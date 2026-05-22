@@ -1,0 +1,38 @@
+{
+  "name": "N-CEDI",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@iconify-json/lucide": "^1.2.108",
+    "@iconify-json/simple-icons": "^1.2.83",
+    "@nuxt/image": "^2.0.0",
+    "@nuxt/ui": "^4.7.1",
+    "@nuxtjs/robots": "^6.0.8",
+    "@nuxtjs/seo": "^5.1.3",
+    "@nuxtjs/sitemap": "^8.0.15",
+    "@nuxtjs/supabase": "^2.0.9",
+    "@supabase/supabase-js": "^2.106.1",
+    "@takumi-rs/core": "^1.3.0",
+    "@vueuse/motion": "^3.0.3",
+    "gsap": "^3.15.0",
+    "lenis": "^1.3.23",
+    "nuxt": "^4.4.6",
+    "nuxt-schema-org": "^6.0.4",
+    "tailwindcss": "^4.3.0"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.15.2",
+    "eslint": "^10.4.0",
+    "typescript": "^6.0.3",
+    "vue-tsc": "^3.3.0"
+  },
+  "packageManager": "pnpm@11.1.3"
+}
