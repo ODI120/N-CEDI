@@ -229,14 +229,14 @@ const breadcrumbs = computed(() => [
   height: 48px;
   border-radius: var(--radius-full);
   object-fit: cover;
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--color-border);
 }
 
 .author-avatar-fallback {
   width: 48px;
   height: 48px;
   border-radius: var(--radius-full);
-  background-color: var(--color-primary-100);
+  background-color: var(--color-surface-inset);
   color: var(--color-brand-primary);
   display: flex;
   align-items: center;
@@ -255,7 +255,7 @@ const breadcrumbs = computed(() => [
   font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 700;
-  color: var(--color-text-primary);
+  color: var(--color-text-dark);
 }
 
 .author-role {
@@ -265,8 +265,8 @@ const breadcrumbs = computed(() => [
 }
 
 .blog-category-badge {
-  background-color: var(--color-accent-50);
-  color: var(--color-accent-700);
+  background-color: var(--color-surface-muted);
+  color: var(--color-brand-accent);
   padding: var(--space-1) var(--space-4);
   font-family: var(--font-body);
   font-size: var(--text-xs);
@@ -280,7 +280,7 @@ const breadcrumbs = computed(() => [
   border-radius: var(--radius-xl);
   overflow: hidden;
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-xs);
   margin-bottom: var(--space-10);
 }
 

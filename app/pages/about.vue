@@ -140,7 +140,7 @@ const team = [
 .mission-card p {
   font-family: var(--font-body);
   font-size: var(--text-base);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   line-height: var(--leading-relaxed);
 }
 
@@ -164,7 +164,7 @@ const team = [
 
 .section-header p {
   font-size: var(--text-lg);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .team-grid {

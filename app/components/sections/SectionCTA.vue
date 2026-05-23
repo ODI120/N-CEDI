@@ -60,8 +60,8 @@ withDefaults(defineProps<SectionCTAProps>(), {
 <style scoped>
 .section-cta {
   position: relative;
-  background-color: var(--color-brand-primary);
-  color: var(--color-text-inverse);
+  background: var(--color-surface-muted);
+  color: var(--color-text-dark);
   padding: var(--section-padding-y) 0;
   overflow: hidden;
 }
@@ -79,7 +79,7 @@ withDefaults(defineProps<SectionCTAProps>(), {
   transform: translate(-50%, -50%);
   width: 50vw;
   height: 50vw;
-  background: radial-gradient(circle, rgba(212, 168, 83, 0.12) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(198, 146, 46, 0.12) 0%, transparent 62%);
   pointer-events: none;
 }
 
@@ -99,7 +99,7 @@ withDefaults(defineProps<SectionCTAProps>(), {
   font-family: var(--font-display);
   font-size: var(--text-3xl);
   font-weight: 800;
-  color: #ffffff;
+  color: var(--color-text-dark);
   margin-top: 0;
   margin-bottom: var(--space-4);
   line-height: var(--leading-tight);
@@ -109,7 +109,7 @@ withDefaults(defineProps<SectionCTAProps>(), {
   font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: var(--leading-relaxed);
-  color: rgba(245, 245, 240, 0.8);
+  color: var(--color-text-muted);
   margin-bottom: var(--space-8);
 }
 
@@ -121,12 +121,12 @@ withDefaults(defineProps<SectionCTAProps>(), {
 }
 
 .btn-sec-inverse {
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
+  color: var(--color-text-dark) !important;
+  border-color: var(--color-border) !important;
 }
 
 .btn-sec-inverse:hover {
-  background-color: rgba(255, 255, 255, 0.08) !important;
-  border-color: #ffffff !important;
+  background-color: var(--color-surface-muted) !important;
+  border-color: var(--color-border) !important;
 }
 </style>

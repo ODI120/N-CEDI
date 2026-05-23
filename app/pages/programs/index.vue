@@ -168,7 +168,7 @@ const breadcrumbs = [
 .programs-section__lead {
   font-family: var(--font-body);
   font-size: var(--text-lg);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   line-height: var(--leading-relaxed);
   margin: 0;
 }

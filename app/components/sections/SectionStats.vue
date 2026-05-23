@@ -126,7 +126,7 @@ withDefaults(defineProps<SectionStatsProps>(), {
   font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   margin: 0;
 }
 </style>

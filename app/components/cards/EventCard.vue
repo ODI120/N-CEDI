@@ -94,7 +94,7 @@ const getEventTypeName = (type: string) => {
 
 .event-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-xs);
 }
 
 .event-card__image-container {
@@ -148,7 +148,7 @@ const getEventTypeName = (type: string) => {
 
 .event-card__title {
   font-family: var(--font-display);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--color-brand-primary);
   margin: 0 0 var(--space-2) 0;
@@ -158,7 +158,7 @@ const getEventTypeName = (type: string) => {
 .event-card__description {
   font-family: var(--font-body);
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   line-height: var(--leading-normal);
   margin: 0 0 var(--space-4) 0;
   flex: 1;

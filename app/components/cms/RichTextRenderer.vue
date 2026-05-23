@@ -143,7 +143,7 @@ const blocks = computed<Block[]>(() => {
   font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: var(--leading-relaxed);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   max-width: 800px;
   margin: 0 auto;
 }
@@ -246,7 +246,7 @@ const blocks = computed<Block[]>(() => {
   height: auto;
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-xs);
 }
 
 .rich-text-content__image-caption,
@@ -265,7 +265,7 @@ const blocks = computed<Block[]>(() => {
   margin: var(--space-8) 0;
   border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-xs);
   border: 1px solid var(--color-border);
 }
 

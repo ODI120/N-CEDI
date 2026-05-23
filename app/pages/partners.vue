@@ -227,7 +227,7 @@ const breadcrumbs = [
 .partner-card:hover {
   transform: translateY(-4px);
   border-color: var(--color-brand-accent);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-xs);
 }
 
 .partner-card__link {
@@ -255,7 +255,7 @@ const breadcrumbs = [
 .partner-card__logo-text--small {
   font-size: var(--text-sm);
   font-weight: 700;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 /* CTA Card */
@@ -265,13 +265,13 @@ const breadcrumbs = [
 }
 
 .partner-cta__card {
-  background-color: var(--color-surface-inverse);
+  background-color: var(--color-brand-primary);
   border: 2.5px solid var(--color-brand-accent);
   border-radius: var(--radius-xl);
   padding: var(--space-10) var(--space-8);
   text-align: center;
-  color: var(--color-text-inverse);
-  box-shadow: var(--shadow-lg);
+  color: var(--color-text-light);
+  box-shadow: var(--shadow-xs);
 }
 
 .partner-cta__title {
@@ -286,7 +286,7 @@ const breadcrumbs = [
 .partner-cta__desc {
   font-family: var(--font-body);
   font-size: var(--text-base);
-  color: var(--color-text-inverse-muted);
+  color: var(--color-text-light);
   line-height: var(--leading-relaxed);
   margin-top: 0;
   margin-bottom: var(--space-8);

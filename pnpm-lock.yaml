@@ -41,6 +41,9 @@ importers:
       '@vueuse/motion':
         specifier: ^3.0.3
         version: 3.0.3(magicast@0.5.3)(vue@3.5.34(typescript@6.0.3))
+      bootstrap-icons:
+        specifier: ^1.13.1
+        version: 1.13.1
       gsap:
         specifier: ^3.15.0
         version: 3.15.0
@@ -3370,6 +3373,9 @@ packages:
 
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
+
+  bootstrap-icons@1.13.1:
+    resolution: {integrity: sha512-ijombt4v6bv5CLeXvRWKy7CuM3TRTuPEuGaGKvTV5cz65rQSY8RQ2JcHt6b90cBBAC7s8fsf2EkQDldzCoXUjw==}
 
   brace-expansion@2.1.0:
     resolution: {integrity: sha512-TN1kCZAgdgweJhWWpgKYrQaMNHcDULHkWwQIspdtjV4Y5aurRdZpjAqn6yX3FPqTA9ngHCc4hJxMAMgGfve85w==}
@@ -9618,6 +9624,8 @@ snapshots:
   birpc@4.0.0: {}
 
   boolbase@1.0.0: {}
+
+  bootstrap-icons@1.13.1: {}
 
   brace-expansion@2.1.0:
     dependencies:

@@ -28,30 +28,34 @@ defineProps<BaseBadgeProps>()
   line-height: 1.5;
   border-radius: var(--radius-full);
   white-space: nowrap;
+  border: 1px solid transparent;
 }
 
 .base-badge--beginner {
-  background-color: var(--color-secondary-50);
+  background-color: var(--color-surface-muted);
   color: var(--color-brand-secondary);
+  border-color: var(--color-surface-inset);
 }
 
 .base-badge--intermediate {
-  background-color: var(--color-accent-50);
-  color: var(--color-accent-700);
+  background-color: var(--color-surface-muted);
+  color: var(--color-brand-accent);
+  border-color: var(--color-surface-inset);
 }
 
 .base-badge--advanced {
-  background-color: var(--color-primary-50);
+  background-color: var(--color-surface);
   color: var(--color-brand-primary);
+  border-color: var(--color-surface-inset);
 }
 
 .base-badge--featured {
-  background-color: var(--color-brand-accent);
-  color: var(--color-brand-primary);
+  background: var(--color-brand-primary);
+  color: var(--color-text-light);
 }
 
 .base-badge--new {
-  background-color: var(--color-brand-secondary);
-  color: #ffffff;
+  background: var(--color-brand-secondary);
+  color: var(--color-text-light);
 }
 </style>

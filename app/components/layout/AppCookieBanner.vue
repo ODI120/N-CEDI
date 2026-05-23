@@ -54,7 +54,7 @@ const declineCookies = () => {
   right: var(--space-4);
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-xs);
   border-radius: var(--radius-lg);
   padding: var(--space-4) 0;
   z-index: 999;
@@ -95,7 +95,7 @@ const declineCookies = () => {
   font-family: var(--font-body);
   font-size: var(--text-sm);
   line-height: var(--leading-relaxed);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   margin: 0;
 }
 
@@ -124,7 +124,7 @@ const declineCookies = () => {
 
 .cookie-banner__btn--decline:hover {
   background-color: var(--color-surface-muted);
-  color: var(--color-text-primary);
+  color: var(--color-text-dark);
 }
 
 /* Transitions */

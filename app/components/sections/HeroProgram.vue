@@ -116,7 +116,7 @@ defineProps<{
 .hero-program__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(10, 37, 64, 0.4) 0%, rgba(10, 37, 64, 0.95) 100%);
+  background: linear-gradient(180deg, rgba(23, 23, 23, 0.18) 0%, rgba(23, 23, 23, 0.78) 100%);
   z-index: 2;
 }
 
@@ -144,7 +144,7 @@ defineProps<{
 }
 
 .hero-program__breadcrumbs-list a {
-  color: rgba(245, 245, 240, 0.7);
+  color: var(--color-text-light);
   text-decoration: none;
   transition: color 0.2s;
 }
@@ -154,7 +154,7 @@ defineProps<{
 }
 
 .hero-program__breadcrumbs-separator {
-  color: rgba(245, 245, 240, 0.4);
+  color: var(--color-text-light);
   margin-right: var(--space-2);
 }
 
@@ -177,7 +177,7 @@ defineProps<{
   font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 600;
-  color: rgba(245, 245, 240, 0.9);
+  color: var(--color-text-light);
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -191,7 +191,7 @@ defineProps<{
   font-family: var(--font-display);
   font-size: var(--text-4xl);
   font-weight: 800;
-  color: #ffffff;
+  color: var(--color-surface-muted);
   margin-top: 0;
   margin-bottom: var(--space-3);
   line-height: var(--leading-tight);
@@ -200,7 +200,7 @@ defineProps<{
 .hero-program__subtitle {
   font-family: var(--font-body);
   font-size: var(--text-lg);
-  color: rgba(245, 245, 240, 0.85);
+  color: var(--color-text-light);
   line-height: var(--leading-relaxed);
   margin-top: 0;
   margin-bottom: var(--space-8);
@@ -214,12 +214,12 @@ defineProps<{
 }
 
 .btn-sec-inverse {
-  color: #ffffff !important;
+  color: var(--color-surface-muted) !important;
   border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
 .btn-sec-inverse:hover {
   background-color: rgba(255, 255, 255, 0.08) !important;
-  border-color: #ffffff !important;
+  border-color: var(--color-surface-muted) !important;
 }
 </style>

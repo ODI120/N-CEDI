@@ -294,7 +294,7 @@ const breadcrumbs = computed(() => [
   border-radius: var(--radius-xl);
   overflow: hidden;
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-xs);
   margin-bottom: var(--space-8);
 }
 
@@ -316,7 +316,7 @@ const breadcrumbs = computed(() => [
   border: 2px solid var(--color-border);
   border-radius: var(--radius-xl);
   padding: var(--space-8);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-xs);
   position: sticky;
   top: var(--space-24);
 }
@@ -345,7 +345,7 @@ const breadcrumbs = computed(() => [
   font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
+  letter-spacing: var(--tracking-wide);
   color: var(--color-text-muted);
 }
 

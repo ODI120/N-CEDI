@@ -113,12 +113,12 @@ const handleSubscribe = () => {
 
 <style scoped>
 .app-footer {
-  background-color: var(--color-brand-primary);
-  color: var(--color-text-inverse-muted);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
   padding-top: var(--space-16);
   padding-bottom: var(--space-8);
   font-family: var(--font-body);
-  border-top: 1px solid var(--color-border-inverse);
+  border-top: 1px solid var(--color-border);
 }
 
 .app-footer__grid {
@@ -156,20 +156,20 @@ const handleSubscribe = () => {
 .app-footer__logo {
   height: 40px;
   width: auto;
-  color: #ffffff;
+  color: var(--color-brand-primary);
 }
 
 .app-footer__description {
   font-size: var(--text-sm);
   line-height: var(--leading-relaxed);
-  color: rgba(245, 245, 240, 0.7);
+  color: var(--color-text-muted);
   max-width: 320px;
 }
 
 .app-footer__title {
-  color: #ffffff;
+  color: var(--color-text-dark);
   font-family: var(--font-display);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   font-weight: 700;
   letter-spacing: var(--tracking-wide);
   margin-bottom: var(--space-2);
@@ -183,7 +183,7 @@ const handleSubscribe = () => {
 }
 
 .app-footer__links a {
-  color: rgba(245, 245, 240, 0.7);
+  color: var(--color-text-muted);
   text-decoration: none;
   font-size: var(--text-sm);
   font-weight: 500;
@@ -201,7 +201,7 @@ const handleSubscribe = () => {
 .app-footer__newsletter-desc {
   font-size: var(--text-sm);
   line-height: var(--leading-snug);
-  color: rgba(245, 245, 240, 0.7);
+  color: var(--color-text-muted);
 }
 
 .newsletter-form {
@@ -216,11 +216,11 @@ const handleSubscribe = () => {
 
 .newsletter-input {
   flex: 1;
-  background-color: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background-color: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: var(--space-2) var(--space-4);
-  color: #ffffff;
+  color: var(--color-text-dark);
   font-family: var(--font-body);
   font-size: var(--text-sm);
   outline: none;
@@ -229,7 +229,7 @@ const handleSubscribe = () => {
 
 .newsletter-input:focus {
   border-color: var(--color-brand-accent);
-  background-color: rgba(255, 255, 255, 0.12);
+  background-color: var(--color-surface-muted);
 }
 
 .newsletter-success {
@@ -252,22 +252,22 @@ const handleSubscribe = () => {
   width: 36px;
   height: 36px;
   border-radius: var(--radius-full);
-  background-color: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
+  background-color: var(--color-surface-muted);
+  color: var(--color-text-dark);
   font-size: var(--text-xs);
   font-weight: 700;
   transition: background-color 0.2s, color 0.2s;
 }
 
 .social-icon:hover {
-  background-color: var(--color-brand-accent);
-  color: var(--color-brand-primary);
+  background-color: var(--color-brand-primary);
+  color: var(--color-text-light);
 }
 
 .app-footer__divider {
   width: 100%;
   height: 1px;
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--color-border);
   margin-top: var(--space-12);
   margin-bottom: var(--space-6);
 }
@@ -277,7 +277,7 @@ const handleSubscribe = () => {
   justify-content: space-between;
   align-items: center;
   font-size: var(--text-xs);
-  color: rgba(245, 245, 240, 0.5);
+  color: var(--color-text-muted);
 }
 
 @media (max-width: 768px) {
@@ -298,7 +298,7 @@ const handleSubscribe = () => {
 }
 
 .app-footer__bottom-links a {
-  color: rgba(245, 245, 240, 0.5);
+  color: var(--color-text-muted);
   text-decoration: none;
   transition: color 0.2s;
 }

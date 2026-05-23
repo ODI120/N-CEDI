@@ -86,7 +86,7 @@ defineProps<{
 .project-card__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(10, 37, 64, 0.95) 0%, rgba(10, 37, 64, 0.4) 100%);
+  background: linear-gradient(to top, rgba(23, 23, 23, 0.82) 0%, rgba(23, 23, 23, 0.18) 100%);
   opacity: 0;
   display: flex;
   align-items: flex-end;
@@ -104,7 +104,7 @@ defineProps<{
 }
 
 .project-card__overlay-content {
-  color: var(--color-text-inverse);
+  color: var(--color-text-light);
   transform: translateY(20px);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   width: 100%;
@@ -127,7 +127,7 @@ defineProps<{
 
 .project-card__title {
   font-family: var(--font-display);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   font-weight: 700;
   margin: 0 0 var(--space-2) 0;
   line-height: var(--leading-snug);
@@ -136,7 +136,7 @@ defineProps<{
 .project-card__desc {
   font-family: var(--font-body);
   font-size: var(--text-sm);
-  color: rgba(245, 245, 240, 0.8);
+  color: var(--color-text-light);
   line-height: var(--leading-normal);
   margin: 0 0 var(--space-4) 0;
   display: -webkit-box;
@@ -165,7 +165,7 @@ defineProps<{
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .project-card__program {

@@ -4,59 +4,127 @@ import TextReveal from '~/components/motion/TextReveal.vue'
 </script>
 
 <template>
-  <section class="hero-home" aria-label="Welcome to N-CEDI">
+  <section
+    class="hero-home"
+    aria-label="Welcome to N-CEDI"
+  >
     <div class="hero-home__background">
       <!-- Gradient overlay for visual richness -->
       <div class="hero-home__overlay" />
+
+      <!-- Pulse wave (center) -->
+      <div class="pulse-wave" />
+
+      <!-- Floating avatars with cursor pointers -->
+      <div class="floating-avatar floating-avatar--1">
+        <div class="floating-avatar__badge avatar-aisha">
+          <div class="avatar avatar--1">
+          </div>
+          <!-- <i class="bi bi-cursor" /> -->
+          <span class="floating-avatar__name">Aisha</span>
+        </div>
+      </div>
+      <div class="floating-avatar floating-avatar--2">
+        <div class="floating-avatar__badge avatar-david">
+          <!-- <i class="bi bi-cursor" /> -->
+          <span class="floating-avatar__name">David</span>
+        </div>
+      </div>
+      <div class="floating-avatar floating-avatar--3">
+        <div class="floating-avatar__badge avatar-tunde">
+          <!-- <i class="bi bi-cursor" /> -->
+          <span class="floating-avatar__name">Tunde</span>
+        </div>
+      </div>
+      <div class="floating-avatar floating-avatar--4">
+        <div class="floating-avatar__badge avatar-chioma">
+          <!-- <i class="bi bi-cursor" /> -->
+          <span class="floating-avatar__name">Chioma</span>
+        </div>
+      </div>
     </div>
 
     <div class="hero-home__container container">
       <div class="hero-home__grid">
         <!-- Left Column: Content -->
         <div class="hero-home__content">
-          <MotionWrapper variant="fadeUp" :delay="200" :duration="0.6">
-            <span class="eyebrow hero-home__eyebrow">NCAT Centre for Entrepreneurship</span>
+          <MotionWrapper
+            variant="fadeUp"
+            :delay="200"
+            :duration="0.6"
+          >
+            <span class="eyebrow hero-home__eyebrow center">NCAT Centre for Entrepreneurship <i class="bi bi-airplane-fill" /></span>
           </MotionWrapper>
 
           <TextReveal
             text="Empowering Africa's Next Innovators"
             tag="h1"
             :delay="400"
-            class="hero-home__title"
+            class="hero-home__title center"
           />
 
-          <MotionWrapper variant="fadeUp" :delay="800" :duration="0.8">
-            <p class="hero-home__lead">
-              N-CEDI accelerates high-impact career development through world-class tech training, vocational innovation, and venture incubation. Secure your future in the global economy.
+          <MotionWrapper
+            variant="fadeUp"
+            class="text"
+            :delay="800"
+            :duration="0.8"
+          >
+            <p class="hero-home__lead center">
+              N-CEDI accelerates high-impact career development through world-class tech training, vocational innovation, and venture incubation.
             </p>
           </MotionWrapper>
 
-          <MotionWrapper variant="fadeUp" :delay="1000" :duration="0.8">
+          <MotionWrapper
+            variant="fadeUp"
+            :delay="1000"
+            :duration="0.8"
+          >
             <div class="hero-home__actions">
-              <BaseButton variant="accent" size="lg" to="/programs">
+              <BaseButton
+                class="base-button--primary"
+                size="lg"
+                to="/programs"
+              >
                 Explore Programs
+                <i class="bi bi-arrow-right-circle" />
               </BaseButton>
-              <BaseButton variant="ghost" size="lg" to="/about" class="btn-secondary-inverse">
+              <BaseButton
+                to="/about"
+                class="base-button--secondary"
+              >
                 Learn More
               </BaseButton>
+            </div>
+          </MotionWrapper>
+
+          <MotionWrapper
+            variant="fadeUp"
+            :delay="1200"
+            :duration="0.8"
+          >
+            <div class="hero-home__social-proof">
+              <div class="social-proof__avatars">
+                <div class="avatar avatar--1">
+                  👨‍💼
+                </div>
+                <div class="avatar avatar--2">
+                  👩‍💼
+                </div>
+                <div class="avatar avatar--3">
+                  👨‍💻
+                </div>
+                <div class="avatar avatar--4">
+                  👩‍💻
+                </div>
+              </div>
+              <div class="social-proof__text">
+                <span class="social-proof__count">Over 500+ Alumni</span>
+              </div>
             </div>
           </MotionWrapper>
         </div>
 
         <!-- Right Column: Visual -->
-        <div class="hero-home__visual">
-          <MotionWrapper variant="scale" :delay="600" :duration="1.2" class="hero-home__visual-wrapper">
-            <div class="hero-home__image-placeholder">
-              <!-- Visual overlay -->
-              <div class="visual-gradient-shim" />
-              <!-- Placeholder content showing institutional excellence -->
-              <div class="placeholder-graphic">
-                <span class="placeholder-graphic__icon">⚡</span>
-                <span class="placeholder-graphic__text">Centre for Entrepreneurship & Innovation</span>
-              </div>
-            </div>
-          </MotionWrapper>
-        </div>
       </div>
     </div>
   </section>
@@ -68,10 +136,10 @@ import TextReveal from '~/components/motion/TextReveal.vue'
   min-height: 100vh;
   display: flex;
   align-items: center;
-  background-color: var(--color-brand-primary);
   overflow: hidden;
   padding-top: 100px;
   padding-bottom: var(--space-12);
+  background: linear-gradient(135deg, #ffffff 0%, #f5f7fb 100%);
 }
 
 .hero-home__background {
@@ -83,77 +151,379 @@ import TextReveal from '~/components/motion/TextReveal.vue'
 .hero-home__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, var(--color-primary-900) 0%, rgba(10, 37, 64, 0.9) 100%);
+  z-index: 1;
+  background-image:
+    /* Grid pattern - visible horizontal and vertical lines */
+    linear-gradient(to right, rgba(150, 170, 210, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(150, 170, 210, 0.15) 1px, transparent 1px),
+    /* Radial gradients for depth */
+    radial-gradient(circle at 15% 20%, rgba(2, 86, 255, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(1, 156, 154, 0.1) 0%, transparent 35%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+
+  background-size:
+    60px 60px,
+    60px 60px,
+    auto,
+    auto,
+    auto;
+
+  background-position:
+    0 0,
+    0 0,
+    0 0,
+    0 0,
+    0 0;
+
+  pointer-events: none;
 }
 
 .hero-home__container {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   width: 100%;
 }
 
+/* Center pulse wave */
+.pulse-wave {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 2; /* above overlay, under content */
+  background: radial-gradient(circle, rgba(2,86,255,0.20) 0%, rgba(2,86,255,0.10) 25%, rgba(2,86,255,0.04) 50%, transparent 60%);
+  filter: blur(8px);
+  animation: pulse-wave 3800ms cubic-bezier(0.22,0.9,0.31,1) infinite;
+}
+
+@keyframes pulse-wave {
+  0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0.95; }
+  40% { transform: translate(-50%, -50%) scale(1.05); opacity: 0.45; }
+  100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+}
+
 .hero-home__grid {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: var(--space-12);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
+  align-content: center;
+
+  gap: var(--space-12);
 }
 
 @media (max-width: 1024px) {
   .hero-home__grid {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: var(--space-8);
+  }
+
+  .floating-avatar--1 {
+    top: 10%;
+    left: 3%;
+  }
+
+  .floating-avatar--2 {
+    top: 15%;
+    right: 3%;
+  }
+
+  .floating-avatar--3 {
+    bottom: 15%;
+    left: 2%;
+  }
+
+  .floating-avatar--4 {
+    bottom: 10%;
+    right: 3%;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-home {
+    padding-top: 80px;
+    padding-bottom: var(--space-8);
+  }
+
+  .floating-avatar {
+    display: none !important;
+  }
+
+  .hero-home__social-proof {
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .social-proof__avatars {
+    margin-right: 0;
+  }
+
+  .text {
+    max-width: 100%;
+  }
+
+  .hero-home__visual-wrapper {
+    aspect-ratio: 16 / 10;
   }
 }
 
 .hero-home__content {
-  max-width: 720px;
+  /* max-width: 720px; */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .hero-home__eyebrow {
-  color: var(--color-brand-accent);
-  margin-bottom: var(--space-4);
-  display: block;
+  color: #019C9A;
+  margin-top: var(--space-6);
+  display: inline-block;
+  background: linear-gradient(135deg, rgba(1, 156, 154, 0.1) 0%, rgba(2, 86, 255, 0.07) 100%);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  border: 1px solid rgba(1, 156, 154, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-home__eyebrow:hover {
+  border-color: rgba(1, 156, 154, 0.4);
+  background: linear-gradient(135deg, rgba(1, 156, 154, 0.15) 0%, rgba(2, 86, 255, 0.1) 100%);
+  box-shadow: 0 8px 24px rgba(1, 156, 154, 0.12);
+  transform: translateY(-2px);
 }
 
 .hero-home__title {
-  color: #ffffff;
   font-family: var(--font-display);
-  font-size: var(--text-hero);
-  font-weight: 800;
-  line-height: var(--leading-tight);
+  font-size: clamp(3.5rem, 8vw, 5.5rem);
+  font-weight: 900;
+  line-height: 1;
   letter-spacing: var(--tracking-tight);
-  margin-bottom: var(--space-6);
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-4);
+  background-clip: text;
+  display: inline-block;
+  width: 100%;
+  color: var(--color-text-dark);
+  text-align: center;
+}
+
+@keyframes shimmer {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.05); }
+}
+
+/* Floating Avatars - Premium Badge Style */
+.floating-avatar {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.floating-avatar--1 {
+  top: 15%;
+  left: 5%;
+  animation: float-avatar-1 6s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+}
+
+.floating-avatar--2 {
+  top: 20%;
+  right: 6%;
+  animation: float-avatar-2 6.5s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+}
+
+.floating-avatar--3 {
+  bottom: 22%;
+  left: 4%;
+  animation: float-avatar-3 6.2s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+}
+
+.floating-avatar--4 {
+  bottom: 20%;
+  right: 5%;
+  animation: float-avatar-4 6.8s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
+}
+
+.floating-avatar__badge {
+  display: flex;
+  /* flex-direction: ; */
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 13px;
+  color: white;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  letter-spacing: 0.3px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 100px;
+  text-align: center;
+}
+
+.floating-avatar__badge:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  transform: translateY(-4px);
+}
+
+.floating-avatar__badge i {
+  font-size: 18px;
+  opacity: 0.9;
+}
+
+.floating-avatar__name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  display: block;
+  white-space: nowrap;
+}
+
+.avatar-aisha {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  box-shadow:
+    0 8px 32px rgba(59, 130, 246, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.avatar-david {
+  background: linear-gradient(135deg, #A855F7 0%, #7C3AED 100%);
+  box-shadow:
+    0 8px 32px rgba(168, 85, 247, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.avatar-tunde {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  box-shadow:
+    0 8px 32px rgba(16, 185, 129, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.avatar-chioma {
+  background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
+  box-shadow:
+    0 8px 32px rgba(236, 72, 153, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+@keyframes float-avatar-1 {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(-15px) translateX(8px);
+  }
+  50% {
+    transform: translateY(-30px) translateX(0px);
+  }
+  75% {
+    transform: translateY(-15px) translateX(-8px);
+  }
+}
+
+@keyframes float-avatar-2 {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(12px) translateX(-10px);
+  }
+  50% {
+    transform: translateY(25px) translateX(0px);
+  }
+  75% {
+    transform: translateY(12px) translateX(10px);
+  }
+}
+
+@keyframes float-avatar-3 {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 1;
+  }
+  33% {
+    transform: translateY(-18px) translateX(-8px);
+  }
+  66% {
+    transform: translateY(-28px) translateX(8px);
+  }
+}
+
+@keyframes float-avatar-4 {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 1;
+  }
+  33% {
+    transform: translateY(16px) translateX(10px);
+  }
+  66% {
+    transform: translateY(28px) translateX(-8px);
+  }
+}
+
+.floating-avatar__badge .avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background:#019C9A ;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  margin-left: -16px;
+  flex-shrink: 0;
 }
 
 .hero-home__lead {
   font-family: var(--font-body);
-  font-size: var(--text-lg);
-  line-height: var(--leading-relaxed);
-  color: rgba(245, 245, 240, 0.8);
-  margin-bottom: var(--space-8);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+  /* margin-bottom: var(--space-4); */
+  max-width: 600px;
+  text-align: center;
+  /* font-weight: 500; */
+  letter-spacing: 0.3px;
+}
+
+.text {
+  max-width: 70%;
 }
 
 .hero-home__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-4);
-}
-
-.btn-secondary-inverse {
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-}
-
-.btn-secondary-inverse:hover {
-  background-color: rgba(255, 255, 255, 0.08) !important;
-  border-color: #ffffff !important;
+  gap: var(--space-5);
+  justify-content: center;
+  margin-top: var(--space-4);
 }
 
 .hero-home__visual {
   width: 100%;
   display: flex;
   justify-content: center;
+  margin-top: var(--space-4);
 }
 
 .hero-home__visual-wrapper {
@@ -165,18 +535,33 @@ import TextReveal from '~/components/motion/TextReveal.vue'
   position: relative;
   width: 100%;
   height: 100%;
-  background-color: var(--color-primary-800);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 50%, #f0f7ff 100%);
+  border: 1px solid rgba(2, 86, 255, 0.1);
+  border-radius: var(--radius-2xl);
   overflow: hidden;
-  box-shadow: var(--shadow-2xl), var(--shadow-accent);
+  box-shadow:
+    0 20px 60px rgba(2, 86, 255, 0.08),
+    0 0 120px rgba(1, 156, 154, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-home__image-placeholder:hover {
+  border-color: rgba(2, 86, 255, 0.2);
+  box-shadow:
+    0 25px 80px rgba(2, 86, 255, 0.12),
+    0 0 150px rgba(1, 156, 154, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .visual-gradient-shim {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 70% 30%, rgba(212, 168, 83, 0.15) 0%, transparent 70%);
+  background: linear-gradient(135deg, rgba(2, 86, 255, 0.08) 0%, rgba(1, 156, 154, 0.06) 100%);
   z-index: 2;
+  mix-blend-mode: multiply;
 }
 
 .placeholder-graphic {
@@ -185,22 +570,86 @@ import TextReveal from '~/components/motion/TextReveal.vue'
   align-items: center;
   justify-content: center;
   height: 100%;
-  gap: var(--space-3);
-  padding: var(--space-8);
+  gap: var(--space-4);
+  padding: var(--space-12);
   text-align: center;
 }
 
 .placeholder-graphic__icon {
-  font-size: var(--text-3xl);
-  filter: drop-shadow(0 0 10px rgba(212, 168, 83, 0.5));
+  font-size: 4rem;
+  filter: drop-shadow(0 8px 24px rgba(2, 86, 255, 0.2));
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
 }
 
 .placeholder-graphic__text {
   font-family: var(--font-display);
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   font-weight: 700;
-  color: var(--color-brand-accent);
-  letter-spacing: var(--tracking-wide);
+  color: #0a0e27;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+/* Social Proof Section */
+.hero-home__social-proof {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding:10px 16px 10px 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(2, 86, 255, 0.1);
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.social-proof__avatars {
+  display: flex;
+  align-items: center;
+  margin-right: var(--space-1);
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #019C9A 0%, #2563eb 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  margin-left: -16px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(2, 86, 255, 0.2);
+}
+
+.avatar:first-child {
+  margin-left: 0;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+}
+
+.avatar:nth-child(2) {
+  background: linear-gradient(135deg, #019C9A 0%, #0d9488 100%);
+}
+
+.avatar:nth-child(3) {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+.avatar:nth-child(4) {
+  background: linear-gradient(135deg, #db2777 0%, #be185d 100%);
+}
+
+.social-proof__count {
+  font-size: 14px;
+  color: var(--color-text-dark);
+  font-weight: 500;
 }
 </style>

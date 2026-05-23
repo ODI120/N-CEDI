@@ -147,7 +147,7 @@ withDefaults(defineProps<SectionTimelineProps>(), {
   top: 0;
   bottom: 0;
   width: 2px;
-  background-color: var(--color-border-strong);
+  background-color: var(--color-border);
   transform: translateX(-50%);
 }
 
@@ -228,13 +228,13 @@ withDefaults(defineProps<SectionTimelineProps>(), {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   padding: var(--space-6) var(--space-8);
-  box-shadow: var(--shadow-md);
-  transition: transform 0.3s var(--easing-snappy), box-shadow 0.3s var(--easing-snappy);
+  box-shadow: var(--shadow-xs);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .timeline__card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xs);
   border-color: var(--color-brand-accent);
 }
 
@@ -257,9 +257,9 @@ withDefaults(defineProps<SectionTimelineProps>(), {
   font-size: var(--text-xs);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-  background-color: var(--color-accent-50);
-  color: var(--color-accent-700);
+  letter-spacing: var(--tracking-wide);
+  background-color: var(--color-surface-muted);
+  color: var(--color-brand-accent);
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-full);
 }
@@ -275,7 +275,7 @@ withDefaults(defineProps<SectionTimelineProps>(), {
 .timeline__item-desc {
   font-family: var(--font-body);
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   line-height: var(--leading-normal);
   margin: 0;
 }

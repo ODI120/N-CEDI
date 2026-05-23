@@ -1,60 +1,38 @@
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+
+
+
 :root {
   /* ─── Brand Core ─── */
-  --color-brand-primary:    #0A2540;
-  --color-brand-accent:     #D4A853;
-  --color-brand-secondary:  #1A6B4A;
-
-  /* ─── Brand Tints ─── */
-  --color-primary-50:   #E8EEF5;
-  --color-primary-100:  #C5D3E6;
-  --color-primary-200:  #8FA8CC;
-  --color-primary-800:  #071B30;
-  --color-primary-900:  #040F1C;
-
-  --color-accent-50:    #FBF4E3;
-  --color-accent-100:   #F5E4B5;
-  --color-accent-200:   #ECCB78;
-  --color-accent-600:   #B8892E;
-  --color-accent-700:   #9A6F1F;
-
-  --color-secondary-50:  #E3F2EB;
-  --color-secondary-100: #B8DEC9;
-  --color-secondary-700: #145939;
-  --color-secondary-900: #0C3824;
+  --color-brand-primary:    #141414;
+  --color-brand-accent:     #6B59FF;
+  --color-brand-secondary:  #6B59FF;
 
   /* ─── Surfaces ─── */
-  --color-surface:          #FAFAF8;
-  --color-surface-muted:    #F2F0EB;
-  --color-surface-inset:    #E8E6E0;
-  --color-surface-inverse:  #0A2540;
+  --color-surface:          #f9f9f9;
+  --color-surface-muted:    #fff;
+  /* --color-surface-inset:    #EDE4D7; */
+
 
   /* ─── Borders ─── */
-  --color-border:           #E2DDD6;
-  --color-border-strong:    #C8C3BB;
-  --color-border-inverse:   rgba(255,255,255,0.12);
+  --color-border:           #e5e7eb;
+  --color--muted:     #6B59FF50;
+
 
   /* ─── Text ─── */
-  --color-text-primary:     #0D0D0D;
-  --color-text-secondary:   #4A4A4A;
-  --color-text-muted:       #888880;
-  --color-text-placeholder: #AEAAA4;
-  --color-text-inverse:     #F5F5F0;
-  --color-text-inverse-muted: rgba(245,245,240,0.6);
-  --color-text-accent:      #D4A853;
+  --color-text-dark:        #141414;
+  --color-text-light:       #fff;
+  --color-text-muted:       #6B7280;
+  --color-text-placeholder: #A79E92;
 
-  /* ─── Functional Colors ─── */
-  --color-error:           #C0392B;
-  --color-error-surface:   #FDECEA;
-  --color-warning:         #D97706;
-  --color-warning-surface: #FEF3C7;
-  --color-success:         #1A6B4A;
-  --color-success-surface: #ECFDF5;
-  --color-info:            #0A2540;
-  --color-info-surface:    #E8EEF5;
 
+
+ 
   /* ─── Typography ─── */
-  --font-display: 'Syne Variable', 'Syne', sans-serif;
-  --font-body:    'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
+  --font-display: "Lato", sans-serif;
+  --font-body:    "Lato", sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
 
   /* ─── Fluid Type Scale ─── */
@@ -102,14 +80,8 @@
   --section-padding-x: clamp(1.5rem, 5vw, 6rem);
 
   /* ─── Shadows ─── */
-  --shadow-xs:  0 1px 2px 0 rgba(10,37,64,0.06);
-  --shadow-sm:  0 2px 6px 0 rgba(10,37,64,0.08);
-  --shadow-md:  0 4px 16px 0 rgba(10,37,64,0.10);
-  --shadow-lg:  0 8px 32px 0 rgba(10,37,64,0.12);
-  --shadow-xl:  0 16px 48px 0 rgba(10,37,64,0.16);
-  --shadow-2xl: 0 24px 64px 0 rgba(10,37,64,0.20);
-  --shadow-accent: 0 0 24px 0 rgba(212,168,83,0.25);
-  --shadow-inset: inset 0 2px 6px 0 rgba(10,37,64,0.08);
+  --shadow-xs:  0 1px 2px 0 rgba(23,23,23,0.05);
+
 
   /* ─── Border Radius ─── */
   --radius-xs:   0.125rem;
@@ -121,16 +93,3 @@
   --radius-full: 9999px;
 }
 
-/* ─── Dark Mode ─── */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-surface:        #0A0A0A;
-    --color-surface-muted:  #141414;
-    --color-surface-inset:  #1C1C1C;
-    --color-border:         #2A2A2A;
-    --color-border-strong:  #3A3A3A;
-    --color-text-primary:   #F5F5F0;
-    --color-text-secondary: #AAAAAA;
-    --color-text-muted:     #666660;
-  }
-}

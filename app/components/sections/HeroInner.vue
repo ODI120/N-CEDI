@@ -21,17 +21,27 @@ withDefaults(defineProps<HeroInnerProps>(), {
 <template>
   <section class="hero-inner">
     <div class="hero-inner__overlay" />
-    
+
     <div class="hero-inner__container container">
       <!-- Breadcrumbs -->
-      <nav v-if="breadcrumbs && breadcrumbs.length > 0" class="hero-inner__breadcrumbs" aria-label="Breadcrumb">
+      <nav
+        v-if="breadcrumbs && breadcrumbs.length > 0"
+        class="hero-inner__breadcrumbs"
+        aria-label="Breadcrumb"
+      >
         <ol class="hero-inner__breadcrumbs-list">
           <li>
             <NuxtLink to="/">Home</NuxtLink>
           </li>
-          <li v-for="(crumb, index) in breadcrumbs" :key="index">
+          <li
+            v-for="(crumb, index) in breadcrumbs"
+            :key="index"
+          >
             <span class="hero-inner__breadcrumbs-separator">/</span>
-            <NuxtLink :to="crumb.to" :aria-current="index === breadcrumbs.length - 1 ? 'page' : undefined">
+            <NuxtLink
+              :to="crumb.to"
+              :aria-current="index === breadcrumbs.length - 1 ? 'page' : undefined"
+            >
               {{ crumb.label }}
             </NuxtLink>
           </li>
@@ -39,13 +49,22 @@ withDefaults(defineProps<HeroInnerProps>(), {
       </nav>
 
       <div class="hero-inner__content">
-        <MotionWrapper variant="fadeUp" :delay="100" :duration="0.6">
+        <MotionWrapper
+          variant="fadeUp"
+          :delay="100"
+          :duration="0.6"
+        >
           <h1 class="hero-inner__title">
             {{ title }}
           </h1>
         </MotionWrapper>
-        
-        <MotionWrapper v-if="subtitle" variant="fadeUp" :delay="300" :duration="0.6">
+
+        <MotionWrapper
+          v-if="subtitle"
+          variant="fadeUp"
+          :delay="300"
+          :duration="0.6"
+        >
           <p class="hero-inner__subtitle">
             {{ subtitle }}
           </p>
@@ -61,7 +80,7 @@ withDefaults(defineProps<HeroInnerProps>(), {
   height: 45vh;
   min-height: 320px;
   max-height: 500px;
-  background-color: var(--color-brand-primary);
+  background: radial-gradient(circle at 10% 10%, rgba(2, 86, 255, 0.153) 20%, transparent 30%), radial-gradient(circle at 100% 100%, rgba(1, 156, 154, 0.153) 10%, transparent 10%);
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -71,7 +90,7 @@ withDefaults(defineProps<HeroInnerProps>(), {
 .hero-inner__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, var(--color-primary-900) 0%, rgba(10, 37, 64, 0.95) 100%);
+  background: linear-gradient(135deg, rgba(255, 254, 251, 0.94) 0%, rgba(247, 242, 234, 0.96) 100%);
   z-index: 1;
 }
 
@@ -99,7 +118,7 @@ withDefaults(defineProps<HeroInnerProps>(), {
 }
 
 .hero-inner__breadcrumbs-list a {
-  color: rgba(245, 245, 240, 0.6);
+  color: var(--color-text-muted);
   text-decoration: none;
   transition: color 0.2s;
 }
@@ -110,7 +129,7 @@ withDefaults(defineProps<HeroInnerProps>(), {
 }
 
 .hero-inner__breadcrumbs-separator {
-  color: rgba(245, 245, 240, 0.3);
+  color: var(--color-border);
   margin-right: var(--space-2);
 }
 
@@ -122,7 +141,7 @@ withDefaults(defineProps<HeroInnerProps>(), {
   font-family: var(--font-display);
   font-size: var(--text-3xl);
   font-weight: 800;
-  color: #ffffff;
+  color: var(--color-text-dark);
   margin-top: 0;
   margin-bottom: var(--space-3);
   line-height: var(--leading-tight);
@@ -131,7 +150,7 @@ withDefaults(defineProps<HeroInnerProps>(), {
 .hero-inner__subtitle {
   font-family: var(--font-body);
   font-size: var(--text-base);
-  color: rgba(245, 245, 240, 0.8);
+  color: var(--color-text-muted);
   line-height: var(--leading-relaxed);
   margin: 0;
   max-width: 600px;

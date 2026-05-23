@@ -169,15 +169,15 @@ const groupedPrograms = computed(() => {
 .mega-menu__backdrop {
   position: absolute;
   inset: 0;
-  background-color: rgba(10, 37, 64, 0.4);
+  background-color: rgba(23, 23, 23, 0.18);
   backdrop-filter: blur(4px);
 }
 
 .mega-menu__content {
   position: relative;
-  background-color: var(--color-surface);
+  background: var(--color-surface-muted);
   border-bottom: 1px solid var(--color-border);
-  box-shadow: var(--shadow-xl);
+  box-shadow: var(--shadow-xs);
   padding-top: var(--space-8);
   padding-bottom: var(--space-12);
   width: 100%;
@@ -202,7 +202,7 @@ const groupedPrograms = computed(() => {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   padding: var(--space-1);
   border-radius: var(--radius-sm);
   transition: background-color 0.2s, color 0.2s;
@@ -299,7 +299,7 @@ const groupedPrograms = computed(() => {
 .mega-menu__link-title {
   font-weight: 600;
   font-size: var(--text-sm);
-  color: var(--color-text-primary);
+  color: var(--color-text-dark);
 }
 
 .mega-menu__link-meta {
@@ -352,7 +352,7 @@ const groupedPrograms = computed(() => {
 
 .spotlight-card p {
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   line-height: var(--leading-snug);
   margin: 0;
 }

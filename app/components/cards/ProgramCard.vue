@@ -62,7 +62,7 @@ defineProps<{
 
 <style scoped>
 .program-card {
-  background-color: var(--color-surface-muted);
+  background: var(--color-surface-muted);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   overflow: hidden;
@@ -75,13 +75,13 @@ defineProps<{
 
 .program-card:hover {
   transform: translateY(-6px);
-  box-shadow: var(--shadow-lg);
-  border-color: var(--color-brand-accent);
+  box-shadow: var(--shadow-xs);
+  border-color: var(--color-border);
 }
 
 .program-card--featured {
-  border-color: rgba(212, 168, 83, 0.4);
-  box-shadow: var(--shadow-sm);
+  border-color: var(--color-brand-accent);
+  box-shadow: var(--shadow-xs);
 }
 
 .program-card__image-container {
@@ -131,7 +131,7 @@ defineProps<{
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 600;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .program-card__title {
@@ -147,7 +147,7 @@ defineProps<{
 .program-card__description {
   font-family: var(--font-body);
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   line-height: var(--leading-normal);
   margin-top: 0;
   margin-bottom: var(--space-6);

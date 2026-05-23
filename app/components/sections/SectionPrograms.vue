@@ -93,7 +93,7 @@ withDefaults(defineProps<SectionProgramsProps>(), {
 .section-programs__subtitle {
   font-family: var(--font-body);
   font-size: var(--text-base);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   line-height: var(--leading-relaxed);
   margin: 0;
 }

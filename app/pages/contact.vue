@@ -289,7 +289,7 @@ const handleSubmit = async () => {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   padding: var(--space-8);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
 }
 
 .contact-info-title {
@@ -345,7 +345,7 @@ const handleSubmit = async () => {
 .info-item__value {
   font-family: var(--font-body);
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   line-height: var(--leading-normal);
   margin: 0;
 }
@@ -367,7 +367,7 @@ const handleSubmit = async () => {
   border: 2px solid var(--color-border);
   border-radius: var(--radius-xl);
   padding: var(--space-8);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-xs);
 }
 
 .contact-form-title {
@@ -401,14 +401,14 @@ const handleSubmit = async () => {
   font-family: var(--font-body);
   font-size: var(--text-xs);
   font-weight: 700;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   margin-bottom: var(--space-2);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
+  letter-spacing: var(--tracking-wide);
 }
 
 .required {
-  color: var(--color-error);
+  color: var(--color-brand-accent);
 }
 
 .form-input {
@@ -418,14 +418,14 @@ const handleSubmit = async () => {
   background-color: var(--color-surface);
   font-family: var(--font-body);
   font-size: var(--text-sm);
-  color: var(--color-text-primary);
+  color: var(--color-text-dark);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .form-input:focus {
   outline: none;
   border-color: var(--color-brand-accent);
-  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.25);
+  box-shadow: 0 0 0 3px rgba(198, 146, 46, 0.22);
 }
 
 .form-textarea {
@@ -445,15 +445,15 @@ const handleSubmit = async () => {
 }
 
 .alert--success {
-  background-color: var(--color-success-surface);
-  border: 1px solid var(--color-success);
-  color: var(--color-success);
+  background-color: var(--color-surface-muted);
+  border: 1px solid var(--color-brand-secondary);
+  color: var(--color-brand-secondary);
 }
 
 .alert--error {
-  background-color: var(--color-error-surface);
-  border: 1px solid var(--color-error);
-  color: var(--color-error);
+  background-color: var(--color-surface-muted);
+  border: 1px solid var(--color-brand-accent);
+  color: var(--color-brand-accent);
 }
 
 .alert-icon {

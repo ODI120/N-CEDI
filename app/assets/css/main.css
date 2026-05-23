@@ -4,15 +4,14 @@
 @import "./typography.css";
 @import "./animations.css";
 
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css");
+
 @theme static {
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;
 
-  /* Map N-CEDI brand colors to Tailwind color slots */
-  --color-primary-50: var(--color-primary-50);
-  --color-primary-100: var(--color-primary-100);
-  --color-primary-200: var(--color-primary-200);
-  --color-primary-800: var(--color-primary-800);
-  --color-primary-900: var(--color-primary-900);
+  --color-primary: var(--color-brand-primary);
+  --color-accent: var(--color-brand-accent);
+  --color-secondary: var(--color-brand-secondary);
 }
 
 /* ─── CSS Reset Additions ─── */
@@ -34,8 +33,9 @@ body {
   font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: var(--leading-normal);
-  color: var(--color-text-primary);
-  background-color: var(--color-surface);
+  color: var(--color-text-dark);
+  background: var(--color-surface);
+  background-attachment: fixed;
 }
 
 img,
@@ -61,7 +61,7 @@ video {
   transform: translateX(-50%);
   padding: var(--space-3) var(--space-6);
   background: var(--color-brand-primary);
-  color: var(--color-text-inverse);
+  color: var(--color-text-light);
   font-family: var(--font-body);
   font-weight: 600;
   border-radius: var(--radius-md);
@@ -85,4 +85,11 @@ video {
 ::selection {
   background-color: var(--color-brand-accent);
   color: var(--color-brand-primary);
+}
+
+
+.center{
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

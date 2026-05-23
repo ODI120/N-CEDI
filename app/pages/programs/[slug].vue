@@ -489,7 +489,7 @@ usePageSeo({
   gap: var(--space-3);
   font-family: var(--font-body);
   font-size: var(--text-base);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
 }
 
 .check-icon {
@@ -533,7 +533,7 @@ usePageSeo({
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
   aspect-ratio: 4/3;
   background-color: var(--color-surface-inset);
 }
@@ -557,7 +557,7 @@ usePageSeo({
   border: 2.5px solid var(--color-brand-accent);
   border-radius: var(--radius-xl);
   padding: var(--space-8);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xs);
 }
 
 .sidebar-title {
@@ -622,7 +622,7 @@ usePageSeo({
 .spec-req-desc {
   font-family: var(--font-body);
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   line-height: var(--leading-normal);
   margin: 0;
 }

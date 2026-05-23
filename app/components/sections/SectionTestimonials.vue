@@ -151,7 +151,7 @@ const selectTestimonial = (index: number) => {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   padding: var(--space-10) var(--space-8);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-xs);
   display: flex;
   flex-direction: column;
 }
@@ -172,7 +172,7 @@ const selectTestimonial = (index: number) => {
   font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: var(--leading-relaxed);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   font-style: italic;
   margin-bottom: var(--space-8);
   z-index: 2;
@@ -197,7 +197,7 @@ const selectTestimonial = (index: number) => {
   width: 56px;
   height: 56px;
   border-radius: var(--radius-full);
-  background-color: var(--color-primary-100);
+  background-color: var(--color-surface-inset);
   color: var(--color-brand-primary);
   display: flex;
   align-items: center;
@@ -235,14 +235,14 @@ const selectTestimonial = (index: number) => {
 .section-testimonials__btn {
   background: none;
   border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   width: 40px;
   height: 40px;
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   cursor: pointer;
   background-color: var(--color-surface);
   transition: border-color 0.2s, background-color 0.2s, color 0.2s;
@@ -263,7 +263,7 @@ const selectTestimonial = (index: number) => {
   width: 8px;
   height: 8px;
   border-radius: var(--radius-full);
-  background-color: var(--color-border-strong);
+  background-color: var(--color-border);
   border: none;
   cursor: pointer;
   padding: 0;

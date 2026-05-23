@@ -189,7 +189,7 @@ const breadcrumbs = [
   font-family: var(--font-body);
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   background-color: var(--color-surface-muted);
   border: 1px solid var(--color-border);
   padding: var(--space-2) var(--space-5);
@@ -206,7 +206,7 @@ const breadcrumbs = [
 .gallery-filter-btn--active {
   background-color: var(--color-brand-primary);
   border-color: var(--color-brand-primary);
-  color: var(--color-text-inverse) !important;
+  color: var(--color-text-light) !important;
 }
 
 .gallery-grid {
@@ -233,7 +233,7 @@ const breadcrumbs = [
   border-radius: var(--radius-xl);
   overflow: hidden;
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
   aspect-ratio: 4/3;
   background-color: var(--color-surface-inset);
   position: relative;
@@ -260,7 +260,7 @@ const breadcrumbs = [
 .gallery-card__info-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(10, 37, 64, 0) 40%, rgba(10, 37, 64, 0.9) 100%);
+  background: linear-gradient(180deg, rgba(23, 23, 23, 0) 40%, rgba(23, 23, 23, 0.76) 100%);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -278,7 +278,7 @@ const breadcrumbs = [
   font-family: var(--font-display);
   font-size: var(--text-base);
   font-weight: 700;
-  color: #ffffff;
+  color: var(--color-surface-muted);
   margin: 0 0 var(--space-1) 0;
 }
 

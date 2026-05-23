@@ -62,7 +62,7 @@ defineProps<{
 
 .team-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-xs);
 }
 
 .team-card__avatar-container {
@@ -85,7 +85,7 @@ defineProps<{
 .team-card__avatar-fallback {
   width: 100%;
   height: 100%;
-  background-color: var(--color-primary-100);
+  background-color: var(--color-surface-inset);
   color: var(--color-brand-primary);
   display: flex;
   align-items: center;
@@ -97,7 +97,7 @@ defineProps<{
 
 .team-card__name {
   font-family: var(--font-display);
-  font-size: var(--text-md);
+  font-size: var(--text-base);
   font-weight: 700;
   color: var(--color-brand-primary);
   margin: 0 0 var(--space-1) 0;
@@ -116,7 +116,7 @@ defineProps<{
 .team-card__bio {
   font-family: var(--font-body);
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   line-height: var(--leading-relaxed);
   margin: 0 0 var(--space-6) 0;
   flex: 1;

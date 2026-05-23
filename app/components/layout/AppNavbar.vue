@@ -235,14 +235,9 @@ watch(() => route.path, () => {
 
 /* Scrolled & Hero State Modifier Classes */
 .app-navbar--scrolled {
-  background-color: rgba(250, 250, 248, 0.92);
+  background-color: rgba(255, 255, 255, 0.88);
   border-bottom-color: var(--color-border);
   backdrop-filter: blur(12px);
-}
-@media (prefers-color-scheme: dark) {
-  .app-navbar--scrolled {
-    background-color: rgba(10, 10, 10, 0.92);
-  }
 }
 
 .app-navbar--transparent {
@@ -278,7 +273,7 @@ watch(() => route.path, () => {
 
 /* Link color updates relative to header state */
 .app-navbar--transparent .app-navbar__logo {
-  color: #ffffff;
+  color: var(--color-surface-muted);
 }
 
 .app-navbar__nav {
@@ -303,7 +298,7 @@ watch(() => route.path, () => {
   font-family: var(--font-body);
   font-weight: 600;
   font-size: var(--text-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-text-muted);
   text-decoration: none;
   background: none;
   border: none;
@@ -370,7 +365,7 @@ watch(() => route.path, () => {
 .app-navbar--transparent .hamburger-inner,
 .app-navbar--transparent .hamburger-inner::before,
 .app-navbar--transparent .hamburger-inner::after {
-  background-color: #ffffff;
+  background-color: var(--color-surface-muted);
 }
 
 .hamburger-inner {
