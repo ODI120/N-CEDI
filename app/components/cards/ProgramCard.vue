@@ -42,7 +42,7 @@ defineProps<{
       <h3 class="program-card__title">
         {{ program.title }}
       </h3>
-      
+
       <p class="program-card__description">
         {{ program.description }}
       </p>
@@ -63,7 +63,7 @@ defineProps<{
 <style scoped>
 .program-card {
   background: var(--color-surface-muted);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-xl);
   overflow: hidden;
   display: flex;
@@ -76,7 +76,7 @@ defineProps<{
 .program-card:hover {
   transform: translateY(-6px);
   box-shadow: var(--shadow-xs);
-  border-color: var(--color-border);
+  border-color: var(--color--muted) !important;
 }
 
 .program-card--featured {

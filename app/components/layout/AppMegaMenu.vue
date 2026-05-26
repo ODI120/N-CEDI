@@ -43,7 +43,7 @@ const groupedPrograms = computed(() => {
 </script>
 
 <template>
-  <Transition name="slide-fade">
+  <Transition name="dropdown-fade">
     <div
       v-if="isOpen"
       class="mega-menu"
@@ -53,7 +53,7 @@ const groupedPrograms = computed(() => {
     >
       <div class="mega-menu__backdrop" @click="emit('close')" />
       
-      <div class="mega-menu__content container">
+      <div class="mega-menu__card container">
         <div class="mega-menu__header">
           <div>
             <span class="eyebrow">Our Curriculum</span>
@@ -64,7 +64,7 @@ const groupedPrograms = computed(() => {
             aria-label="Close menu"
             @click="emit('close')"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -72,73 +72,82 @@ const groupedPrograms = computed(() => {
         </div>
 
         <div class="mega-menu__grid">
-          <!-- Beginner level -->
-          <div class="mega-menu__col">
-            <div class="mega-menu__col-header">
-              <span class="mega-menu__level-dot level-dot--beginner" />
-              <h4>Beginner</h4>
+          <!-- Programs Area -->
+          <div class="mega-menu__programs-area">
+            <!-- Beginner level -->
+            <div class="mega-menu__col">
+              <div class="mega-menu__col-header">
+                <div class="level-badge level-badge--beginner">Beginner</div>
+              </div>
+              <ul class="mega-menu__list">
+                <li v-for="prog in groupedPrograms.beginner" :key="prog.id">
+                  <NuxtLink :to="`/programs/${prog.slug}`" class="mega-menu__link" @click="emit('close')">
+                    <span class="mega-menu__link-title">{{ prog.title }}</span>
+                    <span class="mega-menu__link-meta">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      {{ prog.durationWeeks }} weeks
+                    </span>
+                  </NuxtLink>
+                </li>
+                <li v-if="groupedPrograms.beginner.length === 0" class="mega-menu__empty">
+                  No courses found.
+                </li>
+              </ul>
             </div>
-            <p class="mega-menu__col-desc">Foundation courses. No prior tech experience needed.</p>
-            <ul class="mega-menu__list">
-              <li v-for="prog in groupedPrograms.beginner" :key="prog.id">
-                <NuxtLink :to="`/programs/${prog.slug}`" class="mega-menu__link" @click="emit('close')">
-                  <span class="mega-menu__link-title">{{ prog.title }}</span>
-                  <span class="mega-menu__link-meta">{{ prog.durationWeeks }} weeks</span>
-                </NuxtLink>
-              </li>
-              <li v-if="groupedPrograms.beginner.length === 0" class="mega-menu__empty">
-                No beginner courses scheduled.
-              </li>
-            </ul>
-          </div>
 
-          <!-- Intermediate level -->
-          <div class="mega-menu__col">
-            <div class="mega-menu__col-header">
-              <span class="mega-menu__level-dot level-dot--intermediate" />
-              <h4>Intermediate</h4>
+            <!-- Intermediate level -->
+            <div class="mega-menu__col">
+              <div class="mega-menu__col-header">
+                <div class="level-badge level-badge--intermediate">Intermediate</div>
+              </div>
+              <ul class="mega-menu__list">
+                <li v-for="prog in groupedPrograms.intermediate" :key="prog.id">
+                  <NuxtLink :to="`/programs/${prog.slug}`" class="mega-menu__link" @click="emit('close')">
+                    <span class="mega-menu__link-title">{{ prog.title }}</span>
+                    <span class="mega-menu__link-meta">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      {{ prog.durationWeeks }} weeks
+                    </span>
+                  </NuxtLink>
+                </li>
+                <li v-if="groupedPrograms.intermediate.length === 0" class="mega-menu__empty">
+                  No courses found.
+                </li>
+              </ul>
             </div>
-            <p class="mega-menu__col-desc">Intermediate skill development. Builds on foundation topics.</p>
-            <ul class="mega-menu__list">
-              <li v-for="prog in groupedPrograms.intermediate" :key="prog.id">
-                <NuxtLink :to="`/programs/${prog.slug}`" class="mega-menu__link" @click="emit('close')">
-                  <span class="mega-menu__link-title">{{ prog.title }}</span>
-                  <span class="mega-menu__link-meta">{{ prog.durationWeeks }} weeks</span>
-                </NuxtLink>
-              </li>
-              <li v-if="groupedPrograms.intermediate.length === 0" class="mega-menu__empty">
-                No intermediate courses scheduled.
-              </li>
-            </ul>
-          </div>
 
-          <!-- Advanced level -->
-          <div class="mega-menu__col">
-            <div class="mega-menu__col-header">
-              <span class="mega-menu__level-dot level-dot--advanced" />
-              <h4>Advanced</h4>
+            <!-- Advanced level -->
+            <div class="mega-menu__col">
+              <div class="mega-menu__col-header">
+                <div class="level-badge level-badge--advanced">Advanced</div>
+              </div>
+              <ul class="mega-menu__list">
+                <li v-for="prog in groupedPrograms.advanced" :key="prog.id">
+                  <NuxtLink :to="`/programs/${prog.slug}`" class="mega-menu__link" @click="emit('close')">
+                    <span class="mega-menu__link-title">{{ prog.title }}</span>
+                    <span class="mega-menu__link-meta">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      {{ prog.durationWeeks }} weeks
+                    </span>
+                  </NuxtLink>
+                </li>
+                <li v-if="groupedPrograms.advanced.length === 0" class="mega-menu__empty">
+                  No courses found.
+                </li>
+              </ul>
             </div>
-            <p class="mega-menu__col-desc">Professional specializations and intensive incubation.</p>
-            <ul class="mega-menu__list">
-              <li v-for="prog in groupedPrograms.advanced" :key="prog.id">
-                <NuxtLink :to="`/programs/${prog.slug}`" class="mega-menu__link" @click="emit('close')">
-                  <span class="mega-menu__link-title">{{ prog.title }}</span>
-                  <span class="mega-menu__link-meta">{{ prog.durationWeeks }} weeks</span>
-                </NuxtLink>
-              </li>
-              <li v-if="groupedPrograms.advanced.length === 0" class="mega-menu__empty">
-                No advanced courses scheduled.
-              </li>
-            </ul>
           </div>
 
           <!-- Spotlight / CTA Column -->
           <div class="mega-menu__spotlight">
             <div class="spotlight-card">
-              <h5>Admissions Open</h5>
-              <p>Ready to launch your journey in tech and business innovation? Applications are active for the next cohort.</p>
-              <BaseButton variant="accent" size="sm" to="/contact" @click="emit('close')">
+              <div class="spotlight-content">
+                <h5>Admissions Open</h5>
+                <p>Ready to launch your journey in tech and business innovation? Applications are active for the next cohort.</p>
+              </div>
+              <BaseButton variant="accent" size="sm" to="/contact" class="w-full justify-center mt-auto" @click="emit('close')">
                 Apply Now
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </BaseButton>
             </div>
           </div>
@@ -151,85 +160,122 @@ const groupedPrograms = computed(() => {
 <style scoped>
 .mega-menu {
   position: fixed;
-  top: 72px; /* AppNavbar height on desktop */
+  top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 99;
+  width: 100%;
+  height: 100vh;
+  z-index: 90;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: calc(var(--space-4) + 72px + var(--space-4));
+  pointer-events: none; /* Let clicks pass through to backdrop */
+}
+
+.mega-menu > * {
+  pointer-events: auto; /* Re-enable for content */
+}
+
+.mega-menu__backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: transparent;
+  z-index: 1;
+}
+
+.mega-menu__card {
+  position: relative;
+  background-color: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1), 0 10px 20px -5px rgba(0, 0, 0, 0.04);
+  width: calc(100% - var(--space-8));
+  max-width: 1100px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding: var(--space-8);
+  z-index: 2;
 }
 
 @media (max-width: 768px) {
   .mega-menu {
-    top: 60px;
+    padding-top: calc(var(--space-2) + 60px + var(--space-2));
   }
-}
-
-.mega-menu__backdrop {
-  position: absolute;
-  inset: 0;
-  background-color: rgba(23, 23, 23, 0.18);
-  backdrop-filter: blur(4px);
-}
-
-.mega-menu__content {
-  position: relative;
-  background: var(--color-surface-muted);
-  border-bottom: 1px solid var(--color-border);
-  box-shadow: var(--shadow-xs);
-  padding-top: var(--space-8);
-  padding-bottom: var(--space-12);
-  width: 100%;
-  max-height: 85vh;
-  overflow-y: auto;
-  z-index: 100;
+  .mega-menu__card {
+    padding: var(--space-6);
+    border-radius: var(--radius-xl);
+  }
 }
 
 .mega-menu__header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-6);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.eyebrow {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--color-brand-accent);
+  font-weight: 700;
+  display: block;
+  margin-bottom: var(--space-1);
 }
 
 .mega-menu__title {
-  margin-top: var(--space-1);
+  margin: 0;
   color: var(--color-brand-primary);
+  font-size: var(--text-2xl);
+  font-weight: 800;
 }
 
 .mega-menu__close-btn {
-  background: none;
-  border: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   cursor: pointer;
   color: var(--color-text-muted);
-  padding: var(--space-1);
-  border-radius: var(--radius-sm);
-  transition: background-color 0.2s, color 0.2s;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
 }
 
 .mega-menu__close-btn:hover {
-  background-color: var(--color-surface-muted);
-  color: var(--color-brand-primary);
+  background-color: var(--color-brand-primary);
+  color: var(--color-text-light);
+  border-color: var(--color-brand-primary);
+  transform: rotate(90deg);
 }
 
 .mega-menu__grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 3fr 1fr;
   gap: var(--space-8);
 }
 
 @media (max-width: 1024px) {
   .mega-menu__grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: var(--space-6);
   }
 }
 
+.mega-menu__programs-area {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+}
+
 @media (max-width: 640px) {
-  .mega-menu__grid {
+  .mega-menu__programs-area {
     grid-template-columns: 1fr;
-    gap: var(--space-6);
   }
 }
 
@@ -239,72 +285,74 @@ const groupedPrograms = computed(() => {
 }
 
 .mega-menu__col-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-bottom: var(--space-2);
-}
-
-.mega-menu__col-header h4 {
-  color: var(--color-brand-primary);
-  margin: 0;
-  font-family: var(--font-display);
-}
-
-.mega-menu__col-desc {
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
   margin-bottom: var(--space-4);
-  line-height: var(--leading-snug);
 }
 
-.mega-menu__level-dot {
-  width: 8px;
-  height: 8px;
+.level-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
   border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
 }
 
-.level-dot--beginner {
-  background-color: var(--color-brand-secondary);
+.level-badge--beginner {
+  background-color: rgba(107, 89, 255, 0.1);
+  color: var(--color-brand-accent);
 }
 
-.level-dot--intermediate {
-  background-color: var(--color-brand-accent);
+.level-badge--intermediate {
+  background-color: rgba(20, 20, 20, 0.05);
+  color: var(--color-text-dark);
 }
 
-.level-dot--advanced {
+.level-badge--advanced {
   background-color: var(--color-brand-primary);
+  color: var(--color-text-light);
 }
 
 .mega-menu__list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .mega-menu__link {
   display: flex;
   flex-direction: column;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
   text-decoration: none;
-  transition: background-color 0.2s;
+  background-color: transparent;
+  border: 1px solid transparent;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mega-menu__link:hover {
-  background-color: var(--color-surface-muted);
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
 .mega-menu__link-title {
-  font-weight: 600;
+  font-weight: 700;
   font-size: var(--text-sm);
-  color: var(--color-text-dark);
+  color: var(--color-brand-primary);
+  margin-bottom: var(--space-1);
 }
 
 .mega-menu__link-meta {
-  font-size: var(--text-xs);
+  font-size: 11px;
   color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 500;
 }
 
 .mega-menu__empty {
@@ -315,57 +363,44 @@ const groupedPrograms = computed(() => {
 }
 
 .mega-menu__spotlight {
-  grid-column: span 1;
-}
-
-@media (max-width: 1024px) {
-  .mega-menu__spotlight {
-    grid-column: span 2;
-  }
-}
-
-@media (max-width: 640px) {
-  .mega-menu__spotlight {
-    grid-column: span 1;
-  }
+  display: flex;
 }
 
 .spotlight-card {
-  background-color: var(--color-surface-muted);
-  border: 1px dashed var(--color-brand-accent);
+  background: linear-gradient(145deg, var(--color-brand-primary), #2a2a2a);
   padding: var(--space-6);
-  border-radius: var(--radius-lg);
-  height: 100%;
+  border-radius: var(--radius-xl);
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  gap: var(--space-4);
+  color: var(--color-text-light);
+  width: 100%;
 }
 
-.spotlight-card h5 {
-  color: var(--color-brand-primary);
-  margin: 0;
+.spotlight-content h5 {
+  color: var(--color-text-light);
+  margin-top: 0;
+  margin-bottom: var(--space-2);
   font-family: var(--font-display);
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
+  font-weight: 800;
 }
 
-.spotlight-card p {
+.spotlight-content p {
   font-size: var(--text-sm);
-  color: var(--color-text-muted);
-  line-height: var(--leading-snug);
-  margin: 0;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-6);
 }
 
 /* Transitions */
-.slide-fade-enter-active,
-.slide-fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+.dropdown-fade-enter-active,
+.dropdown-fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.slide-fade-enter-from,
-.slide-fade-leave-to {
+.dropdown-fade-enter-from,
+.dropdown-fade-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-10px) scale(0.98);
 }
 </style>

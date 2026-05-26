@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import MotionWrapper from '~/components/motion/MotionWrapper.vue'
 import TextReveal from '~/components/motion/TextReveal.vue'
+
+import avatar1 from '~/assets/image/avatar1.webp'
+import avatar2 from '~/assets/image/avatar2.jpg'
 </script>
 
 <template>
@@ -17,29 +20,39 @@ import TextReveal from '~/components/motion/TextReveal.vue'
 
       <!-- Floating avatars with cursor pointers -->
       <div class="floating-avatar floating-avatar--1">
+        <i class="bi bi-cursor-fill" />
         <div class="floating-avatar__badge avatar-aisha">
           <div class="avatar avatar--1">
+            <img :src="avatar1" alt="Aisha's Avatar" />
           </div>
-          <!-- <i class="bi bi-cursor" /> -->
           <span class="floating-avatar__name">Aisha</span>
         </div>
       </div>
       <div class="floating-avatar floating-avatar--2">
+        <i class="bi bi-cursor-fill" />
         <div class="floating-avatar__badge avatar-david">
-          <!-- <i class="bi bi-cursor" /> -->
+          <div class="avatar avatar--1">
+            <img :src="avatar2" alt="David's Avatar" />
+          </div>
           <span class="floating-avatar__name">David</span>
         </div>
       </div>
       <div class="floating-avatar floating-avatar--3">
+        <i class="bi bi-cursor-fill" />
         <div class="floating-avatar__badge avatar-tunde">
-          <!-- <i class="bi bi-cursor" /> -->
+          <div class="avatar avatar--1">
+            <img :src="avatar2" alt="David's Avatar" />
+          </div>
           <span class="floating-avatar__name">Tunde</span>
         </div>
       </div>
       <div class="floating-avatar floating-avatar--4">
+        <i class="bi bi-cursor-fill" />
         <div class="floating-avatar__badge avatar-chioma">
-          <!-- <i class="bi bi-cursor" /> -->
-          <span class="floating-avatar__name">Chioma</span>
+          <div class="avatar avatar--1">
+            <img :src="avatar1" alt="Aisha's Avatar" />
+          </div>
+          <span class="floating-avatar__name float">Chioma</span>
         </div>
       </div>
     </div>
@@ -329,26 +342,26 @@ import TextReveal from '~/components/motion/TextReveal.vue'
 }
 
 .floating-avatar--1 {
-  top: 15%;
-  left: 5%;
+  top: 28%;
+  left: 8%;
   animation: float-avatar-1 6s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
 }
 
 .floating-avatar--2 {
-  top: 20%;
-  right: 6%;
+  top: 35%;
+  right: 8%;
   animation: float-avatar-2 6.5s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
 }
 
 .floating-avatar--3 {
   bottom: 22%;
-  left: 4%;
+  left: 20%;
   animation: float-avatar-3 6.2s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
 }
 
 .floating-avatar--4 {
   bottom: 20%;
-  right: 5%;
+  right: 20%;
   animation: float-avatar-4 6.8s cubic-bezier(0.4, 0.0, 0.2, 1) infinite;
 }
 
@@ -358,7 +371,7 @@ import TextReveal from '~/components/motion/TextReveal.vue'
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px;
+  padding: 4px 12px 4px 6px;
   border-radius: 50px;
   font-weight: 700;
   font-size: 13px;
@@ -371,7 +384,7 @@ import TextReveal from '~/components/motion/TextReveal.vue'
     0 0 0 1px rgba(255, 255, 255, 0.1) inset;
   letter-spacing: 0.3px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 100px;
+  /* min-width: 100px; */
   text-align: center;
 }
 
@@ -383,17 +396,32 @@ import TextReveal from '~/components/motion/TextReveal.vue'
   transform: translateY(-4px);
 }
 
-.floating-avatar__badge i {
-  font-size: 18px;
-  opacity: 0.9;
-}
-
 .floating-avatar__name {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.4px;
   display: block;
   white-space: nowrap;
+}
+
+.floating-avatar__badge .avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color:#fffb07 !important; ;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  margin-left: 0 !important;
+  flex-shrink: 0;
+  border: transparent !important;
+}
+.floating-avatar__badge .avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .avatar-aisha {
@@ -422,6 +450,29 @@ import TextReveal from '~/components/motion/TextReveal.vue'
   box-shadow:
     0 8px 32px rgba(236, 72, 153, 0.25),
     0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.floating-avatar .bi-cursor-fill {
+  display: inline-block;
+  transform: rotate(280deg);
+  font-size: 28px;
+  opacity: 0.95;
+  position:relative;
+  left: -24px;
+  bottom: 0px;
+}
+
+.floating-avatar--1 i{
+  color: #60A5FA;
+}
+.floating-avatar--2 i {
+  color: #A855F7;
+}
+.floating-avatar--3 i {
+  color: #10B981;
+}
+.floating-avatar--4 i {
+  color: #EC4899;
 }
 
 @keyframes float-avatar-1 {
@@ -480,19 +531,6 @@ import TextReveal from '~/components/motion/TextReveal.vue'
   66% {
     transform: translateY(28px) translateX(-8px);
   }
-}
-
-.floating-avatar__badge .avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background:#019C9A ;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  margin-left: -16px;
-  flex-shrink: 0;
 }
 
 .hero-home__lead {

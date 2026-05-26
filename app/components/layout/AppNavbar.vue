@@ -1,105 +1,83 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
-import AppLogo from '~/components/AppLogo.vue'
-import AppMegaMenu from '~/components/layout/AppMegaMenu.vue'
+  import { ref, onMounted, onUnmounted, computed } from 'vue'
+  import { useRoute } from 'vue-router'
+  import AppLogo from '~/components/AppLogo.vue'
+  import AppMegaMenu from '~/components/layout/AppMegaMenu.vue'
 
-// 1. Scroll tracking state
-const isScrolled = ref(false)
-const route = useRoute()
+  const route = useRoute()
 
-// Check if current route has a transparent header (e.g. Home with dark hero, or Program details with dark cover)
-const isHeroPage = computed(() => {
-  return route.path === '/' || route.path.startsWith('/programs/') || route.path.startsWith('/events/')
-})
+  const navbarClass = computed(() => {
+    return {
+      'app-navbar--menu-open': isMobileMenuOpen.value
+    }
+  })
 
-const navbarClass = computed(() => {
-  return {
-    'app-navbar--scrolled': isScrolled.value || !isHeroPage.value,
-    'app-navbar--transparent': !isScrolled.value && isHeroPage.value,
-    'app-navbar--menu-open': isMobileMenuOpen.value
+  // 2. Mobile Menu State
+  const isMobileMenuOpen = ref(false)
+  const toggleMobileMenu = () => {
+    isMobileMenuOpen.value = !isMobileMenuOpen.value
+    if (isMobileMenuOpen.value) {
+      isMegaMenuOpen.value = false
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
   }
-})
 
-const handleScroll = () => {
-  isScrolled.value = window.scrollY > 20
-}
-
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll)
-  handleScroll()
-})
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
-
-// 2. Mobile Menu State
-const isMobileMenuOpen = ref(false)
-const toggleMobileMenu = () => {
-  isMobileMenuOpen.value = !isMobileMenuOpen.value
-  if (isMobileMenuOpen.value) {
+  // 3. Mega Menu State
+  const isMegaMenuOpen = ref(false)
+  const toggleMegaMenu = () => {
+    isMegaMenuOpen.value = !isMegaMenuOpen.value
+  }
+  const closeMegaMenu = () => {
     isMegaMenuOpen.value = false
-    document.body.style.overflow = 'hidden'
-  } else {
+  }
+
+  // Fetch programs for MegaMenu
+  const supabase = useSupabaseClient()
+  const { data: rawPrograms } = await useAsyncData('navbar-programs', async () => {
+    try {
+      const { data } = await supabase
+        .from('programs')
+        .select('id, title, slug, subtitle, level, duration_weeks')
+        .eq('is_published', true)
+        .limit(9)
+      return data || []
+    } catch (err) {
+      return []
+    }
+  })
+
+  // Mock programs for fallback if Supabase returns nothing or fails
+  const defaultPrograms = [
+    { id: '1', title: 'Fashion Design', slug: 'fashion-design', level: 'beginner', durationWeeks: 12 },
+    { id: '2', title: 'Web Design & Development', slug: 'web-design-development', level: 'intermediate', durationWeeks: 12 },
+    { id: '3', title: 'Solar Installation & Energy Systems', slug: 'solar-installation-energy-systems', level: 'beginner', durationWeeks: 8 },
+    { id: '4', title: 'Computer Hardware Engineering', slug: 'computer-hardware-engineering', level: 'beginner', durationWeeks: 12 },
+    { id: '5', title: 'Woodwork & Furniture Design', slug: 'woodwork-furniture-design', level: 'intermediate', durationWeeks: 16 },
+    { id: '6', title: 'Bakery & Bead Making', slug: 'bakery-bead-making', level: 'beginner', durationWeeks: 8 }
+  ]
+
+  const programs = computed(() => {
+    if (rawPrograms.value && rawPrograms.value.length > 0) {
+      return rawPrograms.value.map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        slug: p.slug,
+        subtitle: p.subtitle || '',
+        level: p.level,
+        durationWeeks: p.duration_weeks
+      }))
+    }
+    return defaultPrograms
+  })
+
+  // Reset menu states on navigation
+  watch(() => route.path, () => {
+    isMobileMenuOpen.value = false
+    isMegaMenuOpen.value = false
     document.body.style.overflow = ''
-  }
-}
-
-// 3. Mega Menu State
-const isMegaMenuOpen = ref(false)
-const toggleMegaMenu = () => {
-  isMegaMenuOpen.value = !isMegaMenuOpen.value
-}
-const closeMegaMenu = () => {
-  isMegaMenuOpen.value = false
-}
-
-// Fetch programs for MegaMenu
-const supabase = useSupabaseClient()
-const { data: rawPrograms } = await useAsyncData('navbar-programs', async () => {
-  try {
-    const { data } = await supabase
-      .from('programs')
-      .select('id, title, slug, subtitle, level, duration_weeks')
-      .eq('is_published', true)
-      .limit(9)
-    return data || []
-  } catch (err) {
-    return []
-  }
-})
-
-// Mock programs for fallback if Supabase returns nothing or fails
-const defaultPrograms = [
-  { id: '1', title: 'Fashion Design', slug: 'fashion-design', level: 'beginner', durationWeeks: 12 },
-  { id: '2', title: 'Web Design & Development', slug: 'web-design-development', level: 'intermediate', durationWeeks: 12 },
-  { id: '3', title: 'Solar Installation & Energy Systems', slug: 'solar-installation-energy-systems', level: 'beginner', durationWeeks: 8 },
-  { id: '4', title: 'Computer Hardware Engineering', slug: 'computer-hardware-engineering', level: 'beginner', durationWeeks: 12 },
-  { id: '5', title: 'Woodwork & Furniture Design', slug: 'woodwork-furniture-design', level: 'intermediate', durationWeeks: 16 },
-  { id: '6', title: 'Bakery & Bead Making', slug: 'bakery-bead-making', level: 'beginner', durationWeeks: 8 }
-]
-
-const programs = computed(() => {
-  if (rawPrograms.value && rawPrograms.value.length > 0) {
-    return rawPrograms.value.map((p: any) => ({
-      id: p.id,
-      title: p.title,
-      slug: p.slug,
-      subtitle: p.subtitle || '',
-      level: p.level,
-      durationWeeks: p.duration_weeks
-    }))
-  }
-  return defaultPrograms
-})
-
-// Reset menu states on navigation
-watch(() => route.path, () => {
-  isMobileMenuOpen.value = false
-  isMegaMenuOpen.value = false
-  document.body.style.overflow = ''
-})
+  })
 </script>
 
 <template>
@@ -148,12 +126,7 @@ watch(() => route.path, () => {
         </ul>
       </nav>
 
-      <!-- Action Button -->
-      <div class="app-navbar__actions">
-        <BaseButton variant="accent" size="sm" to="/contact">
-          Enroll Now
-        </BaseButton>
-      </div>
+      <!-- Action Button Removed per instructions -->
 
       <!-- Hamburger Menu (Mobile) -->
       <button
@@ -203,9 +176,7 @@ watch(() => route.path, () => {
             </li>
           </ul>
           <div class="mobile-menu__actions">
-            <BaseButton variant="accent" size="lg" to="/contact" class="w-full">
-              Enroll Now
-            </BaseButton>
+            <!-- Action Button Removed per instructions -->
           </div>
         </div>
       </div>
@@ -216,41 +187,45 @@ watch(() => route.path, () => {
 <style scoped>
 .app-navbar {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 72px;
+  top: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - var(--space-8));
+  max-width: 1200px;
+  height: 64px;
   z-index: 100;
   display: flex;
   align-items: center;
-  transition: background-color 0.3s, border-color 0.3s, backdrop-filter 0.3s;
-  border-bottom: 1px solid transparent;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(14px);
+  background-color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-full);
+  /* box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); */
 }
 
 @media (max-width: 768px) {
   .app-navbar {
     height: 60px;
+    top: var(--space-2);
+    width: calc(100% - var(--space-4));
   }
 }
 
-/* Scrolled & Hero State Modifier Classes */
-.app-navbar--scrolled {
-  background-color: rgba(255, 255, 255, 0.88);
-  border-bottom-color: var(--color-border);
-  backdrop-filter: blur(12px);
-}
 
-.app-navbar--transparent {
-  background-color: transparent;
-  border-bottom-color: transparent;
-  backdrop-filter: none;
-}
 
 .app-navbar__container {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  padding: 0 var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .app-navbar__container {
+    padding: 0 var(--space-4);
+  }
 }
 
 .app-navbar__logo-link {
@@ -259,7 +234,7 @@ watch(() => route.path, () => {
 }
 
 .app-navbar__logo {
-  height: 36px;
+  height: 32px;
   width: auto;
   color: var(--color-brand-primary);
   transition: color 0.3s;
@@ -267,22 +242,18 @@ watch(() => route.path, () => {
 
 @media (max-width: 768px) {
   .app-navbar__logo {
-    height: 28px;
+    height: 24px;
   }
 }
 
-/* Link color updates relative to header state */
-.app-navbar--transparent .app-navbar__logo {
-  color: var(--color-surface-muted);
-}
-
 .app-navbar__nav {
-  display: block;
+  display: flex;
+  flex: 1;
+  justify-content: center;
 }
 
 @media (max-width: 1024px) {
-  .app-navbar__nav,
-  .app-navbar__actions {
+  .app-navbar__nav {
     display: none;
   }
 }
@@ -290,35 +261,42 @@ watch(() => route.path, () => {
 .app-navbar__nav-list {
   display: flex;
   align-items: center;
-  gap: var(--space-6);
+  gap: var(--space-2);
   list-style: none;
 }
 
 .app-navbar__nav-link {
   font-family: var(--font-body);
-  font-weight: 600;
+  font-weight: 500;
   font-size: var(--text-sm);
   color: var(--color-text-muted);
   text-decoration: none;
-  background: none;
+  background: transparent;
   border: none;
-  padding: var(--space-1) var(--space-2);
+  padding: 4px 12px ;
+  border-radius: var(--radius-full);
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  transition: color 0.2s;
+  gap: 4px;
+  transition: all 0.2s ease;
 }
 
-.app-navbar--transparent .app-navbar__nav-link {
-  color: rgba(255, 255, 255, 0.85);
+.app-navbar__nav-link:hover {
+  color: var(--color-brand-primary);
+  background-color: #6B59FF10;
+}
+.app-navbar__nav-list{
+  background-color: #6B59FF08;
+  border-radius: 50px;
+  padding: 4px;
+  border: 1px solid #6B59FF18;
 }
 
-.app-navbar__nav-link:hover,
-.app-navbar__nav-link.active,
-.app-navbar--transparent .app-navbar__nav-link:hover,
-.app-navbar--transparent .app-navbar__nav-link.active {
+.app-navbar__nav-link.active {
   color: var(--color-brand-accent);
+  background-color: #6B59FF25;
+  font-weight: 500;
 }
 
 .mega-menu-trigger .arrow-icon {
@@ -360,12 +338,6 @@ watch(() => route.path, () => {
   background-color: var(--color-brand-primary);
   position: absolute;
   transition: transform 0.15s ease, background-color 0.15s ease;
-}
-
-.app-navbar--transparent .hamburger-inner,
-.app-navbar--transparent .hamburger-inner::before,
-.app-navbar--transparent .hamburger-inner::after {
-  background-color: var(--color-surface-muted);
 }
 
 .hamburger-inner {
