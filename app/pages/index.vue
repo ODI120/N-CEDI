@@ -103,10 +103,33 @@ const testimonials = [
 ]
 
 const partners = [
-  { name: 'Federal Government of Nigeria', logoUrl: '/images/partners/fg-nigeria.png', websiteUrl: '#', tier: 'platinum' as const },
-  { name: 'NCAT Zaria', logoUrl: '/images/partners/ncat.png', websiteUrl: '#', tier: 'platinum' as const },
-  { name: 'GIZ Nigeria', logoUrl: '/images/partners/giz.png', websiteUrl: '#', tier: 'gold' as const },
-  { name: 'Tony Elumelu Foundation', logoUrl: '/images/partners/tef.png', websiteUrl: '#', tier: 'gold' as const }
+  { 
+    id: '1',
+    name: 'Federal Ministry of Innovation, Science and Technology', 
+    acronym: 'FMIST',
+    logoUrl: '/images/fg.png', 
+    description: 'Federal agency driving Nigeria\'s science, technology and innovation policy framework.',
+    websiteUrl: '#', 
+    tier: 'platinum' as const 
+  },
+  { 
+    id: '2',
+    name: 'National Board for Technology Incubation', 
+    acronym: 'NBTI',
+    logoUrl: '/images/ncatlogo.png', 
+    description: 'Fostering technology-based entrepreneurship through incubation centres nationwide.',
+    websiteUrl: '#', 
+    tier: 'platinum' as const 
+  },
+  { 
+    id: '3',
+    name: 'National Board for Technical Education', 
+    acronym: 'NBTE',
+    logoUrl: '/images/nbte.png', 
+    description: 'Regulating and setting standards for technical and vocational education in Nigeria.',
+    websiteUrl: '#', 
+    tier: 'platinum' as const 
+  }
 ]
 </script>
 

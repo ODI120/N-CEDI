@@ -78,21 +78,23 @@ withDefaults(defineProps<SectionProgramsProps>(), {
 }
 
 .section-programs__header-content {
-  max-width: 600px;
+  max-width: 650px;
 }
 
 .section-programs__title {
   font-family: var(--font-display);
-  font-size: var(--text-3xl);
+  font-size: clamp(2.5rem, 4vw, 3.5rem);
+  font-weight: 900;
   color: var(--color-brand-primary);
   margin-top: var(--space-2);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
   line-height: var(--leading-tight);
+  letter-spacing: -0.02em;
 }
 
 .section-programs__subtitle {
   font-family: var(--font-body);
-  font-size: var(--text-base);
+  font-size: var(--text-lg);
   color: var(--color-text-muted);
   line-height: var(--leading-relaxed);
   margin: 0;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import MotionWrapper from '~/components/motion/MotionWrapper.vue'
 
 interface Testimonial {
@@ -17,13 +17,7 @@ interface SectionTestimonialsProps {
 const props = defineProps<SectionTestimonialsProps>()
 const activeIndex = ref(0)
 
-const nextTestimonial = () => {
-  activeIndex.value = (activeIndex.value + 1) % props.testimonials.length
-}
-
-const prevTestimonial = () => {
-  activeIndex.value = (activeIndex.value - 1 + props.testimonials.length) % props.testimonials.length
-}
+const activeTestimonial = computed(() => props.testimonials?.[activeIndex.value])
 
 const selectTestimonial = (index: number) => {
   activeIndex.value = index
@@ -31,269 +25,338 @@ const selectTestimonial = (index: number) => {
 </script>
 
 <template>
-  <section class="section-testimonials" aria-label="Student Testimonials">
+  <section class="section-testimonials-pro" aria-label="Student Testimonials">
     <div class="container">
-      <div class="section-testimonials__header">
-        <span class="eyebrow">Student Success</span>
-        <h2 class="section-testimonials__title">Voices of N-CEDI Alumni</h2>
+      
+      <div class="testimonials-header">
+        <MotionWrapper variant="fadeUp">
+          <span class="testimonials-eyebrow">Student Success</span>
+          <h2 class="testimonials-title">Voices of N-CEDI Alumni</h2>
+        </MotionWrapper>
       </div>
 
-      <div v-if="testimonials && testimonials.length > 0" class="section-testimonials__slider">
-        <div class="section-testimonials__carousel">
-          <Transition name="fade-slide" mode="out-in">
-            <div :key="activeIndex" class="testimonial-card">
-              <!-- Large Gold Accent Quote Icon -->
-              <span class="testimonial-card__quote-mark">“</span>
+      <div v-if="testimonials && testimonials.length > 0" class="testimonials-grid">
+        
+        <!-- Massive Statement Card -->
+        <MotionWrapper variant="fadeUp" :delay="0.1" class="statement-card-wrapper">
+          <div class="statement-card">
+            <div class="statement-card__glow"></div>
+            
+            <div class="statement-card__content">
+              <span class="quote-mark" aria-hidden="true">"</span>
               
-              <p class="testimonial-card__quote">
-                {{ testimonials[activeIndex].quote }}
-              </p>
+              <Transition name="fade-blur" mode="out-in">
+                <blockquote :key="activeIndex" class="statement-card__quote">
+                  {{ activeTestimonial?.quote }}
+                </blockquote>
+              </Transition>
 
-              <div class="testimonial-card__author">
-                <NuxtImg
-                  v-if="testimonials[activeIndex].avatarUrl"
-                  :src="testimonials[activeIndex].avatarUrl"
-                  :alt="testimonials[activeIndex].name"
-                  class="testimonial-card__avatar"
-                  width="60"
-                  height="60"
-                />
-                <div v-else class="testimonial-card__avatar-fallback">
-                  {{ testimonials[activeIndex].name.charAt(0) }}
-                </div>
-                <div class="testimonial-card__info">
-                  <span class="testimonial-card__name">{{ testimonials[activeIndex].name }}</span>
-                  <span class="testimonial-card__role">
-                    {{ testimonials[activeIndex].role }}
-                    <template v-if="testimonials[activeIndex].organization">
-                      at {{ testimonials[activeIndex].organization }}
+              <Transition name="fade-slide" mode="out-in">
+                <div :key="activeIndex" class="statement-card__author-info">
+                  <span class="author-name">{{ activeTestimonial?.name }}</span>
+                  <span class="author-role">
+                    {{ activeTestimonial?.role }}
+                    <template v-if="activeTestimonial?.organization">
+                      <span class="author-org">@ {{ activeTestimonial?.organization }}</span>
                     </template>
                   </span>
                 </div>
-              </div>
+              </Transition>
             </div>
-          </Transition>
-        </div>
-
-        <!-- Carousel Navigation Controls -->
-        <div class="section-testimonials__controls">
-          <button
-            class="section-testimonials__btn"
-            aria-label="Previous testimonial"
-            @click="prevTestimonial"
-          >
-            ←
-          </button>
-          
-          <div class="section-testimonials__indicators">
-            <button
-              v-for="(_, index) in testimonials"
-              :key="index"
-              class="section-testimonials__dot"
-              :class="{ 'is-active': index === activeIndex }"
-              :aria-label="`Go to testimonial ${index + 1}`"
-              @click="selectTestimonial(index)"
-            />
           </div>
+        </MotionWrapper>
 
-          <button
-            class="section-testimonials__btn"
-            aria-label="Next testimonial"
-            @click="nextTestimonial"
-          >
-            →
-          </button>
-        </div>
-      </div>
-      
-      <div v-else class="section-testimonials__empty">
-        No testimonials configured.
+        <!-- Interactive Avatar Selector -->
+        <MotionWrapper variant="fadeUp" :delay="0.2" class="avatar-selector">
+          <div class="avatar-list">
+            <button
+              v-for="(testimonial, index) in testimonials"
+              :key="index"
+              class="avatar-btn"
+              :class="{ 'avatar-btn--active': index === activeIndex }"
+              @click="selectTestimonial(index)"
+              :aria-label="`View testimonial from ${testimonial.name}`"
+            >
+              <div class="avatar-btn__ring"></div>
+              <NuxtImg
+                v-if="testimonial.avatarUrl"
+                :src="testimonial.avatarUrl"
+                :alt="testimonial.name"
+                class="avatar-btn__img"
+                width="80"
+                height="80"
+              />
+              <div v-else class="avatar-btn__fallback">
+                {{ testimonial.name.charAt(0) }}
+              </div>
+            </button>
+          </div>
+        </MotionWrapper>
+
       </div>
     </div>
   </section>
 </template>
 
 <style scoped>
-.section-testimonials {
-  background-color: var(--color-surface-muted);
+/* ═══════════════════════════════════════════════════
+   TESTIMONIALS SECTION (Dark Mode Pro)
+   ═══════════════════════════════════════════════════ */
+.section-testimonials-pro {
+  position: relative;
+  background-color: #6c59ff;
+  background-image:
+    radial-gradient(rgba(0, 141, 209, 0.07) 1px, transparent 1px),
+    linear-gradient(145deg, #0a0e17 0%, #0d1526 50%, #0a1020 100%);
+  background-size: 24px 24px, 100% 100%;
   padding: var(--section-padding-y) 0;
-  border-bottom: 1px solid var(--color-border);
+  overflow: hidden;
+  color: var(--color-text-light);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.section-testimonials__header {
+.testimonials-header {
   text-align: center;
-  margin-bottom: var(--space-12);
+  margin-bottom: var(--space-16);
 }
 
-.section-testimonials__title {
+.testimonials-eyebrow {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #8372ff;
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  background: #8474fa20;
+  border: 1px solid #6B59FF20;
+  border-radius: var(--radius-full);
+}
+
+.testimonials-title {
   font-family: var(--font-display);
-  font-size: var(--text-3xl);
-  color: var(--color-brand-primary);
-  margin-top: var(--space-2);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 900;
+  line-height: var(--leading-tight);
+  letter-spacing: -0.03em;
+  margin: 0;
 }
 
-.section-testimonials__slider {
-  max-width: 800px;
-  margin-inline: auto;
+/* ─── Grid Layout ─── */
+.testimonials-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-12);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ─── Massive Statement Card ─── */
+.statement-card-wrapper {
+  width: 100%;
+}
+
+.statement-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #6B59FF25;
+  border-radius: var(--radius-2xl);
+  padding: clamp(var(--space-8), 8vw, var(--space-16));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.statement-card__glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #6B59FF20 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.statement-card__content {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.section-testimonials__carousel {
-  width: 100%;
-  min-height: 280px;
-}
-
-.testimonial-card {
-  position: relative;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  padding: var(--space-10) var(--space-8);
-  box-shadow: var(--shadow-xs);
-  display: flex;
-  flex-direction: column;
-}
-
-.testimonial-card__quote-mark {
+.quote-mark {
   position: absolute;
-  top: var(--space-4);
-  left: var(--space-6);
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
   font-family: var(--font-display);
-  font-size: 5rem;
+  font-size: 14rem;
+  font-weight: 900;
   line-height: 1;
-  color: var(--color-brand-accent);
-  opacity: 0.15;
+  color: #775cff25; /* Gold accent with low opacity */
+  z-index: -1;
   pointer-events: none;
 }
 
-.testimonial-card__quote {
-  font-family: var(--font-body);
-  font-size: var(--text-base);
-  line-height: var(--leading-relaxed);
-  color: var(--color-text-muted);
-  font-style: italic;
-  margin-bottom: var(--space-8);
-  z-index: 2;
-  position: relative;
+.statement-card__quote {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 600;
+  color: var(--color-text-light);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  margin: 0 0 var(--space-8) 0;
 }
 
-.testimonial-card__author {
+.statement-card__author-info {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-1);
 }
 
-.testimonial-card__avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-full);
+.author-name {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: var(--color-text-light);
+}
+
+.author-role {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.author-org {
+  color: #FBCF03;
+}
+
+/* ─── Avatar Selector ─── */
+.avatar-selector {
+  width: 100%;
+}
+
+.avatar-list {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.avatar-btn {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.avatar-btn:hover {
+  transform: scale(1.1);
+}
+
+.avatar-btn__img, .avatar-btn__fallback {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
   object-fit: cover;
-  border: 2px solid var(--color-brand-accent);
+  position: relative;
+  z-index: 2;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  filter: grayscale(100%) opacity(0.6);
 }
 
-.testimonial-card__avatar-fallback {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-full);
-  background-color: var(--color-surface-inset);
+.avatar-btn__fallback {
+  background: var(--color-surface-muted);
   color: var(--color-brand-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: var(--text-lg);
+  font-size: 1.5rem;
+  font-weight: 800;
 }
 
-.testimonial-card__info {
-  display: flex;
-  flex-direction: column;
+.avatar-btn__ring {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  right: -6px;
+  bottom: -6px;
+  border-radius: 50%;
+  border: 2px solid #775cff;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 1;
 }
 
-.testimonial-card__name {
-  font-family: var(--font-body);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--color-brand-primary);
+.avatar-btn--active .avatar-btn__img,
+.avatar-btn--active .avatar-btn__fallback {
+  filter: grayscale(0%) opacity(1);
 }
 
-.testimonial-card__role {
-  font-family: var(--font-body);
-  font-size: var(--text-xs);
-  color: var(--color-text-muted);
+.avatar-btn--active .avatar-btn__ring {
+  opacity: 1;
+  transform: scale(1);
 }
 
-.section-testimonials__controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-6);
-  margin-top: var(--space-8);
+/* ─── Transitions ─── */
+.fade-blur-enter-active,
+.fade-blur-leave-active {
+  transition: opacity 0.5s ease, filter 0.5s ease, transform 0.5s ease;
 }
 
-.section-testimonials__btn {
-  background: none;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-base);
-  cursor: pointer;
-  background-color: var(--color-surface);
-  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+.fade-blur-enter-from,
+.fade-blur-leave-to {
+  opacity: 0;
+  filter: blur(8px);
+  transform: translateY(10px);
 }
 
-.section-testimonials__btn:hover {
-  border-color: var(--color-brand-primary);
-  background-color: var(--color-surface-muted);
-  color: var(--color-brand-primary);
-}
-
-.section-testimonials__indicators {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.section-testimonials__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-full);
-  background-color: var(--color-border);
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  transition: transform 0.2s, background-color 0.2s;
-}
-
-.section-testimonials__dot.is-active {
-  background-color: var(--color-brand-accent);
-  transform: scale(1.3);
-}
-
-.section-testimonials__empty {
-  text-align: center;
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
-/* Transitions */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
-  transition: opacity 0.3s, transform 0.3s;
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateX(20px);
-}
-
+.fade-slide-enter-from,
 .fade-slide-leave-to {
   opacity: 0;
-  transform: translateX(-20px);
+  transform: translateY(10px);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 640px) {
+  .statement-card {
+    padding: var(--space-8) var(--space-6);
+  }
+  
+  .quote-mark {
+    font-size: 8rem;
+    top: -20px;
+  }
+  
+  .avatar-btn {
+    width: 48px;
+    height: 48px;
+  }
 }
 </style>
