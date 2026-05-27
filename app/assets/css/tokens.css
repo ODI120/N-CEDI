@@ -76,8 +76,8 @@
   --space-40:  10rem;
 
   /* ─── Section Rhythm ─── */
-  --section-padding-y: clamp(6rem, 10vw, 10rem);
-  --section-padding-x: clamp(1.5rem, 5vw, 6rem);
+  --section-padding-y: clamp(3rem, 8vw, 8rem);
+  --section-padding-x: clamp(1.25rem, 5vw, 6rem);
 
   /* ─── Shadows ─── */
   --shadow-xs:  0 1px 2px 0 rgba(23,23,23,0.05);

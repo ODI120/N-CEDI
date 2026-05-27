@@ -190,7 +190,7 @@ onUnmounted(() => {
 
 /* ─── Content Section ─── */
 .program-card-pro__content {
-  padding: var(--space-8);
+  padding: clamp(1.25rem, 5vw, 2rem);
   display: flex;
   flex-direction: column;
   flex: 1;

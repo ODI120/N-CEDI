@@ -140,6 +140,15 @@ const handleSubscribe = () => {
     grid-template-columns: 1fr;
     gap: var(--space-8);
   }
+  .app-footer__col--newsletter {
+    max-width: 100%;
+  }
+  .newsletter-input-group {
+    flex-direction: column;
+  }
+  .newsletter-input-group button {
+    width: 100%;
+  }
 }
 
 .app-footer__col {
@@ -188,6 +197,8 @@ const handleSubscribe = () => {
   font-size: var(--text-sm);
   font-weight: 500;
   transition: color 0.2s;
+  display: inline-block;
+  padding: var(--space-1) 0;
 }
 
 .app-footer__links a:hover {

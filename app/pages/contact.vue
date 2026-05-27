@@ -1,63 +1,63 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import HeroInner from '~/components/sections/HeroInner.vue'
-import MotionWrapper from '~/components/motion/MotionWrapper.vue'
-import BaseButton from '~/components/ui/BaseButton.vue'
-import { usePageSeo } from '~/composables/useSeo'
+  import { ref } from 'vue'
+  import HeroInner from '~/components/sections/HeroInner.vue'
+  import MotionWrapper from '~/components/motion/MotionWrapper.vue'
+  import BaseButton from '~/components/ui/BaseButton.vue'
+  import { usePageSeo } from '~/composables/useSeo'
 
-usePageSeo({
-  title: 'Contact & Inquiries',
-  description: 'Reach out to the N-CEDI campus administration in Kaduna. Submit general inquiries, enrollment questions, or partnership proposals.'
-})
+  usePageSeo({
+    title: 'Contact & Inquiries',
+    description: 'Reach out to the N-CEDI campus administration in Kaduna. Submit general inquiries, enrollment questions, or partnership proposals.'
+  })
 
-const breadcrumbs = [
-  { label: 'Contact', to: '/contact' }
-]
+  const breadcrumbs = [
+    { label: 'Contact', to: '/contact' }
+  ]
 
-const form = ref({
-  name: '',
-  email: '',
-  phone: '',
-  subject: '',
-  type: 'general' as 'general' | 'partnership' | 'enrollment' | 'media',
-  message: ''
-})
+  const form = ref({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    type: 'general' as 'general' | 'partnership' | 'enrollment' | 'media',
+    message: ''
+  })
 
-const submitting = ref(false)
-const submitSuccess = ref(false)
-const submitError = ref('')
+  const submitting = ref(false)
+  const submitSuccess = ref(false)
+  const submitError = ref('')
 
-const handleSubmit = async () => {
-  submitting.value = true
-  submitSuccess.value = false
-  submitError.value = ''
-  
-  try {
-    const response = await $fetch('/api/contact', {
-      method: 'POST',
-      body: form.value
-    })
+  const handleSubmit = async () => {
+    submitting.value = true
+    submitSuccess.value = false
+    submitError.value = ''
     
-    if (response?.success) {
-      submitSuccess.value = true
-      form.value = {
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        type: 'general',
-        message: ''
+    try {
+      const response = await $fetch('/api/contact', {
+        method: 'POST',
+        body: form.value
+      })
+      
+      if (response?.success) {
+        submitSuccess.value = true
+        form.value = {
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          type: 'general',
+          message: ''
+        }
+      } else {
+        throw new Error('Unexpected response format')
       }
-    } else {
-      throw new Error('Unexpected response format')
+    } catch (err: any) {
+      console.error('Contact submit error:', err)
+      submitError.value = err.data?.statusMessage || err.message || 'An error occurred during submission. Please try again.'
+    } finally {
+      submitting.value = false
     }
-  } catch (err: any) {
-    console.error('Contact submit error:', err)
-    submitError.value = err.data?.statusMessage || err.message || 'An error occurred during submission. Please try again.'
-  } finally {
-    submitting.value = false
   }
-}
 </script>
 
 <template>
@@ -286,7 +286,7 @@ const handleSubmit = async () => {
 /* Info card styling */
 .contact-info-card {
   background-color: var(--color-surface-muted);
-  border: 1px solid var(--color-border);
+  border: 1px solid #6B59FF25;
   border-radius: var(--radius-xl);
   padding: var(--space-8);
   box-shadow: var(--shadow-xs);
@@ -317,7 +317,7 @@ const handleSubmit = async () => {
   height: 40px;
   background-color: var(--color-surface);
   border: 1.5px solid var(--color-brand-accent);
-  color: var(--color-brand-primary);
+  color: var(--color-brand-accent);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -364,7 +364,7 @@ const handleSubmit = async () => {
 /* Form card styling */
 .contact-form {
   background-color: var(--color-surface);
-  border: 2px solid var(--color-border);
+  border: 2px solid #6B59FF25;
   border-radius: var(--radius-xl);
   padding: var(--space-8);
   box-shadow: var(--shadow-xs);

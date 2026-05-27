@@ -149,37 +149,50 @@
       @close="closeMegaMenu"
     />
 
-    <!-- Mobile Menu Modal Overlay -->
-    <Transition name="fade">
-      <div v-if="isMobileMenuOpen" class="mobile-menu" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
-        <button class="mobile-close" @click.stop="toggleMobileMenu" aria-label="Close navigation menu">×</button>
-        <div class="mobile-menu__content container">
+    <!-- Full Screen Mobile Menu -->
+    <Transition name="fade-scale">
+      <div v-if="isMobileMenuOpen" class="mobile-menu-fullscreen" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+        
+        <div class="mobile-menu-fullscreen__header">
+          <NuxtLink to="/" class="mobile-menu-fullscreen__logo-link" @click="toggleMobileMenu">
+            <AppLogo class="app-navbar__logo" />
+          </NuxtLink>
+          <button class="mobile-menu-fullscreen__close" @click="toggleMobileMenu" aria-label="Close navigation menu">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="mobile-menu-fullscreen__body">
           <ul class="mobile-menu__list">
-            <li>
-                <NuxtLink to="/" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Home</NuxtLink>
+            <li :style="{ animationDelay: '0.1s' }" class="nav-item-animate">
+              <NuxtLink to="/" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Home</NuxtLink>
             </li>
-            <li>
-                <NuxtLink to="/about" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">About</NuxtLink>
+            <li :style="{ animationDelay: '0.15s' }" class="nav-item-animate">
+              <NuxtLink to="/about" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">About</NuxtLink>
             </li>
-            <li>
-                <NuxtLink to="/programs" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Programs</NuxtLink>
+            <li :style="{ animationDelay: '0.2s' }" class="nav-item-animate">
+              <NuxtLink to="/programs" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Programs</NuxtLink>
             </li>
-            <li>
-                <NuxtLink to="/events" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Events</NuxtLink>
+            <li :style="{ animationDelay: '0.25s' }" class="nav-item-animate">
+              <NuxtLink to="/events" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Events</NuxtLink>
             </li>
-            <li>
-                <NuxtLink to="/blog" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Blog</NuxtLink>
+            <li :style="{ animationDelay: '0.3s' }" class="nav-item-animate">
+              <NuxtLink to="/blog" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Blog</NuxtLink>
             </li>
-            <li>
-                <NuxtLink to="/gallery" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Gallery</NuxtLink>
+            <li :style="{ animationDelay: '0.35s' }" class="nav-item-animate">
+              <NuxtLink to="/gallery" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Gallery</NuxtLink>
             </li>
-            <li>
-                <NuxtLink to="/contact" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Contact</NuxtLink>
+            <li :style="{ animationDelay: '0.4s' }" class="nav-item-animate">
+              <NuxtLink to="/contact" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Contact</NuxtLink>
             </li>
           </ul>
-          <div class="mobile-menu__actions">
-            <!-- Action Button Removed per instructions -->
-          </div>
+        </div>
+        
+        <div class="mobile-menu-fullscreen__footer">
+          <p>&copy; {{ new Date().getFullYear() }} N-CEDI.</p>
         </div>
       </div>
     </Transition>
@@ -378,115 +391,124 @@
   background-color: var(--color-brand-primary) !important;
 }
 
-/* Mobile Menu Panel */
-.mobile-menu {
+/* ═══════════════════════════════════════════════════
+   FULL-SCREEN MOBILE MENU
+   ═══════════════════════════════════════════════════ */
+
+.mobile-menu-fullscreen {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: flex-end;
-  z-index: 100;
-  animation: slideInMobile 0.35s ease-out forwards;
-}
-
-@keyframes slideInMobile {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-
-.mobile-menu__content {
-  width: 80%;
-  max-width: 320px;
-  background: #fff;
-  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
-  padding: var(--space-8);
-  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
+  background: #ffffff; /* Solid and accessible background */
+  z-index: 200; /* Above everything */
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
+  height: 100vh; /* Fill entire screen */
+  height: 100dvh; /* For mobile browsers with dynamic UI */
+  overflow: hidden;
 }
 
+.mobile-menu-fullscreen__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  height: 72px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
 
-.mobile-close {
-  position: absolute;
-  top: var(--space-4);
-  right: var(--space-4);
+.mobile-menu-fullscreen__logo-link {
+  display: flex;
+  align-items: center;
+}
+
+.mobile-menu-fullscreen__close {
   background: none;
   border: none;
-  font-size: 2rem;
-  line-height: 1;
+  color: var(--color-text-dark);
   cursor: pointer;
-  color: #fff;
+  padding: 8px;
+  margin-right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s, color 0.2s;
 }
 
-
-.mobile-menu__link {
-  font-family: var(--font-display);
-  font-size: var(--text-2xl);
-  font-weight: 600;
-  color: var(--color-text-primary);
-  text-decoration: none;
-  padding: var(--space-4) 0;
-  border-bottom: 1px solid var(--color-border);
-  transition: color 0.2s;
-  width: 100%;
-  text-align: center;
-}
-
-
-
-
-.mobile-menu__link:hover,
-.mobile-menu__link.active {
+.mobile-menu-fullscreen__close:hover {
+  background-color: var(--color-surface-muted);
   color: var(--color-brand-accent);
 }
 
-
-.mobile-menu__content {
+.mobile-menu-fullscreen__body {
+  /* flex: 1; */
   display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding-bottom: var(--space-10);
-  justify-content: space-between;
+  align-items: center; /* Center vertically */
+  justify-content: center; /* Center horizontally */
+  overflow-y: auto;
+  padding: 24px;
 }
 
 .mobile-menu__list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: 24px; /* Generous spacing for touch accessibility */
   align-items: center;
-  flex: 1;
+  width: 100%;
 }
 
-
-/* Removed duplicate .mobile-menu__link styles (lines 422-433) to avoid conflicts. */
-
-.mobile-menu__actions {
-  margin-top: var(--space-6);
+.mobile-menu__link {
+  font-family: var(--font-display);
+  font-size: 1rem; /* Accessible, readable font size (24px) */
+  font-weight: 700;
+  color: var(--color-text-dark);
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  text-align: center;
 }
 
-/* Transitions */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.25s ease;
+.mobile-menu__link:hover,
+.mobile-menu__link.active {
+  color: var(--color-brand-accent);
+  background-color: rgba(107, 89, 255, 0.08); /* Soft highlight */
+  transform: scale(1.05); /* Gentle pop instead of slide */
 }
 
-.fade-enter-from,
-.fade-leave-to {
+.mobile-menu-fullscreen__footer {
+  padding: 24px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+/* Transitions and Animations */
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.fade-scale-enter-from,
+.fade-scale-leave-to {
   opacity: 0;
+  transform: scale(0.98); /* Slight zoom effect for modern feel */
+}
+
+.nav-item-animate {
+  animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

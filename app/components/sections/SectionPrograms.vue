@@ -106,20 +106,12 @@ withDefaults(defineProps<SectionProgramsProps>(), {
 
 .section-programs__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
   gap: var(--space-8);
-}
-
-@media (max-width: 1024px) {
-  .section-programs__grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-6);
-  }
 }
 
 @media (max-width: 640px) {
   .section-programs__grid {
-    grid-template-columns: 1fr;
     gap: var(--space-6);
   }
 }

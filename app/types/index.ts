@@ -162,6 +162,19 @@ export interface Inquiry {
   createdAt: string
 }
 
+export interface SiteStat {
+  id: string
+  value: number
+  prefix?: string
+  suffix?: string
+  label: string
+  icon?: string
+  displayOrder: number
+  isPublished: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 // ───────────────────────────────────────────────
 // Utility / generic types
 // ───────────────────────────────────────────────

@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import MotionWrapper from '~/components/motion/MotionWrapper.vue'
+  import MotionWrapper from '~/components/motion/MotionWrapper.vue'
 
-interface Breadcrumb {
-  label: string
-  to: string
-}
+  interface Breadcrumb {
+    label: string
+    to: string
+  }
 
-interface HeroInnerProps {
-  title: string
-  subtitle?: string
-  breadcrumbs?: Breadcrumb[]
-}
+  interface HeroInnerProps {
+    title: string
+    subtitle?: string
+    breadcrumbs?: Breadcrumb[]
+  }
 
-withDefaults(defineProps<HeroInnerProps>(), {
-  subtitle: undefined,
-  breadcrumbs: () => []
-})
+  withDefaults(defineProps<HeroInnerProps>(), {
+    subtitle: undefined,
+    breadcrumbs: () => []
+  })
 </script>
 
 <template>
@@ -77,15 +77,21 @@ withDefaults(defineProps<HeroInnerProps>(), {
 <style scoped>
 .hero-inner {
   position: relative;
-  height: 45vh;
+  /* height: 45vh;
   min-height: 320px;
-  max-height: 450px;
+  max-height: 450px; */
   background: #0a0e17;
   display: flex;
   align-items: center;
   overflow: hidden;
-  padding-top: 72px; /* AppNavbar height offset */
+  padding-top: 115px; /* AppNavbar height offset */
+  padding-bottom: 32px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+@media (max-width: 768px) {
+  .hero-inner {
+    padding-top: 100px;
+  }
 }
 
 .hero-inner__overlay {

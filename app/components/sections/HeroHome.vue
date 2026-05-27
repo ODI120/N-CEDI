@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import MotionWrapper from '~/components/motion/MotionWrapper.vue'
-import TextReveal from '~/components/motion/TextReveal.vue'
+  import MotionWrapper from '~/components/motion/MotionWrapper.vue'
+  import TextReveal from '~/components/motion/TextReveal.vue'
 
-import avatar1 from '~/assets/image/avatar1.webp'
-import avatar2 from '~/assets/image/avatar2.jpg'
+  import avatar1 from '~/assets/image/avatar1.webp'
+  import avatar2 from '~/assets/image/avatar2.jpg'
 </script>
 
 <template>
@@ -13,14 +13,14 @@ import avatar2 from '~/assets/image/avatar2.jpg'
   >
     <div class="hero-home__background">
       <!-- Gradient overlay for visual richness -->
-      <div class="hero-home__overlay" />
+      <div class="hero-home__overlay"></div>
 
       <!-- Pulse wave (center) -->
-      <div class="pulse-wave" />
+      <div class="pulse-wave"></div>
 
       <!-- Floating avatars with cursor pointers -->
       <div class="floating-avatar floating-avatar--1">
-        <i class="bi bi-cursor-fill" />
+        <i class="bi bi-cursor-fill"></i>
         <div class="floating-avatar__badge avatar-aisha">
           <div class="avatar avatar--1">
             <img :src="avatar1" alt="Aisha's Avatar" />
@@ -29,7 +29,16 @@ import avatar2 from '~/assets/image/avatar2.jpg'
         </div>
       </div>
       <div class="floating-avatar floating-avatar--2">
-        <i class="bi bi-cursor-fill" />
+        <i class="bi bi-cursor-fill"></i>
+        <div class="floating-avatar__badge avatar-tunde">
+          <div class="avatar avatar--1">
+            <img :src="avatar2" alt="Tunde's Avatar" />
+          </div>
+          <span class="floating-avatar__name">Tunde</span>
+        </div>
+      </div>
+      <div class="floating-avatar floating-avatar--3">
+        <i class="bi bi-cursor-fill"></i>
         <div class="floating-avatar__badge avatar-david">
           <div class="avatar avatar--1">
             <img :src="avatar2" alt="David's Avatar" />
@@ -37,20 +46,11 @@ import avatar2 from '~/assets/image/avatar2.jpg'
           <span class="floating-avatar__name">David</span>
         </div>
       </div>
-      <div class="floating-avatar floating-avatar--3">
-        <i class="bi bi-cursor-fill" />
-        <div class="floating-avatar__badge avatar-tunde">
-          <div class="avatar avatar--1">
-            <img :src="avatar2" alt="David's Avatar" />
-          </div>
-          <span class="floating-avatar__name">Tunde</span>
-        </div>
-      </div>
       <div class="floating-avatar floating-avatar--4">
-        <i class="bi bi-cursor-fill" />
+        <i class="bi bi-cursor-fill"></i>
         <div class="floating-avatar__badge avatar-chioma">
           <div class="avatar avatar--1">
-            <img :src="avatar1" alt="Aisha's Avatar" />
+            <img :src="avatar1" alt="Chioma's Avatar" />
           </div>
           <span class="floating-avatar__name float">Chioma</span>
         </div>
@@ -66,7 +66,7 @@ import avatar2 from '~/assets/image/avatar2.jpg'
             :delay="200"
             :duration="0.6"
           >
-            <span class="eyebrow hero-home__eyebrow center">NCAT Centre for Entrepreneurship <i class="bi bi-airplane-fill" /></span>
+            <span class="eyebrow hero-home__eyebrow center">NCAT Centre for Entrepreneurship <i class="bi bi-airplane-fill"></i></span>
           </MotionWrapper>
 
           <TextReveal
@@ -99,7 +99,7 @@ import avatar2 from '~/assets/image/avatar2.jpg'
                 to="/programs"
               >
                 Explore Programs
-                <i class="bi bi-arrow-right-circle" />
+                <i class="bi bi-arrow-right-circle"></i>
               </BaseButton>
               <BaseButton
                 to="/about"
@@ -150,8 +150,8 @@ import avatar2 from '~/assets/image/avatar2.jpg'
   display: flex;
   align-items: center;
   overflow: hidden;
-  padding-top: 100px;
-  padding-bottom: var(--space-12);
+  padding-top: clamp(100px, 15vh, 160px);
+  padding-bottom: var(--section-padding-y);
   background: linear-gradient(135deg, #ffffff 0%, #f5f7fb 100%);
 }
 
@@ -197,14 +197,14 @@ import avatar2 from '~/assets/image/avatar2.jpg'
   width: 100%;
 }
 
-/* Center pulse wave */
 .pulse-wave {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%) scale(1);
-  width: 420px;
-  height: 420px;
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 1;
   border-radius: 50%;
   pointer-events: none;
   z-index: 2; /* above overlay, under content */
@@ -267,7 +267,6 @@ import avatar2 from '~/assets/image/avatar2.jpg'
   }
 
   .hero-home__social-proof {
-    flex-direction: column;
     gap: var(--space-3);
     padding: var(--space-3) var(--space-4);
   }
@@ -316,7 +315,7 @@ import avatar2 from '~/assets/image/avatar2.jpg'
 
 .hero-home__title {
   font-family: var(--font-display);
-  font-size: clamp(3.5rem, 8vw, 5.5rem);
+  font-size: clamp(2.5rem, 8vw, 5.5rem);
   font-weight: 900;
   line-height: 1;
   letter-spacing: var(--tracking-tight);
@@ -544,9 +543,26 @@ import avatar2 from '~/assets/image/avatar2.jpg'
   /* font-weight: 500; */
   letter-spacing: 0.3px;
 }
-
-.text {
-  max-width: 70%;
+@media (max-width: 426px) {
+  .hero-home__content{
+    gap: var(--space-1);
+  }
+  .hero-home__lead {
+    /* font-size: var(--text-sm); */
+    max-width: 100%;
+  }
+  .text {
+    width: 100%;
+  }
+  .hero-home__actions {
+    margin-top: var(--space-4);
+  }
+  .hero-home__title{
+    font-size: 3.3rem;
+    font-weight: 900!important;
+    line-height: 1.1;
+  }
+  
 }
 
 .hero-home__actions {
@@ -602,7 +618,7 @@ import avatar2 from '~/assets/image/avatar2.jpg'
   mix-blend-mode: multiply;
 }
 
-.placeholder-graphic {
+/* .placeholder-graphic {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -631,7 +647,7 @@ import avatar2 from '~/assets/image/avatar2.jpg'
   color: #0a0e27;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-}
+} */
 
 /* Social Proof Section */
 .hero-home__social-proof {

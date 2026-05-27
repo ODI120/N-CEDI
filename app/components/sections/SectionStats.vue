@@ -1,15 +1,36 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CounterAnimate from '~/components/motion/CounterAnimate.vue'
 import MotionWrapper from '~/components/motion/MotionWrapper.vue'
 
-// Placeholder data for the database-driven slider
-const gallerySlides = ref([
-  { id: 1, image: '/images/student2.jpg', title: 'Robotics Lab', description: 'Students working on advanced robotics and automation.' },
-  { id: 2, image: '/images/student3.jpg', title: 'Coding Bootcamp', description: 'Intensive software engineering programs.' },
-  { id: 3, image: '/images/student4.jpg', title: 'Aviation Tech', description: 'State of the art aviation training facilities.' }
-])
+// ─── Props ────────────────────────────────────────────────────
+interface SectionStatsProps {
+  title?: string
+  eyebrow?: string
+}
 
+const props = withDefaults(defineProps<SectionStatsProps>(), {
+  title: 'Life at N-CEDI & Our Impact',
+  eyebrow: 'Experience',
+})
+
+// ─── Live data from Supabase ───────────────────────────────────
+const { stats } = useStats()
+
+// Gallery slider: published images only, limited to 6
+const { items: galleryItems } = useGallery({ mediaType: 'image', limit: 6 })
+
+// Normalize gallery items so the template stays readable
+const gallerySlides = computed(() =>
+  (galleryItems.value ?? []).map((item) => ({
+    id:          item.id,
+    image:       item.mediaUrl,
+    title:       item.title ?? '',
+    description: item.altText ?? '',
+  }))
+)
+
+// ─── Slider logic ──────────────────────────────────────────────
 const currentSlide = ref(0)
 const isHovered = ref(false)
 let slideInterval: ReturnType<typeof setInterval> | null = null
@@ -23,9 +44,10 @@ const nextSlide = () => {
 }
 
 const prevSlide = () => {
-  currentSlide.value = currentSlide.value === 0 
-    ? gallerySlides.value.length - 1 
-    : currentSlide.value - 1
+  currentSlide.value =
+    currentSlide.value === 0
+      ? gallerySlides.value.length - 1
+      : currentSlide.value - 1
 }
 
 const goToSlide = (index: number) => {
@@ -82,21 +104,17 @@ const handleVisibilityChange = () => {
   }
 }
 
-// Hover glow effect logic for cards
+// Mouse-tracking glow effect for pro-cards
 const handleMouseMove = (e: MouseEvent) => {
   const target = e.currentTarget as HTMLElement
   const rect = target.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const y = e.clientY - rect.top
-  target.style.setProperty('--mouse-x', `${x}px`)
-  target.style.setProperty('--mouse-y', `${y}px`)
+  target.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`)
+  target.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`)
 }
 
 onMounted(() => {
   startInterval()
   document.addEventListener('visibilitychange', handleVisibilityChange)
-  
-  // Attach mousemove listener to all pro cards
   document.querySelectorAll('.pro-card').forEach((card) => {
     card.addEventListener('mousemove', handleMouseMove as EventListener)
   })
@@ -105,43 +123,10 @@ onMounted(() => {
 onUnmounted(() => {
   pauseInterval()
   document.removeEventListener('visibilitychange', handleVisibilityChange)
-  
   document.querySelectorAll('.pro-card').forEach((card) => {
     card.removeEventListener('mousemove', handleMouseMove as EventListener)
   })
 })
-
-interface StatItem {
-  value: number
-  prefix?: string
-  suffix?: string
-  label: string
-}
-
-interface SectionStatsProps {
-  stats?: StatItem[]
-  title?: string
-  eyebrow?: string
-}
-
-// Fallback statistics if none are provided
-const defaultStats: StatItem[] = [
-  { value: 1200, suffix: '+', label: 'Trained Graduates' },
-  { value: 85, suffix: '%', label: 'Employment Rate' },
-  { value: 45, suffix: '+', label: 'Partner Startups' },
-  { value: 12, label: 'Tech & Vocational Labs' }
-]
-
-const props = withDefaults(defineProps<SectionStatsProps>(), {
-  stats: () => [],
-  title: 'Life at N-CEDI & Our Impact',
-  eyebrow: 'Experience'
-})
-
-const activeStats = computed(() => {
-  return props.stats.length > 0 ? props.stats : defaultStats
-})
-import { computed } from 'vue'
 </script>
 
 <template>
@@ -151,10 +136,10 @@ import { computed } from 'vue'
     <div class="stats-bg-glow stats-bg-glow--right"></div>
 
     <div class="container">
-      <div v-if="title || eyebrow" class="pro-header">
+      <div v-if="props.title || props.eyebrow" class="pro-header">
         <MotionWrapper variant="fadeUp">
-          <span v-if="eyebrow" class="pro-eyebrow">{{ eyebrow }}</span>
-          <h2 v-if="title" class="pro-title">{{ title }}</h2>
+          <span v-if="props.eyebrow" class="pro-eyebrow">{{ props.eyebrow }}</span>
+          <h2 v-if="props.title" class="pro-title">{{ props.title }}</h2>
         </MotionWrapper>
       </div>
 
@@ -245,9 +230,9 @@ import { computed } from 'vue'
         <!-- ==========================================
              CARDS 3, 4, 5, 6: STATS (Glassmorphism)
              ========================================== -->
-        <MotionWrapper 
-          v-for="(stat, index) in activeStats" 
-          :key="`stat-${index}`"
+        <MotionWrapper
+          v-for="(stat, index) in stats"
+          :key="`stat-${stat.id ?? index}`"
           variant="fadeUp" 
           :delay="0.3 + (index * 0.1)" 
           :duration="0.8" 
