@@ -15,16 +15,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-
-/**
- * When `supabase gen types typescript --local > app/types/database.ts`
- * has been run, replace this alias with a proper import:
- *
- *   import type { Database } from '~/types/database'
- *
- * Until then, the generic fallback keeps everything compiling.
- */
-type Database = Record<string, unknown>
+import type { Database } from '~/types/database.types'
 
 export function useSupabase() {
   const client = useSupabaseClient<Database>() as SupabaseClient<Database>
