@@ -9,25 +9,25 @@ usePageSeo({
 })
 
 const milestones = [
-  { year: '2018', title: 'Foundation', description: 'N-CEDI was established as a centre of excellence within NCAT to bridge the gap between academic knowledge and practical skills.' },
-  { year: '2019', title: 'First Programs Launched', description: 'Fashion Design and Woodwork programs launched with 50 inaugural students.' },
-  { year: '2020', title: 'Digital Expansion', description: 'Web Development and Computer Hardware programs introduced to meet growing tech demand.' },
-  { year: '2021', title: 'Renewable Energy Focus', description: 'Solar Installation program launched in partnership with international energy organizations.' },
-  { year: '2022', title: 'Government Recognition', description: 'Officially recognized as a key innovation hub by the Federal Government of Nigeria.' },
-  { year: '2023', title: 'Scaling Impact', description: 'Trained over 500 students with a 95% employment rate. Expanded partnerships across West Africa.' },
-  { year: '2024', title: 'Centre of Excellence', description: 'Named a Centre of Excellence for vocational training and entrepreneurship development in Northern Nigeria.' }
+  { year: '2018', title: 'Foundation', badge: 'Initiative', description: 'N-CEDI was established as a centre of excellence within NCAT to bridge the gap between academic knowledge and practical skills.' },
+  { year: '2019', title: 'First Programs Launched', badge: 'Launch', description: 'Fashion Design and Woodwork programs launched with 50 inaugural students.' },
+  { year: '2020', title: 'Digital Expansion', badge: 'Tech Era', description: 'Web Development and Computer Hardware programs introduced to meet growing tech demand.' },
+  { year: '2021', title: 'Renewable Energy Focus', badge: 'Green Energy', description: 'Solar Installation program launched in partnership with international energy organizations.' },
+  { year: '2022', title: 'Government Recognition', badge: 'Partnership', description: 'Officially recognized as a key innovation hub by the Federal Government of Nigeria.' },
+  { year: '2023', title: 'Scaling Impact', badge: 'Expansion', description: 'Trained over 500 students with a 95% employment rate. Expanded partnerships across West Africa.' },
+  { year: '2024', title: 'Centre of Excellence', badge: 'Excellence', description: 'Named a Centre of Excellence for vocational training and entrepreneurship development in Northern Nigeria.' }
 ]
 
 const team = [
-  { name: 'Dr. Aisha Mohammed', role: 'Director', bio: 'Leading N-CEDI\'s vision for innovation and entrepreneurship excellence in Nigeria.', avatarUrl: '/images/team/director.jpg', linkedinUrl: '#' },
-  { name: 'Engr. Bello Abdullahi', role: 'Deputy Director, Programs', bio: 'Overseeing curriculum development and program delivery across all training tracks.', avatarUrl: '/images/team/deputy.jpg', linkedinUrl: '#' },
-  { name: 'Mrs. Grace Okonkwo', role: 'Head of Partnerships', bio: 'Building strategic relationships with government, industry, and international partners.', avatarUrl: '/images/team/partnerships.jpg', linkedinUrl: '#' },
-  { name: 'Mr. Ibrahim Musa', role: 'Head of Student Affairs', bio: 'Ensuring student success from enrollment through graduation and career placement.', avatarUrl: '/images/team/student-affairs.jpg', linkedinUrl: '#' }
+  { name: 'Dr. Aisha Mohammed', role: 'Director', bio: 'Leading N-CEDI\'s vision for innovation and entrepreneurship excellence in Nigeria.', avatarUrl: '/images/student1.jpg', linkedinUrl: '#' },
+  { name: 'Engr. Bello Abdullahi', role: 'Deputy Director, Programs', bio: 'Overseeing curriculum development and program delivery across all training tracks.', avatarUrl: '/images/student2.jpg', linkedinUrl: '#' },
+  { name: 'Mrs. Grace Okonkwo', role: 'Head of Partnerships', bio: 'Building strategic relationships with government, industry, and international partners.', avatarUrl: '/images/student3.jpg', linkedinUrl: '#' },
+  { name: 'Mr. Ibrahim Musa', role: 'Head of Student Affairs', bio: 'Ensuring student success from track onboarding through graduation and career placement.', avatarUrl: '/images/student4.jpg', linkedinUrl: '#' }
 ]
 </script>
 
 <template>
-  <div>
+  <div class="about-page">
     <HeroInner
       title="About N-CEDI"
       subtitle="Empowering Africa's next generation of innovators through world-class vocational training and entrepreneurship development."
@@ -40,6 +40,36 @@ const team = [
         <div class="mission-grid">
           <MotionWrapper variant="fadeUp">
             <div class="mission-card">
+              <div class="mission-card__icon">
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="9"
+                    stroke="var(--color-brand-accent)"
+                    stroke-width="2"
+                    stroke-dasharray="4 2"
+                  />
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="5"
+                    fill="rgba(107, 89, 255, 0.25)"
+                  />
+                  <path
+                    d="M12 3v3M12 18v3M3 12h3M18 12h3"
+                    stroke="var(--color-brand-accent)"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
               <span class="eyebrow">Our Mission</span>
               <h2>Building Africa's Innovation Ecosystem</h2>
               <p>
@@ -50,8 +80,44 @@ const team = [
             </div>
           </MotionWrapper>
 
-          <MotionWrapper variant="fadeUp" :delay="0.15">
+          <MotionWrapper
+            variant="fadeUp"
+            :delay="0.15"
+          >
             <div class="mission-card">
+              <div class="mission-card__icon">
+                <svg
+                  width="48"
+                  height="48"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"
+                    stroke="var(--color-brand-accent)"
+                    stroke-width="2"
+                  />
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                    fill="rgba(107, 89, 255, 0.25)"
+                  />
+                  <path
+                    d="M12 5V3M12 21v-2"
+                    stroke="var(--color-brand-accent)"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M17 12h4M3 12h4"
+                    stroke="var(--color-brand-accent)"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </div>
               <span class="eyebrow">Our Vision</span>
               <h2>A Centre of Global Excellence</h2>
               <p>
@@ -104,9 +170,15 @@ const team = [
 </template>
 
 <style scoped>
+.about-page {
+  background: var(--color-surface);
+}
+
 .about-mission {
   padding: var(--section-padding-y) 0;
   background: var(--color-surface);
+  position: relative;
+  overflow: hidden;
 }
 
 .mission-grid {
@@ -123,18 +195,50 @@ const team = [
 }
 
 .mission-card {
-  padding: var(--space-8);
-  background: var(--color-surface-muted);
+  padding: clamp(var(--space-8), 5vw, var(--space-12));
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-2xl);
+  border: 1px solid #6B59FF25;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.mission-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(107, 89, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border-color: rgba(107, 89, 255, 0.35);
+}
+
+.mission-card__icon {
+  width: 64px;
+  height: 64px;
   border-radius: var(--radius-xl);
-  border: 1px solid var(--color-border);
+  background: rgba(107, 89, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+  border: 1px solid rgba(107, 89, 255, 0.15);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mission-card:hover .mission-card__icon {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .mission-card h2 {
   font-family: var(--font-display);
   font-size: var(--text-2xl);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--color-brand-primary);
-  margin: var(--space-4) 0;
+  margin: var(--space-3) 0 var(--space-4) 0;
+  line-height: var(--leading-tight);
 }
 
 .mission-card p {
@@ -142,29 +246,35 @@ const team = [
   font-size: var(--text-base);
   color: var(--color-text-muted);
   line-height: var(--leading-relaxed);
+  margin-top: auto;
 }
 
 .about-team {
   padding: var(--section-padding-y) 0;
   background: var(--color-surface-muted);
+  border-top: 1px solid var(--color-border);
 }
 
 .section-header {
   text-align: center;
   margin-bottom: var(--space-16);
+  max-width: 600px;
+  margin-inline: auto;
 }
 
 .section-header h2 {
   font-family: var(--font-display);
   font-size: var(--text-3xl);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--color-brand-primary);
-  margin: var(--space-4) 0;
+  margin: var(--space-3) 0;
+  line-height: var(--leading-tight);
 }
 
 .section-header p {
   font-size: var(--text-lg);
   color: var(--color-text-muted);
+  line-height: var(--leading-relaxed);
 }
 
 .team-grid {
@@ -175,10 +285,15 @@ const team = [
 
 .eyebrow {
   font-family: var(--font-display);
-  font-size: var(--text-sm);
-  font-weight: 600;
+  font-size: var(--text-xs);
+  font-weight: 700;
   letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
   color: var(--color-brand-accent);
+  display: inline-block;
+  background: rgba(107, 89, 255, 0.06);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(107, 89, 255, 0.12);
 }
 </style>

@@ -79,19 +79,32 @@ withDefaults(defineProps<HeroInnerProps>(), {
   position: relative;
   height: 45vh;
   min-height: 320px;
-  max-height: 500px;
-  background: radial-gradient(circle at 10% 10%, rgba(2, 86, 255, 0.153) 20%, transparent 30%), radial-gradient(circle at 100% 100%, rgba(1, 156, 154, 0.153) 10%, transparent 10%);
+  max-height: 450px;
+  background: #0a0e17;
   display: flex;
   align-items: center;
   overflow: hidden;
   padding-top: 72px; /* AppNavbar height offset */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .hero-inner__overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 254, 251, 0.94) 0%, rgba(247, 242, 234, 0.96) 100%);
   z-index: 1;
+  background-image:
+    /* Grid pattern */
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    /* Radial gradients for depth */
+    radial-gradient(circle at 15% 20%, rgba(107, 89, 255, 0.12) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(1, 156, 154, 0.08) 0%, transparent 35%);
+  background-size:
+    60px 60px,
+    60px 60px,
+    auto,
+    auto;
+  pointer-events: none;
 }
 
 .hero-inner__container {
@@ -101,24 +114,31 @@ withDefaults(defineProps<HeroInnerProps>(), {
 }
 
 .hero-inner__breadcrumbs {
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .hero-inner__breadcrumbs-list {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   list-style: none;
   font-family: var(--font-body);
   font-size: var(--text-xs);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+  padding: 6px 16px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .hero-inner__breadcrumbs-list a {
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.6);
   text-decoration: none;
   transition: color 0.2s;
 }
@@ -129,7 +149,7 @@ withDefaults(defineProps<HeroInnerProps>(), {
 }
 
 .hero-inner__breadcrumbs-separator {
-  color: var(--color-border);
+  color: rgba(255, 255, 255, 0.25);
   margin-right: var(--space-2);
 }
 
@@ -140,19 +160,19 @@ withDefaults(defineProps<HeroInnerProps>(), {
 .hero-inner__title {
   font-family: var(--font-display);
   font-size: var(--text-3xl);
-  font-weight: 800;
-  color: var(--color-text-dark);
+  font-weight: 900;
+  color: var(--color-text-light);
   margin-top: 0;
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
   line-height: var(--leading-tight);
 }
 
 .hero-inner__subtitle {
   font-family: var(--font-body);
   font-size: var(--text-base);
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.7);
   line-height: var(--leading-relaxed);
   margin: 0;
-  max-width: 600px;
+  max-width: 650px;
 }
 </style>

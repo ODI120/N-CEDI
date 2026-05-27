@@ -66,10 +66,9 @@ onUnmounted(() => {
 
     <div class="program-card-pro__content">
       <div class="program-card-pro__meta">
-        <BaseBadge :type="program.level" :label="program.level" />
         <span class="program-card-pro__duration">
-          <i class="bi bi-clock"></i>
-          {{ program.durationWeeks }} weeks
+          <i class="bi bi-mortarboard"></i>
+          ND1 – HND2 Path
         </span>
       </div>
 
@@ -83,7 +82,7 @@ onUnmounted(() => {
 
       <div class="program-card-pro__footer">
         <NuxtLink :to="`/programs/${program.slug}`" class="program-card-pro__link">
-          <span>Explore Program</span>
+          <span>View Track Details</span>
           <div class="arrow-circle">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="5" y1="12" x2="19" y2="12" />

@@ -14,10 +14,10 @@ interface SectionCTAProps {
 }
 
 withDefaults(defineProps<SectionCTAProps>(), {
-  title: 'Shape the Future of African Industry',
-  description: 'Admissions are open for our next cohort. Explore programs in software development, vocational design, and business incubation.',
-  primaryAction: () => ({ label: 'Apply Now', to: '/contact' }),
-  secondaryAction: () => ({ label: 'Contact Admissions', to: '/contact' })
+  title: 'Shape your Entrepreneurial Journey',
+  description: 'N-CEDI tracks are automatically integrated into all NCAT NBTE academic programs. Explore available skill tracks to align with your career goals.',
+  primaryAction: () => ({ label: 'Explore Tracks', to: '/programs' }),
+  secondaryAction: () => ({ label: 'Center Guidelines', to: '/about' })
 })
 </script>
 

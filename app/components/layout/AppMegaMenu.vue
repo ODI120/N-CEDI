@@ -24,22 +24,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 }
 
-// Group programs by level for structured display
-const groupedPrograms = computed(() => {
-  const groups: Record<string, ProgramItem[]> = {
-    beginner: [],
-    intermediate: [],
-    advanced: []
-  }
-  props.programs.forEach(prog => {
-    if (prog.level in groups) {
-      groups[prog.level].push(prog)
-    } else {
-      groups.beginner.push(prog)
-    }
-  })
-  return groups
-})
 </script>
 
 <template>
@@ -74,79 +58,30 @@ const groupedPrograms = computed(() => {
         <div class="mega-menu__grid">
           <!-- Programs Area -->
           <div class="mega-menu__programs-area">
-            <!-- Beginner level -->
-            <div class="mega-menu__col">
-              <div class="mega-menu__col-header">
-                <div class="level-badge level-badge--beginner">Beginner</div>
-              </div>
-              <ul class="mega-menu__list">
-                <li v-for="prog in groupedPrograms.beginner" :key="prog.id">
-                  <NuxtLink :to="`/programs/${prog.slug}`" class="mega-menu__link" @click="emit('close')">
-                    <span class="mega-menu__link-title">{{ prog.title }}</span>
-                    <span class="mega-menu__link-meta">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                      {{ prog.durationWeeks }} weeks
-                    </span>
-                  </NuxtLink>
-                </li>
-                <li v-if="groupedPrograms.beginner.length === 0" class="mega-menu__empty">
-                  No courses found.
-                </li>
-              </ul>
+            <div v-for="prog in programs" :key="prog.id" class="mega-menu__col">
+              <NuxtLink :to="`/programs/${prog.slug}`" class="mega-menu__link" @click="emit('close')">
+                <span class="mega-menu__link-title">{{ prog.title }}</span>
+                <span class="mega-menu__link-meta">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
+                  ND1 – HND2 Track
+                </span>
+              </NuxtLink>
             </div>
-
-            <!-- Intermediate level -->
-            <div class="mega-menu__col">
-              <div class="mega-menu__col-header">
-                <div class="level-badge level-badge--intermediate">Intermediate</div>
-              </div>
-              <ul class="mega-menu__list">
-                <li v-for="prog in groupedPrograms.intermediate" :key="prog.id">
-                  <NuxtLink :to="`/programs/${prog.slug}`" class="mega-menu__link" @click="emit('close')">
-                    <span class="mega-menu__link-title">{{ prog.title }}</span>
-                    <span class="mega-menu__link-meta">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                      {{ prog.durationWeeks }} weeks
-                    </span>
-                  </NuxtLink>
-                </li>
-                <li v-if="groupedPrograms.intermediate.length === 0" class="mega-menu__empty">
-                  No courses found.
-                </li>
-              </ul>
-            </div>
-
-            <!-- Advanced level -->
-            <div class="mega-menu__col">
-              <div class="mega-menu__col-header">
-                <div class="level-badge level-badge--advanced">Advanced</div>
-              </div>
-              <ul class="mega-menu__list">
-                <li v-for="prog in groupedPrograms.advanced" :key="prog.id">
-                  <NuxtLink :to="`/programs/${prog.slug}`" class="mega-menu__link" @click="emit('close')">
-                    <span class="mega-menu__link-title">{{ prog.title }}</span>
-                    <span class="mega-menu__link-meta">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                      {{ prog.durationWeeks }} weeks
-                    </span>
-                  </NuxtLink>
-                </li>
-                <li v-if="groupedPrograms.advanced.length === 0" class="mega-menu__empty">
-                  No courses found.
-                </li>
-              </ul>
+            <div v-if="programs.length === 0" class="mega-menu__empty">
+              No programs found.
             </div>
           </div>
 
-          <!-- Spotlight / CTA Column -->
+          <!-- Spotlight / CTA Column (NCAT Advert Spot) -->
           <div class="mega-menu__spotlight">
-            <div class="spotlight-card">
+            <div class="spotlight-card ad-card">
+              <div class="ad-badge">Sponsored</div>
               <div class="spotlight-content">
-                <h5>Admissions Open</h5>
-                <p>Ready to launch your journey in tech and business innovation? Applications are active for the next cohort.</p>
+                <h5>Fly High with NCAT</h5>
+                <p>Ready to take to the skies? Apply now for NCAT's world-class aircraft piloting, maintenance, and aviation management courses.</p>
               </div>
-              <BaseButton variant="accent" size="sm" to="/contact" class="w-full justify-center mt-auto" @click="emit('close')">
-                Apply Now
+              <BaseButton variant="accent" size="sm" to="https://ncat.gov.ng" target="_blank" class="w-full justify-center mt-auto" @click="emit('close')">
+                Apply to NCAT
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
               </BaseButton>
             </div>
@@ -390,6 +325,26 @@ const groupedPrograms = computed(() => {
   color: rgba(255, 255, 255, 0.8);
   line-height: var(--leading-relaxed);
   margin-bottom: var(--space-6);
+}
+
+/* NCAT Ad Card Styling */
+.ad-card {
+  background: linear-gradient(145deg, #004d73 0%, #001f33 100%) !important;
+  border: 1px solid rgba(0, 141, 209, 0.3) !important;
+  position: relative;
+}
+
+.ad-badge {
+  align-self: flex-start;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-3);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* Transitions */

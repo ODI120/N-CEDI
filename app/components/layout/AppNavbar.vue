@@ -97,12 +97,13 @@
           <li>
             <NuxtLink to="/about" class="app-navbar__nav-link" active-class="active">About</NuxtLink>
           </li>
-          <li class="has-mega-menu">
+          <li class="has-mega-menu" @mouseenter="handleMegaHover(true)" @mouseleave="handleMegaHover(false)">
             <button
               class="app-navbar__nav-link mega-menu-trigger"
               :class="{ 'mega-active': isMegaMenuOpen }"
               aria-haspopup="dialog"
               :aria-expanded="isMegaMenuOpen"
+              :aria-controls="'mega-menu'"
               @click.stop="toggleMegaMenu"
             >
               Programs
@@ -151,28 +152,29 @@
     <!-- Mobile Menu Modal Overlay -->
     <Transition name="fade">
       <div v-if="isMobileMenuOpen" class="mobile-menu" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+        <button class="mobile-close" @click.stop="toggleMobileMenu" aria-label="Close navigation menu">×</button>
         <div class="mobile-menu__content container">
           <ul class="mobile-menu__list">
             <li>
-              <NuxtLink to="/" class="mobile-menu__link" active-class="active">Home</NuxtLink>
+                <NuxtLink to="/" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Home</NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/about" class="mobile-menu__link" active-class="active">About</NuxtLink>
+                <NuxtLink to="/about" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">About</NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/programs" class="mobile-menu__link" active-class="active">Programs</NuxtLink>
+                <NuxtLink to="/programs" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Programs</NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/events" class="mobile-menu__link" active-class="active">Events</NuxtLink>
+                <NuxtLink to="/events" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Events</NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/blog" class="mobile-menu__link" active-class="active">Blog</NuxtLink>
+                <NuxtLink to="/blog" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Blog</NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/gallery" class="mobile-menu__link" active-class="active">Gallery</NuxtLink>
+                <NuxtLink to="/gallery" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Gallery</NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/contact" class="mobile-menu__link" active-class="active">Contact</NuxtLink>
+                <NuxtLink to="/contact" class="mobile-menu__link" active-class="active" @click="toggleMobileMenu">Contact</NuxtLink>
             </li>
           </ul>
           <div class="mobile-menu__actions">
@@ -380,12 +382,78 @@
 .mobile-menu {
   position: fixed;
   inset: 0;
-  background-color: var(--color-surface);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: flex-end;
   z-index: 100;
-  padding-top: 80px;
+  animation: slideInMobile 0.35s ease-out forwards;
+}
+
+@keyframes slideInMobile {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.mobile-menu__content {
+  width: 80%;
+  max-width: 320px;
+  background: #fff;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  padding: var(--space-8);
+  box-shadow: -4px 0 24px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
 }
+
+
+.mobile-close {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #fff;
+}
+
+
+.mobile-menu__link {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-border);
+  transition: color 0.2s;
+  width: 100%;
+  text-align: center;
+}
+
+
+
+
+.mobile-menu__link:hover,
+.mobile-menu__link.active {
+  color: var(--color-brand-accent);
+}
+
 
 .mobile-menu__content {
   display: flex;
@@ -400,24 +468,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  align-items: center;
+  flex: 1;
 }
 
-.mobile-menu__link {
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  font-weight: 700;
-  color: var(--color-brand-primary);
-  text-decoration: none;
-  padding: var(--space-2) 0;
-  display: block;
-  border-bottom: 1px solid var(--color-border);
-  transition: color 0.2s;
-}
 
-.mobile-menu__link:hover,
-.mobile-menu__link.active {
-  color: var(--color-brand-accent);
-}
+/* Removed duplicate .mobile-menu__link styles (lines 422-433) to avoid conflicts. */
 
 .mobile-menu__actions {
   margin-top: var(--space-6);

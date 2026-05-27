@@ -88,7 +88,7 @@ const defaultPrograms = [
 
 const programs = computed(() => {
   if (dbPrograms.value && dbPrograms.value.length > 0) {
-    return dbPrograms.value.map(p => ({
+    return (dbPrograms.value as any[]).map(p => ({
       title: p.title,
       slug: p.slug,
       description: p.description || '',
@@ -109,8 +109,8 @@ const breadcrumbs = [
 <template>
   <div class="programs-page">
     <HeroInner
-      title="Our Academic Programs"
-      subtitle="Comprehensive hands-on curriculum bridging traditional crafts and software innovation to build self-sustaining enterprises."
+      title="Skill Development Tracks"
+      subtitle="N-CEDI is an integrated academic ecosystem automatically available to all NCAT NBTE students. Choose a skill track and develop it continuously from ND1 through HND2."
       :breadcrumbs="breadcrumbs"
     />
 
@@ -118,11 +118,11 @@ const breadcrumbs = [
       <div class="container">
         <div class="programs-section__intro">
           <MotionWrapper variant="fadeUp" :delay="100">
-            <span class="eyebrow">Practical Skillsets</span>
-            <h2 class="programs-section__heading">Empowering Nigerian Youth</h2>
+            <span class="eyebrow">Integrated Skill Tracks</span>
+            <h2 class="programs-section__heading">Select Your Development Track</h2>
             <p class="programs-section__lead">
-              Our training methodology combines rigorous technical instruction with essential business incubation.
-              Graduates leave not only with a mastery of their craft, but with a fully realized business model to start their own enterprises.
+              As an NCAT NBTE student in AMS, ATE, or AME schools, you are automatically part of the N-CEDI ecosystem.
+              Browse the available skill and innovation tracks below, then visit the N-CEDI centre to register your preferred track and begin your development journey from ND1 to HND2.
             </p>
           </MotionWrapper>
         </div>

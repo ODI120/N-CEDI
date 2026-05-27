@@ -64,7 +64,7 @@ const handleSubmit = async () => {
   <div class="contact-page">
     <HeroInner
       title="Contact Our Centre"
-      subtitle="Have questions about admissions, sponsorship tiers, or our facilities? Get in touch with our administrative team."
+      subtitle="Have questions about track allocation, sponsorship tiers, or our facilities? Get in touch with our administrative team."
       :breadcrumbs="breadcrumbs"
     />
 
@@ -104,7 +104,7 @@ const handleSubmit = async () => {
                     <h3 class="info-item__label">Email Communications</h3>
                     <p class="info-item__value">
                       <a href="mailto:info@ncedi.edu.ng">info@ncedi.edu.ng</a><br />
-                      <a href="mailto:admissions@ncedi.edu.ng">admissions@ncedi.edu.ng</a>
+                      <a href="mailto:academic@ncedi.edu.ng">academic@ncedi.edu.ng</a>
                     </p>
                   </div>
                 </div>
@@ -219,7 +219,7 @@ const handleSubmit = async () => {
                     class="form-input"
                   >
                     <option value="general">General Inquiry</option>
-                    <option value="enrollment">Student Enrollment</option>
+                    <option value="enrollment">Academic Track Allocation</option>
                     <option value="partnership">Strategic Partnership</option>
                     <option value="media">Media / Press Relation</option>
                   </select>

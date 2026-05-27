@@ -1,100 +1,97 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+  import { ref, onMounted } from 'vue'
 
-interface Partner {
-  id: string
-  name: string
-  acronym: string
-  logoUrl: string
-  description: string
-  websiteUrl?: string
-  icon: string
-  tier: 'platinum'
-}
-
-interface SectionPartnersProps {
-  partners?: Partner[]
-}
-
-const props = withDefaults(defineProps<SectionPartnersProps>(), {
-  partners: () => []
-})
-
-const defaultPartners: Partner[] = [
-  {
-    id: '1',
-    name: 'Federal Ministry of Innovation, Science and Technology',
-    acronym: 'FMIST',
-    logoUrl: '/partners/fmict.png',
-    description: 'Federal agency driving Nigeria\'s science, technology and innovation policy framework.',
-    icon: 'bi-bank2',
-    tier: 'platinum'
-  },
-  {
-    id: '2',
-    name: 'Nigerian College of Aviation Technology',
-    acronym: 'NCAT',
-    logoUrl: '/partners/ncat.png',
-    description: 'Pioneering AI research and innovation to advance Nigeria\'s digital transformation.',
-    icon: 'bi-rocket-takeoff',
-    tier: 'platinum'
-  },
-  {
-    id: '3',
-    name: 'National Board for Technical Education',
-    acronym: 'NBTE',
-    logoUrl: '/partners/nbte.png',
-    description: 'Regulating and setting standards for technical and vocational education in Nigeria.',
-    icon: 'bi-mortarboard',
+  interface Partner {
+    id: string
+    name: string
+    acronym: string
+    logoUrl: string
+    description: string
+    websiteUrl?: string
+    icon: string
     tier: 'platinum'
   }
-]
 
-import { computed } from 'vue'
+  interface SectionPartnersProps {
+    partners?: Partner[]
+  }
 
-const partnersList = computed(() => {
-  return props.partners.length > 0 ? props.partners : defaultPartners
-})
+  const props = withDefaults(defineProps<SectionPartnersProps>(), {
+    partners: () => []
+  })
 
-// Staggered reveal animation
-const isVisible = ref(false)
-const cardRevealed = ref<boolean[]>([])
-
-onMounted(() => {
-  // Initialize card reveal states
-  cardRevealed.value = new Array(partnersList.value.length).fill(false)
-
-  // Use IntersectionObserver for scroll-triggered reveal
-  const section = document.querySelector('.section-partners')
-  if (!section) return
-
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          isVisible.value = true
-          // Stagger card reveals
-          partnersList.value.forEach((_, index) => {
-            setTimeout(() => {
-              cardRevealed.value[index] = true
-            }, 200 + index * 180)
-          })
-          observer.unobserve(entry.target)
-        }
-      })
+  const defaultPartners: Partner[] = [
+    {
+      id: '1',
+      name: 'Federal Ministry of Innovation, Science and Technology',
+      acronym: 'FMIST',
+      logoUrl: '/partners/fmict.png',
+      description: 'Federal agency driving Nigeria\'s science, technology and innovation policy framework.',
+      icon: 'bi-bank2',
+      tier: 'platinum'
     },
-    { threshold: 0.15 }
-  )
-  observer.observe(section)
+    {
+      id: '2',
+      name: 'Nigerian College of Aviation Technology',
+      acronym: 'NCAT',
+      logoUrl: '/partners/ncat.png',
+      description: 'Pioneering AI research and innovation to advance Nigeria\'s digital transformation.',
+      icon: 'bi-rocket-takeoff',
+      tier: 'platinum'
+    },
+    {
+      id: '3',
+      name: 'National Board for Technical Education',
+      acronym: 'NBTE',
+      logoUrl: '/partners/nbte.png',
+      description: 'Regulating and setting standards for technical and vocational education in Nigeria.',
+      icon: 'bi-mortarboard',
+      tier: 'platinum'
+    }
+  ]
+
+  import { computed } from 'vue'
+
+  const partnersList = computed(() => {
+    return props.partners.length > 0 ? props.partners : defaultPartners
+  })
+
+  // Staggered reveal animation
+  const isVisible = ref(false)
+  const cardRevealed = ref<boolean[]>([])
+
+  onMounted(() => {
+    // Initialize card reveal states
+    cardRevealed.value = new Array(partnersList.value.length).fill(false)
+
+    // Use IntersectionObserver for scroll-triggered reveal
+    const section = document.querySelector('.section-partners')
+    if (!section) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            isVisible.value = true
+            // Stagger card reveals
+            partnersList.value.forEach((_, index) => {
+              setTimeout(() => {
+                cardRevealed.value[index] = true
+              }, 200 + index * 180)
+            })
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.15 }
+    )
+    observer.observe(section)
 })
 </script>
 
 <template>
   <section class="section-partners" aria-label="Institutional Anchor Partners">
-    <!-- Ambient glow orbs -->
-    <div class="partners-glow partners-glow--1" aria-hidden="true"></div>
-    <div class="partners-glow partners-glow--2" aria-hidden="true"></div>
-
+ 
     <div class="container">
       <!-- Section Header -->
       <div class="partners-header" :class="{ 'partners-header--visible': isVisible }">

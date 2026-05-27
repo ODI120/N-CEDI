@@ -59,49 +59,77 @@ withDefaults(defineProps<SectionTimelineProps>(), {
   eyebrow: 'Milestones & History',
   items: () => []
 })
+
+const timelineRef = ref<HTMLElement | null>(null)
+
+const handleMouseMove = (e: MouseEvent) => {
+  if (!timelineRef.value) return
+  const rect = timelineRef.value.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+  timelineRef.value.style.setProperty('--mouse-x', `${x}px`)
+  timelineRef.value.style.setProperty('--mouse-y', `${y}px`)
+}
 </script>
 
 <template>
-  <section class="section-timeline">
+  <section
+    ref="timelineRef"
+    class="section-timeline"
+    @mousemove="handleMouseMove"
+  >
     <div class="container">
       <div class="section-timeline__header">
-        <span v-if="eyebrow" class="eyebrow">{{ eyebrow }}</span>
-        <h2 v-if="title" class="section-timeline__title">{{ title }}</h2>
+        <span
+          v-if="eyebrow"
+          class="eyebrow"
+        >{{ eyebrow }}</span>
+        <h2
+          v-if="title"
+          class="section-timeline__title"
+        >
+          {{ title }}
+        </h2>
       </div>
 
       <div class="timeline">
-        <!-- Center line -->
-        <div class="timeline__line"></div>
+        <!-- Subtle vertical line -->
+        <div class="timeline__line" />
 
         <div class="timeline__items">
           <div
             v-for="(item, index) in (items.length > 0 ? items : defaultItems)"
             :key="index"
             class="timeline__item"
-            :class="{
-              'timeline__item--left': index % 2 === 0,
-              'timeline__item--right': index % 2 !== 0
-            }"
           >
             <!-- Timeline dot -->
             <div class="timeline__dot">
-              <span class="timeline__dot-inner"></span>
+              <span class="timeline__dot-inner" />
             </div>
 
             <!-- Content Card -->
             <div class="timeline__content-wrapper">
               <MotionWrapper
-                :variant="index % 2 === 0 ? 'slideRight' : 'slideLeft'"
+                variant="fadeUp"
                 :delay="index * 100"
-                :duration="0.7"
+                :duration="0.6"
               >
                 <div class="timeline__card">
-                  <div class="timeline__card-header">
-                    <span class="timeline__year">{{ item.year }}</span>
-                    <span v-if="item.badge" class="timeline__badge">{{ item.badge }}</span>
+                  <div class="timeline__card-content">
+                    <div class="timeline__card-header">
+                      <span class="timeline__year">{{ item.year }}</span>
+                      <span
+                        v-if="item.badge"
+                        class="timeline__badge"
+                      >{{ item.badge }}</span>
+                    </div>
+                    <h3 class="timeline__item-title">
+                      {{ item.title }}
+                    </h3>
+                    <p class="timeline__item-desc">
+                      {{ item.description }}
+                    </p>
                   </div>
-                  <h3 class="timeline__item-title">{{ item.title }}</h3>
-                  <p class="timeline__item-desc">{{ item.description }}</p>
                 </div>
               </MotionWrapper>
             </div>
@@ -114,41 +142,70 @@ withDefaults(defineProps<SectionTimelineProps>(), {
 
 <style scoped>
 .section-timeline {
-  background-color: var(--color-surface-muted);
+  background-color: var(--color-surface);
   padding: var(--section-padding-y) 0;
   border-bottom: 1px solid var(--color-border);
   position: relative;
   overflow: hidden;
 }
 
+/* Dot grid revealed by mouse spotlight */
+.section-timeline::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    /* Layer 1 (top): dark mask with transparent spotlight hole */
+    radial-gradient(
+      550px circle at var(--mouse-x, -600px) var(--mouse-y, -600px),
+      transparent 0%,
+      var(--color-surface) 75%
+    ),
+    /* Layer 2 (bottom): subtle dot grid pattern */
+    radial-gradient(circle, rgba(255, 255, 255, 0.13) 1.5px, transparent 1.5px);
+  background-size: auto, 22px 22px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ensure all content sits above the dot-mask pseudo */
+.section-timeline .container {
+  position: relative;
+  z-index: 1;
+}
+
 .section-timeline__header {
   text-align: center;
   margin-bottom: var(--space-16);
+  max-width: 600px;
+  margin-inline: auto;
 }
 
 .section-timeline__title {
   font-family: var(--font-display);
   font-size: var(--text-3xl);
+  font-weight: 800;
   color: var(--color-brand-primary);
-  margin-top: var(--space-2);
+  margin-top: var(--space-3);
+  line-height: var(--leading-tight);
 }
 
 /* Timeline Layout */
 .timeline {
   position: relative;
-  max-width: 1000px;
+  max-width: 800px;
   margin: 0 auto;
   padding: var(--space-4) 0;
 }
 
+/* Left-aligned vertical line */
 .timeline__line {
   position: absolute;
-  left: 50%;
+  left: 20px;
   top: 0;
   bottom: 0;
   width: 2px;
   background-color: var(--color-border);
-  transform: translateX(-50%);
 }
 
 .timeline__items {
@@ -157,84 +214,76 @@ withDefaults(defineProps<SectionTimelineProps>(), {
 
 .timeline__item {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   position: relative;
   margin-bottom: var(--space-10);
-  width: 50%;
+  width: 100%;
 }
 
-.timeline__item--left {
-  align-self: flex-start;
-  justify-content: flex-start;
-  left: 0;
-}
-
-.timeline__item--right {
-  align-self: flex-end;
-  justify-content: flex-start;
-  left: 50%;
+.timeline__item:last-child {
+  margin-bottom: 0;
 }
 
 /* Dots on the line */
 .timeline__dot {
   position: absolute;
   top: 24px;
+  left: 9px; /* Centered with the 2px line at 20px (20 - 24/2 = 8px + 1px tweak) */
   width: 24px;
   height: 24px;
   background-color: var(--color-surface);
-  border: 2px solid var(--color-brand-primary);
+  border: 2px solid var(--color-border);
   border-radius: 50%;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.timeline__item--left .timeline__dot {
-  right: -12px;
-}
-
-.timeline__item--right .timeline__dot {
-  left: -12px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 0 0 4px var(--color-surface);
 }
 
 .timeline__dot-inner {
-  width: 10px;
-  height: 10px;
-  background-color: var(--color-brand-accent);
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-border);
   border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+/* Hover effects */
+.timeline__item:hover .timeline__dot {
+  border-color: var(--color-brand-accent);
+}
+
+.timeline__item:hover .timeline__dot-inner {
+  background-color: var(--color-brand-accent);
 }
 
 /* Content wrapper and card */
 .timeline__content-wrapper {
-  width: 90%;
-}
-
-.timeline__item--left .timeline__content-wrapper {
-  margin-right: auto;
-}
-
-.timeline__item--right .timeline__content-wrapper {
-  margin-left: auto;
-  padding-left: var(--space-6);
-}
-
-.timeline__item--left .timeline__content-wrapper {
-  padding-right: var(--space-6);
+  width: 100%;
+  padding-left: var(--space-12);
 }
 
 .timeline__card {
-  background-color: var(--color-surface);
+  background-color: var(--color-surface-muted);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
   padding: var(--space-6) var(--space-8);
   box-shadow: var(--shadow-xs);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.timeline__card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-xs);
+.timeline__card-content {
+  position: relative;
+  z-index: 2;
+}
+
+.timeline__item:hover .timeline__card {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
   border-color: var(--color-brand-accent);
 }
 
@@ -255,64 +304,55 @@ withDefaults(defineProps<SectionTimelineProps>(), {
 .timeline__badge {
   font-family: var(--font-body);
   font-size: var(--text-xs);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
-  background-color: var(--color-surface-muted);
-  color: var(--color-brand-accent);
-  padding: var(--space-1) var(--space-3);
+  background-color: var(--color-surface);
+  color: var(--color-text-muted);
+  padding: 4px 12px;
   border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.timeline__item:hover .timeline__badge {
+  border-color: var(--color-brand-accent);
+  color: var(--color-brand-accent);
 }
 
 .timeline__item-title {
   font-family: var(--font-display);
   font-size: var(--text-lg);
-  font-weight: 700;
+  font-weight: 800;
   color: var(--color-brand-primary);
   margin-bottom: var(--space-2);
+  line-height: var(--leading-tight);
 }
 
 .timeline__item-desc {
   font-family: var(--font-body);
   font-size: var(--text-sm);
   color: var(--color-text-muted);
-  line-height: var(--leading-normal);
+  line-height: var(--leading-relaxed);
   margin: 0;
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 576px) {
   .timeline__line {
-    left: var(--space-4);
+    left: 12px;
   }
 
-  .timeline__item {
-    width: 100%;
-    margin-bottom: var(--space-8);
-  }
-
-  .timeline__item--left,
-  .timeline__item--right {
-    align-self: flex-start;
-    justify-content: flex-start;
+  .timeline__dot {
     left: 0;
-    padding-left: var(--space-10);
-  }
-
-  .timeline__item--left .timeline__dot,
-  .timeline__item--right .timeline__dot {
-    left: calc(var(--space-4) - 12px);
-    right: auto;
   }
 
   .timeline__content-wrapper {
-    width: 100%;
+    padding-left: var(--space-8);
   }
 
-  .timeline__item--left .timeline__content-wrapper,
-  .timeline__item--right .timeline__content-wrapper {
-    padding-left: 0;
-    padding-right: 0;
+  .timeline__card {
+    padding: var(--space-5) var(--space-6);
   }
 }
 </style>

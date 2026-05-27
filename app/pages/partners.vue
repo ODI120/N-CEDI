@@ -159,7 +159,7 @@ const breadcrumbs = [
             <div class="partner-cta__card">
               <h2 class="partner-cta__title">Partner With N-CEDI</h2>
               <p class="partner-cta__desc">
-                Invest in vocational infrastructure, sponsor a student cohort, or co-create custom tech curriculums to drive sustainable growth.
+                Invest in vocational infrastructure, sponsor student innovation projects, or co-create custom tech curriculums to drive sustainable growth.
               </p>
               <BaseButton variant="accent" size="lg" to="/contact">
                 Become a Partner
