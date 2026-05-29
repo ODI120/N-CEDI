@@ -4,6 +4,7 @@
 @import "./tokens.css";
 @import "./typography.css";
 @import "./animations.css";
+@import "./admin.css";
 
 @theme static {
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif;

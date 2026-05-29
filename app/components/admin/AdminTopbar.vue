@@ -6,6 +6,8 @@ const route = useRoute()
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
 
+const isSidebarOpen = useState('admin-sidebar-open', () => false)
+
 const signingOut = ref(false)
 const handleSignOut = async () => {
   signingOut.value = true
@@ -22,6 +24,7 @@ const title = computed(() => {
   if (route.path.startsWith('/admin/inquiries')) return 'Inquiries'
   if (route.path.startsWith('/admin/site-stats')) return 'Site Stats'
   if (route.path.startsWith('/admin/programs')) return 'Programs'
+  if (route.path.startsWith('/admin/users')) return 'Admin Users'
   return 'Admin'
 })
 </script>
@@ -29,30 +32,39 @@ const title = computed(() => {
 <template>
   <header class="topbar">
     <div class="topbar__left">
+      <!-- Mobile hamburger toggle -->
+      <button 
+        class="mobile-toggle" 
+        aria-label="Toggle Navigation Menu"
+        @click="isSidebarOpen = !isSidebarOpen"
+      >
+        <UIcon name="i-lucide-menu" class="mobile-toggle__icon" />
+      </button>
+
       <div class="topbar__title">
-        <span class="topbar__eyebrow">Operations</span>
-        <h1 class="topbar__h1">
-          {{ title }}
-        </h1>
+        <div class="topbar__breadcrumbs">
+          <span class="breadcrumb-item">Operations</span>
+          <UIcon name="i-lucide-chevron-right" class="breadcrumb-separator" />
+          <span class="breadcrumb-item current">{{ title }}</span>
+        </div>
       </div>
     </div>
 
     <div class="topbar__right">
       <div v-if="user" class="topbar__user">
-        <span class="topbar__user-label">Signed in</span>
+        <span class="topbar__user-label">Logged in</span>
         <span class="topbar__user-value">{{ user?.email }}</span>
       </div>
 
-      <UButton
-        color="primary"
-        variant="soft"
-        size="sm"
-        :loading="signingOut"
-        icon="i-lucide-log-out"
+      <button
+        class="btn btn-ghost logout-btn"
+        :disabled="signingOut"
         @click="handleSignOut"
       >
-        Sign out
-      </UButton>
+        <UIcon name="i-lucide-log-out" />
+        <span v-if="signingOut">Signing out...</span>
+        <span v-else>Sign out</span>
+      </button>
     </div>
   </header>
 </template>
@@ -62,39 +74,80 @@ const title = computed(() => {
   position: sticky;
   top: 0;
   z-index: 40;
-  padding: var(--space-6) var(--space-8);
+  padding: var(--space-4) var(--space-8);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-6);
-  border-bottom: 1px solid var(--color-border);
-  background: rgba(249, 249, 249, 0.75);
+  border-bottom: 1px solid var(--admin-border);
+  background: var(--admin-surface);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
 
 @media (max-width: 640px) {
   .topbar {
-    padding: var(--space-5) var(--space-4);
+    padding: var(--space-4) var(--space-4);
   }
 }
 
-.topbar__eyebrow {
-  font-size: var(--text-xs);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-widest);
-  color: var(--color-text-muted);
-  font-weight: 800;
-  display: block;
+.topbar__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
-.topbar__h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-2xl);
-  font-weight: 900;
-  color: var(--color-brand-primary);
-  letter-spacing: var(--tracking-tight);
+.mobile-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  cursor: pointer;
+  color: var(--admin-text-primary);
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.mobile-toggle:hover {
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.mobile-toggle__icon {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 1024px) {
+  .mobile-toggle {
+    display: inline-flex;
+  }
+}
+
+.topbar__breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: 500;
+}
+
+.breadcrumb-item {
+  color: var(--admin-text-muted);
+}
+
+.breadcrumb-item.current {
+  color: var(--admin-text-primary);
+  font-weight: 700;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: var(--text-base);
+}
+
+.breadcrumb-separator {
+  width: 12px;
+  height: 12px;
+  color: var(--admin-text-muted);
 }
 
 .topbar__right {
@@ -117,16 +170,27 @@ const title = computed(() => {
 }
 
 .topbar__user-label {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: var(--tracking-widest);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--admin-text-muted);
 }
 
 .topbar__user-value {
   font-size: var(--text-sm);
-  font-weight: 800;
-  color: var(--color-brand-primary);
+  font-weight: 600;
+  color: var(--admin-text-primary);
+}
+
+.logout-btn {
+  color: var(--admin-text-secondary);
+  border: 1px solid var(--admin-border);
+}
+
+.logout-btn:hover {
+  background-color: rgba(239, 68, 68, 0.08) !important;
+  color: #ef4444 !important;
+  border-color: rgba(239, 68, 68, 0.2) !important;
 }
 </style>

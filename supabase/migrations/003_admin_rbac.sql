@@ -15,6 +15,7 @@ create extension if not exists "uuid-ossp";
 -- ─────────────────────────────────────────────────────────────
 -- 1) Admin membership table
 -- ─────────────────────────────────────────────────────────────
+-- Create admin_role enum with hierarchical access levels
 do $$
 begin
   if not exists (

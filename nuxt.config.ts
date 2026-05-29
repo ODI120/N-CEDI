@@ -90,6 +90,18 @@ export default defineNuxtConfig({
     redirect: false
   },
 
+  runtimeConfig: {
+    // Server-only variables (never exposed to client)
+    adminInitSecret: process.env.ADMIN_INIT_SECRET || process.env.NUXT_ADMIN_INIT_SECRET || '',
+    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NUXT_SUPABASE_SERVICE_ROLE_KEY || '',
+    
+    public: {
+      // Public variables (safe to expose to client)
+      supabaseUrl: '',
+      supabaseAnonKey: ''
+    }
+  },
+
   eslint: {
     config: {
       stylistic: {

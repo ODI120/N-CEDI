@@ -1,13 +1,13 @@
 -- Initial N-CEDI Schema Migration
 -- Enables uuid-ossp extension
-create extension if not exists "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 1. categories Table
-create table if nulls not exists categories (
+create table if not exists categories (
   id uuid primary key default uuid_generate_v4(),
   slug text not null unique,
   name text not null,
-  type text not null check (type in ('blog', 'gallery', 'event', 'program')),
+  category_type text not null check (category_type in ('blog', 'gallery', 'event', 'program')),
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
@@ -188,7 +188,7 @@ create policy "Allow public read access on published gallery items" on gallery_i
 create policy "Allow anyone to insert inquiries" on inquiries for insert with check (true);
 
 -- Indexes for performance
-create index idx_categories_type on categories(type);
+create index idx_categories_type on categories(category_type);
 create index idx_programs_slug on programs(slug);
 create index idx_events_slug on events(slug);
 create index idx_posts_slug on posts(slug);
