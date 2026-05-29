@@ -130,7 +130,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 .mega-menu__backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(11, 15, 25, 0.12);
+  background-color: transparent;
   z-index: 2;
   pointer-events: auto;
 }
