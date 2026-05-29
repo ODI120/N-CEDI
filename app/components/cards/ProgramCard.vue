@@ -7,14 +7,14 @@ interface Program {
   slug: string
   description: string
   coverImageUrl: string
-  durationWeeks: number
-  level: 'beginner' | 'intermediate' | 'advanced'
   isFeatured?: boolean
 }
 
-defineProps<{
+const props = defineProps<{
   program: Program
 }>()
+
+const coverSrc = useProgramCoverSrc(() => props.program.coverImageUrl)
 
 const cardRef = ref<HTMLElement | null>(null)
 
@@ -49,15 +49,14 @@ onUnmounted(() => {
     <div class="program-card-pro__glow"></div>
     
     <div class="program-card-pro__image-container">
-      <NuxtImg
-        :src="program.coverImageUrl || '/og/default.jpg'"
+      <img
+        :src="coverSrc"
         :alt="program.title"
         class="program-card-pro__image"
         loading="lazy"
         width="400"
         height="300"
-        format="webp"
-      />
+      >
       <div class="program-card-pro__image-overlay"></div>
       <div v-if="program.isFeatured" class="program-card-pro__featured-badge">
         <BaseBadge type="featured" label="Featured" />

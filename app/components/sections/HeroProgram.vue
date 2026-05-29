@@ -7,27 +7,26 @@ interface Program {
   title: string
   subtitle?: string
   coverImageUrl: string
-  durationWeeks: number
-  level: 'beginner' | 'intermediate' | 'advanced'
 }
 
-defineProps<{
+const props = defineProps<{
   program: Program
 }>()
+
+const coverSrc = useProgramCoverSrc(() => props.program.coverImageUrl)
 </script>
 
 <template>
   <section class="hero-program" aria-label="Program Info">
     <div class="hero-program__background">
-      <NuxtImg
-        :src="program.coverImageUrl || '/og/default.jpg'"
+      <img
+        :src="coverSrc"
         :alt="program.title"
         class="hero-program__image"
-        priority
         width="1920"
         height="800"
-        format="webp"
-      />
+        fetchpriority="high"
+      >
       <div class="hero-program__overlay" />
     </div>
 

@@ -26,57 +26,66 @@
 
   // 3. Mega Menu State
   const isMegaMenuOpen = ref(false)
-  const toggleMegaMenu = () => {
-    isMegaMenuOpen.value = !isMegaMenuOpen.value
-  }
   const closeMegaMenu = () => {
+    clearMegaMenuCloseTimer()
     isMegaMenuOpen.value = false
   }
 
-  // Fetch programs for MegaMenu
-  const supabase = useSupabaseClient()
-  const { data: rawPrograms } = await useAsyncData('navbar-programs', async () => {
-    try {
-      const { data } = await supabase
-        .from('programs')
-        .select('id, title, slug, subtitle, level, duration_weeks')
-        .eq('is_published', true)
-        .limit(9)
-      return data || []
-    } catch (err) {
-      return []
-    }
-  })
+  let megaMenuCloseTimer: ReturnType<typeof setTimeout> | null = null
 
-  // Mock programs for fallback if Supabase returns nothing or fails
-  const defaultPrograms = [
-    { id: '1', title: 'Fashion Design', slug: 'fashion-design', level: 'beginner', durationWeeks: 12 },
-    { id: '2', title: 'Web Design & Development', slug: 'web-design-development', level: 'intermediate', durationWeeks: 12 },
-    { id: '3', title: 'Solar Installation & Energy Systems', slug: 'solar-installation-energy-systems', level: 'beginner', durationWeeks: 8 },
-    { id: '4', title: 'Computer Hardware Engineering', slug: 'computer-hardware-engineering', level: 'beginner', durationWeeks: 12 },
-    { id: '5', title: 'Woodwork & Furniture Design', slug: 'woodwork-furniture-design', level: 'intermediate', durationWeeks: 16 },
-    { id: '6', title: 'Bakery & Bead Making', slug: 'bakery-bead-making', level: 'beginner', durationWeeks: 8 }
-  ]
-
-  const programs = computed(() => {
-    if (rawPrograms.value && rawPrograms.value.length > 0) {
-      return rawPrograms.value.map((p: any) => ({
-        id: p.id,
-        title: p.title,
-        slug: p.slug,
-        subtitle: p.subtitle || '',
-        level: p.level,
-        durationWeeks: p.duration_weeks
-      }))
+  const clearMegaMenuCloseTimer = () => {
+    if (megaMenuCloseTimer) {
+      clearTimeout(megaMenuCloseTimer)
+      megaMenuCloseTimer = null
     }
-    return defaultPrograms
-  })
+  }
+
+  const openMegaMenu = () => {
+    clearMegaMenuCloseTimer()
+    isMegaMenuOpen.value = true
+  }
+
+  const scheduleCloseMegaMenu = () => {
+    clearMegaMenuCloseTimer()
+    megaMenuCloseTimer = setTimeout(() => {
+      isMegaMenuOpen.value = false
+      megaMenuCloseTimer = null
+    }, 180)
+  }
+
+  const handleMegaHover = (open: boolean) => {
+    if (open) openMegaMenu()
+    else scheduleCloseMegaMenu()
+  }
+
+  const toggleMegaMenu = () => {
+    clearMegaMenuCloseTimer()
+    isMegaMenuOpen.value = !isMegaMenuOpen.value
+  }
+
+  const { programs: navbarPrograms } = await usePrograms({ limit: 9 })
+
+  const programs = computed(() =>
+    (navbarPrograms.value ?? []).map((program) => ({
+      id: program.id ?? program.slug,
+      title: program.title,
+      slug: program.slug,
+      subtitle: program.subtitle ?? '',
+      level: 'track',
+      durationWeeks: 0,
+    }))
+  )
 
   // Reset menu states on navigation
   watch(() => route.path, () => {
+    clearMegaMenuCloseTimer()
     isMobileMenuOpen.value = false
     isMegaMenuOpen.value = false
     document.body.style.overflow = ''
+  })
+
+  onUnmounted(() => {
+    clearMegaMenuCloseTimer()
   })
 </script>
 
@@ -147,6 +156,8 @@
       :is-open="isMegaMenuOpen"
       :programs="programs"
       @close="closeMegaMenu"
+      @pointerenter="openMegaMenu"
+      @pointerleave="scheduleCloseMegaMenu"
     />
 
     <!-- Full Screen Mobile Menu -->

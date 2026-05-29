@@ -97,8 +97,12 @@ export default defineNuxtConfig({
     
     public: {
       // Public variables (safe to expose to client)
-      supabaseUrl: '',
-      supabaseAnonKey: ''
+      supabaseUrl: process.env.SUPABASE_URL || process.env.NUXT_PUBLIC_SUPABASE_URL || '',
+      supabaseAnonKey:
+        process.env.SUPABASE_KEY
+        || process.env.SUPABASE_ANON_KEY
+        || process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY
+        || ''
     }
   },
 

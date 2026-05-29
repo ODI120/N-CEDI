@@ -2,6 +2,8 @@
 import { ref } from 'vue'
 import AppLogo from '~/components/AppLogo.vue'
 
+const { programs: footerPrograms } = await usePrograms({ limit: 5 })
+
 const email = ref('')
 const isSubscribed = ref(false)
 
@@ -46,10 +48,9 @@ const handleSubscribe = () => {
           <h4 class="app-footer__title">Programs</h4>
           <ul class="app-footer__links">
             <li><NuxtLink to="/programs">All Courses</NuxtLink></li>
-            <li><NuxtLink to="/programs/fashion-design">Fashion Design</NuxtLink></li>
-            <li><NuxtLink to="/programs/web-design-development">Web Design & Development</NuxtLink></li>
-            <li><NuxtLink to="/programs/solar-installation-energy-systems">Solar Installation</NuxtLink></li>
-            <li><NuxtLink to="/programs/computer-hardware-engineering">Computer Hardware</NuxtLink></li>
+            <li v-for="prog in footerPrograms" :key="prog.slug">
+              <NuxtLink :to="`/programs/${prog.slug}`">{{ prog.title }}</NuxtLink>
+            </li>
             <li><NuxtLink to="/contact">Enrollment Inquiry</NuxtLink></li>
           </ul>
         </div>

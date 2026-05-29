@@ -16,7 +16,11 @@ interface AppMegaMenuProps {
 }
 
 const props = defineProps<AppMegaMenuProps>()
-const emit = defineEmits(['close'])
+const emit = defineEmits<{
+  close: []
+  pointerenter: []
+  pointerleave: []
+}>()
 
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
@@ -30,11 +34,17 @@ const handleKeydown = (event: KeyboardEvent) => {
   <Transition name="dropdown-fade">
     <div
       v-if="isOpen"
+      id="mega-menu"
       class="mega-menu"
       role="dialog"
       aria-label="Programs Menu"
+      aria-modal="true"
       @keydown="handleKeydown"
+      @mouseenter="emit('pointerenter')"
+      @mouseleave="emit('pointerleave')"
     >
+      <!-- Invisible hit area between navbar and panel so hover does not close the menu -->
+      <div class="mega-menu__hover-bridge" aria-hidden="true" />
       <div class="mega-menu__backdrop" @click="emit('close')" />
       
       <div class="mega-menu__card container">
@@ -99,23 +109,30 @@ const handleKeydown = (event: KeyboardEvent) => {
   left: 0;
   width: 100%;
   height: 100vh;
-  z-index: 90;
+  z-index: 110;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: calc(var(--space-4) + 72px + var(--space-4));
-  pointer-events: none; /* Let clicks pass through to backdrop */
+  padding-top: calc(var(--space-4) + 64px + var(--space-2));
+  pointer-events: auto;
 }
 
-.mega-menu > * {
-  pointer-events: auto; /* Re-enable for content */
+.mega-menu__hover-bridge {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--space-4) + 64px + var(--space-6));
+  z-index: 1;
+  pointer-events: auto;
 }
 
 .mega-menu__backdrop {
   position: fixed;
   inset: 0;
-  background-color: transparent;
-  z-index: 1;
+  background-color: rgba(11, 15, 25, 0.12);
+  z-index: 2;
+  pointer-events: auto;
 }
 
 .mega-menu__card {
@@ -129,7 +146,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   max-height: calc(100vh - 120px);
   overflow-y: auto;
   padding: var(--space-8);
-  z-index: 2;
+  z-index: 3;
 }
 
 @media (max-width: 768px) {

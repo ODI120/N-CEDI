@@ -1,52 +1,28 @@
 /**
  * N-CEDI — Supabase Storage image URL builder
  *
- * Builds a public URL pointing at a file inside a Supabase Storage
- * bucket, optionally appending image-transform query parameters
- * (width, height, quality) so the CDN returns optimised variants.
- *
- * @example
- *   getImageUrl('programs/cover.jpg')
- *   // → "https://<project>.supabase.co/storage/v1/object/public/media/programs/cover.jpg"
- *
- *   getImageUrl('programs/cover.jpg', { width: 800, quality: 75 })
- *   // → ".../cover.jpg?width=800&quality=75"
+ * Prefer `resolveStorageRef` / `getStoragePublicUrl` from `~/utils/storage` for
+ * bucket-aware URLs. This module remains for backward-compatible `getImageUrl`.
  */
 
-interface ImageTransformOptions {
-  width?: number
-  height?: number
-  quality?: number
-}
+import {
+  STORAGE_BUCKETS,
+  getStoragePublicUrl,
+  type ImageTransformOptions,
+  type StorageBucketId,
+} from '~/utils/storage'
 
-const DEFAULT_BUCKET = 'media'
+export type { ImageTransformOptions }
 
+/**
+ * @param path Object path inside the bucket (not a storage ref).
+ * @param options Image transform query params.
+ * @param bucket Defaults to `media` for legacy callers.
+ */
 export function getImageUrl(
   path: string,
-  options?: ImageTransformOptions
+  options?: ImageTransformOptions,
+  bucket: StorageBucketId = STORAGE_BUCKETS.media,
 ): string {
-  const config = useRuntimeConfig()
-  const supabaseUrl: string = (config.public as Record<string, unknown>).supabaseUrl as string
-    || 'https://placeholder.supabase.co'
-
-  const base = `${supabaseUrl}/storage/v1/object/public/${DEFAULT_BUCKET}/${path}`
-
-  if (!options) {
-    return base
-  }
-
-  const params = new URLSearchParams()
-
-  if (options.width) {
-    params.set('width', String(options.width))
-  }
-  if (options.height) {
-    params.set('height', String(options.height))
-  }
-  if (options.quality) {
-    params.set('quality', String(options.quality))
-  }
-
-  const qs = params.toString()
-  return qs ? `${base}?${qs}` : base
+  return getStoragePublicUrl(bucket, path, options)
 }

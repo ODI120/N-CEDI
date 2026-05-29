@@ -6,353 +6,45 @@ import RichTextRenderer from '~/components/cms/RichTextRenderer.vue'
 import MotionWrapper from '~/components/motion/MotionWrapper.vue'
 import ProgramCard from '~/components/cards/ProgramCard.vue'
 import { usePageSeo } from '~/composables/useSeo'
-import { useSupabase } from '~/composables/useSupabase'
 
 const route = useRoute()
 const slug = route.params.slug as string
-const { client } = useSupabase()
 
-// Fetch program from database
-const { data: dbProgram, error } = await useAsyncData(`program-${slug}`, async () => {
-  try {
-    const { data, error } = await client
-      .from('programs')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_published', true)
-      .maybeSingle()
+const { program, pending } = await useProgram(slug)
+const { programs: relatedPrograms } = await usePrograms({ excludeSlug: slug, limit: 2 })
 
-    if (error) throw error
-    return data
-  } catch (err) {
-    console.warn(`Supabase fetch failed for program ${slug}, using static fallback`, err)
-    return null
-  }
-})
-
-// Detailed static fallback programs
-const defaultPrograms = [
-  {
-    title: 'Fashion Design & Garment Construction',
-    slug: 'fashion-design',
-    subtitle: 'Acquire couture drafting, high-end finishing, and sustainable brand launch strategies.',
-    description: 'Learn modern garment construction, pattern drafting, and entrepreneurial fashion branding.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1200',
-    durationWeeks: 12,
-    level: 'beginner' as const,
-    isFeatured: true,
-    requirements: 'No prior sewing experience required. Passion for design is key.',
-    outcomes: [
-      'Draft customized bodices, skirts, and trousers from scratch.',
-      'Operate domestic and industrial sewing machines and sergers.',
-      'Develop a collection from mood board to finished physical garments.',
-      'Set up a digital micro-brand ready for e-commerce integration.'
-    ],
-    body: [
-      {
-        type: 'heading',
-        data: { level: 2, text: 'Program Overview' }
-      },
-      {
-        type: 'paragraph',
-        data: { text: 'Our Fashion Design program at N-CEDI is structured to take you from a novice to an industry-ready fashion entrepreneur. We believe in bridging structural design principles with modern digital branding to prepare you for the competitive Nigerian and international markets.' }
-      },
-      {
-        type: 'heading',
-        data: { level: 3, text: 'What You Will Learn' }
-      },
-      {
-        type: 'list',
-        data: {
-          style: 'unordered',
-          items: [
-            '<strong>Introduction to textiles:</strong> Fiber types, fabric properties, and industrial sourcing.',
-            '<strong>Flat pattern drafting:</strong> Drafting base blocks (slopers) and executing complex manipulations.',
-            '<strong>Garment construction:</strong> Interfacing, seams, hems, collars, zippers, and advanced finishing techniques.',
-            '<strong>Brand incubation:</strong> Pricing, collections timeline, social commerce, and supplier relationships.'
-          ]
-        }
-      },
-      {
-        type: 'quote',
-        data: {
-          text: 'The N-CEDI fashion program gave me more than sewing skills; it taught me how to structure my design collections and launch my online boutique.',
-          caption: 'Halima Bello, Founder of Bello Couture (Cohort 2)'
-        }
-      }
-    ],
-    galleryUrls: [
-      'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=800',
-      'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800',
-      'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=800'
-    ]
-  },
-  {
-    title: 'Woodwork & Modern Furniture Design',
-    slug: 'woodwork-furniture-design',
-    subtitle: 'From basic joinery to high-concept interior fittings using advanced power tools and finishings.',
-    description: 'Master precision carpentry, modern furniture construction, and spatial installation designs.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?q=80&w=1200',
-    durationWeeks: 16,
-    level: 'intermediate' as const,
-    isFeatured: false,
-    requirements: 'Completion of basic workshop safety briefing (provided at orientation).',
-    outcomes: [
-      'Perform precision joinery techniques including mortise-and-tenon and dovetails.',
-      'Create technical workshop drawings and cut lists from architectural briefs.',
-      'Operate tablesaws, routers, planers, and sanding equipment safely.',
-      'Execute high-durability spray and hand-applied veneer finishes.'
-    ],
-    body: [
-      {
-        type: 'heading',
-        data: { level: 2, text: 'Program Overview' }
-      },
-      {
-        type: 'paragraph',
-        data: { text: 'Our Woodwork and Furniture Design track focuses on modern manufacturing methods. Students study timber technology, ergonomics, and spatial design to craft products that meet functional, commercial, and structural specifications.' }
-      },
-      {
-        type: 'heading',
-        data: { level: 3, text: 'Practical Lab Experience' }
-      },
-      {
-        type: 'paragraph',
-        data: { text: 'Students spend 80% of their program in the workshop floor. Working on projects from design sketching to production planning, assembly, and final delivery, you develop a portfolio of items including chairs, cabinets, and office tables.' }
-      },
-      {
-        type: 'quote',
-        data: {
-          text: 'The precision and safety training at N-CEDI labs rivaled the industrial standards I saw in large wood fabrication factories.',
-          caption: 'Joseph Okechukwu, Design Lead at WoodCrafts (Cohort 1)'
-        }
-      }
-    ],
-    galleryUrls: [
-      'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=800',
-      'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=800'
-    ]
-  },
-  {
-    title: 'Web Design & Fullstack Development',
-    slug: 'web-design-development',
-    subtitle: 'Build enterprise-grade modern web applications and design visually stunning interfaces.',
-    description: 'Build premium responsive websites using Nuxt, Tailwind CSS, Javascript and database integrations.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=1200',
-    durationWeeks: 12,
-    level: 'intermediate' as const,
-    isFeatured: true,
-    requirements: 'Basic computer literacy and typing speeds above 30 words per minute.',
-    outcomes: [
-      'Build frontend architectures using Vue 3, Nuxt 4, and Tailwind CSS v4.',
-      'Design fully interactive user interfaces using modern design tools like Figma.',
-      'Implement secure user authentication, CRUD operations, and relational storage with Supabase.',
-      'Deploy production sites with dynamic route caching on Vercel.'
-    ],
-    body: [
-      {
-        type: 'heading',
-        data: { level: 2, text: 'Become a Fullstack Innovator' }
-      },
-      {
-        type: 'paragraph',
-        data: { text: 'N-CEDI Web Design & Development course is designed to empower you with the tools of the modern web. We skip outdated methods and jump directly into standard frameworks and workflows utilized by leading tech hubs globally.' }
-      },
-      {
-        type: 'heading',
-        data: { level: 3, text: 'Core Tech Stack Taught' }
-      },
-      {
-        type: 'list',
-        data: {
-          style: 'unordered',
-          items: [
-            '<strong>Vue 3 & Nuxt 4:</strong> Reusable SFC structures, reactivity, composables, and layouts.',
-            '<strong>Tailwind CSS v4:</strong> Custom CSS property setups, utility mappings, responsive flexbox/grid.',
-            '<strong>Supabase Backends:</strong> PostgreSQL tables, Row Level Security rules, auth controllers, and Storage buckets.',
-            '<strong>Git & GitHub workflows:</strong> Continuous integration and team codebase branch reviews.'
-          ]
-        }
-      },
-      {
-        type: 'quote',
-        data: {
-          text: 'This program is the perfect launching pad. Right after graduating, N-CEDI incubation program helped me secure three international freelancing projects.',
-          caption: 'Emeka Nwosu, Freelance Developer (Cohort 4)'
-        }
-      }
-    ],
-    galleryUrls: [
-      'https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=800',
-      'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=800'
-    ]
-  },
-  {
-    title: 'Computer Hardware Engineering',
-    slug: 'computer-hardware-engineering',
-    subtitle: 'Master structural computer assembly, motherboard diagnostics, repair mechanics, and network configuration.',
-    description: 'Understand computer architecture, component diagnostics, micro-soldering, and system repairs.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=1200',
-    durationWeeks: 12,
-    level: 'beginner' as const,
-    isFeatured: false,
-    requirements: 'An analytical mindset. No prior electronic assembly experience required.',
-    outcomes: [
-      'Identify and isolate faulty hardware chips, cards, and drives.',
-      'Perform micro-soldering on circuit boards and replace damaged capacitors.',
-      'Install, optimize, and secure OS layouts and device drivers.',
-      'Configure local office LAN/WLAN networks and file servers.'
-    ],
-    body: [
-      {
-        type: 'heading',
-        data: { level: 2, text: 'Program Overview' }
-      },
-      {
-        type: 'paragraph',
-        data: { text: 'Our Hardware Engineering laboratory is equipped with advanced testing tools. Students work on real customer devices, diagnosing motherboard failures, running thermal performance checks, and testing components under various load profiles.' }
-      }
-    ],
-    galleryUrls: [
-      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800'
-    ]
-  },
-  {
-    title: 'Solar Installation & Energy Systems',
-    slug: 'solar-installation-energy-systems',
-    subtitle: 'Gain competence in green energy design, solar array installation, inverter setup, and grid operations.',
-    description: 'Design and install sustainable solar panels, inverter systems, battery storage, and hybrid microgrids.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?q=80&w=1200',
-    durationWeeks: 8,
-    level: 'beginner' as const,
-    isFeatured: true,
-    requirements: 'Basic arithmetic understanding. Comfortable working at heights on safety gear.',
-    outcomes: [
-      'Calculate daily solar load requirements and sizing battery backup configurations.',
-      'Install photovoltaic (PV) arrays securely on roofing structures.',
-      'Configure solar charge controllers, pure sine-wave inverters, and battery banks.',
-      'Diagnose wiring drops, ground faults, and execute safety grounding grids.'
-    ],
-    body: [
-      {
-        type: 'heading',
-        data: { level: 2, text: 'Harness the Power of the Sun' }
-      },
-      {
-        type: 'paragraph',
-        data: { text: 'With the growing demand for clean and off-grid power solutions in Nigeria, solar tech is a massive market. This practical course provides hands-on knowledge on design parameters, wiring regulations, battery chemistries (LiFePO4, Lead-acid), and real installation scenarios.' }
-      }
-    ],
-    galleryUrls: [
-      'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?q=80&w=800'
-    ]
-  },
-  {
-    title: 'Bakery & Bead Making Commercial Arts',
-    slug: 'bakery-bead-making',
-    subtitle: 'Acquire high-quality bakery skills, customized bead designs, and business models for retail.',
-    description: 'Combine culinary pastry arts with intricate traditional African bead crafts for commercial enterprise.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=1200',
-    durationWeeks: 8,
-    level: 'beginner' as const,
-    isFeatured: false,
-    requirements: 'An interest in creative designs and culinary arts.',
-    outcomes: [
-      'Bake professional-grade yeast breads, pastries, cakes, and confectionaries.',
-      'Understand commercial kitchen sanitation, safety rules, and bulk measurement.',
-      'Create high-end traditional and contemporary bead jewelry designs.',
-      'Price and package goods effectively for retail supermarkets and boutique stores.'
-    ],
-    body: [
-      {
-        type: 'heading',
-        data: { level: 2, text: 'Artisanal Entrepreneurship' }
-      },
-      {
-        type: 'paragraph',
-        data: { text: 'This program is tailored to students seeking cashflow-generating skills. Baking and beadwork are in high demand during events, weddings, and daily catering settings. We teach the fine art of baking and the complex weaves of bead jewelry alongside business finance.' }
-      }
-    ],
-    galleryUrls: [
-      'https://images.unsplash.com/photo-1549931319-a545dcf3bc73?q=80&w=800'
-    ]
-  }
-]
-
-// Determine which program details to display (DB or static fallback)
-const program = computed(() => {
-  if (dbProgram.value) {
-    const p = dbProgram.value as any
-    const fallbackBody = [
-      { type: 'heading', data: { level: 2, text: 'Program Overview' } },
-      { type: 'paragraph', data: { text: p.overview || p.description || '' } }
-    ]
-    if (p.lab_experience) {
-      fallbackBody.push(
-        { type: 'heading', data: { level: 3, text: 'Practical Lab Experience' } },
-        { type: 'paragraph', data: { text: p.lab_experience } }
-      )
-    }
-
-    return {
-      title: p.title,
-      slug: p.slug,
-      subtitle: p.subtitle || '',
-      description: p.description || '',
-      coverImageUrl: p.cover_image_url || 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=1200',
-      durationWeeks: p.duration_weeks || 12,
-      level: (p.level || 'beginner') as 'beginner' | 'intermediate' | 'advanced',
-      isFeatured: p.is_featured || false,
-      requirements: (p as any).requirements || 'Basic interest and commitment to attend all practical labs.',
-      outcomes: (p as any).outcomes || [
-        'Gain foundational competence in the program domain.',
-        'Operate specialized tools and tech benches under safety standards.',
-        'Develop a complete prototype/project portfolio.',
-        'Structure a business plan ready for incubator funding.'
-      ],
-      body: p.body || fallbackBody,
-      overview: p.overview || undefined,
-      labExperience: p.lab_experience || undefined,
-      galleryUrls: p.gallery_urls || []
-    }
-  }
-
-  // Fallback check
-  const fallback = defaultPrograms.find(p => p.slug === slug)
-  return fallback || null
-})
-
-// Return a 404 if program not found in DB and fallback list
 if (!program.value) {
   throw createError({
     statusCode: 404,
     statusMessage: `Program "${slug}" not found`,
-    fatal: true
+    fatal: true,
   })
 }
 
-// Wire up SEO dynamically
 usePageSeo({
-  title: program.value.title,
-  description: program.value.subtitle || program.value.description,
-  image: program.value.coverImageUrl
+  title: program.value.metaTitle || program.value.title,
+  description:
+    program.value.metaDescription
+    || program.value.subtitle
+    || program.value.description,
+  image: resolveProgramCoverForSeo(program.value.coverImageUrl),
 })
 
-// ─── REDESIGN ADDITIONAL SCRIPT LOGIC ───
+const galleryImageSrcs = useProgramGallerySrcs(() => program.value?.galleryUrls)
 
 const activeSection = ref('overview')
 const isNavSticky = ref(false)
 const activePhotoIndex = ref<number | null>(null)
 
 const sections = computed(() => {
-  const list = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'outcomes', label: 'Outcomes' }
-  ]
+  const list = [{ id: 'overview', label: 'Overview' }]
+  if (program.value?.outcomes?.length) {
+    list.push({ id: 'outcomes', label: 'Outcomes' })
+  }
   if (program.value?.labExperience) {
     list.push({ id: 'lab-experience', label: 'Lab Experience' })
   }
-  if (program.value?.galleryUrls && program.value.galleryUrls.length > 0) {
+  if (galleryImageSrcs.value.length) {
     list.push({ id: 'gallery', label: 'Facilities & Work' })
   }
   list.push({ id: 'specifications', label: 'Academic Integration' })
@@ -362,7 +54,7 @@ const sections = computed(() => {
 const scrollToSection = (id: string) => {
   const el = document.getElementById(id)
   if (el) {
-    const offset = 145 // Header height + Sticky tabs bar height + safe padding
+    const offset = 145
     const bodyRect = document.body.getBoundingClientRect().top
     const elementRect = el.getBoundingClientRect().top
     const elementPosition = elementRect - bodyRect
@@ -370,20 +62,12 @@ const scrollToSection = (id: string) => {
 
     window.scrollTo({
       top: offsetPosition,
-      behavior: 'smooth'
+      behavior: 'smooth',
     })
     activeSection.value = id
   }
 }
 
-// Determine related programs (exclude current page program)
-const relatedPrograms = computed(() => {
-  return defaultPrograms
-    .filter(p => p.slug !== slug)
-    .slice(0, 2)
-})
-
-// Gallery Lightbox controls
 const openLightbox = (index: number) => {
   activePhotoIndex.value = index
   document.body.style.overflow = 'hidden'
@@ -397,13 +81,14 @@ const closeLightbox = () => {
 }
 
 const prevPhoto = () => {
-  if (activePhotoIndex.value === null || !program.value?.galleryUrls) return
-  activePhotoIndex.value = (activePhotoIndex.value - 1 + program.value.galleryUrls.length) % program.value.galleryUrls.length
+  if (activePhotoIndex.value === null || !galleryImageSrcs.value.length) return
+  activePhotoIndex.value =
+    (activePhotoIndex.value - 1 + galleryImageSrcs.value.length) % galleryImageSrcs.value.length
 }
 
 const nextPhoto = () => {
-  if (activePhotoIndex.value === null || !program.value?.galleryUrls) return
-  activePhotoIndex.value = (activePhotoIndex.value + 1) % program.value.galleryUrls.length
+  if (activePhotoIndex.value === null || !galleryImageSrcs.value.length) return
+  activePhotoIndex.value = (activePhotoIndex.value + 1) % galleryImageSrcs.value.length
 }
 
 const handleLightboxKeydown = (e: KeyboardEvent) => {
@@ -412,7 +97,6 @@ const handleLightboxKeydown = (e: KeyboardEvent) => {
   if (e.key === 'ArrowRight') nextPhoto()
 }
 
-// Map index to modern outline bootstrap icon
 const getOutcomeIcon = (index: number) => {
   const icons = [
     'bi-journal-check',
@@ -420,7 +104,7 @@ const getOutcomeIcon = (index: number) => {
     'bi-patch-check',
     'bi-rocket-takeoff',
     'bi-tools',
-    'bi-briefcase'
+    'bi-briefcase',
   ]
   return icons[index % icons.length]
 }
@@ -428,7 +112,6 @@ const getOutcomeIcon = (index: number) => {
 let observer: IntersectionObserver | null = null
 
 onMounted(() => {
-  // Toggle sticky classes based on scroll coordinates
   const handleScroll = () => {
     const trigger = document.querySelector('.program-detail-layout')
     if (trigger) {
@@ -437,11 +120,10 @@ onMounted(() => {
   }
   window.addEventListener('scroll', handleScroll)
 
-  // Track page scroll to highlight relevant sticky tab
   const observerOptions = {
     root: null,
     rootMargin: '-160px 0px -50% 0px',
-    threshold: 0
+    threshold: 0,
   }
 
   observer = new IntersectionObserver((entries) => {
@@ -465,7 +147,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="program" class="program-detail-page">
+  <div v-if="pending" class="program-detail-page program-detail-page--loading container">
+    <p class="programs-empty">Loading program…</p>
+  </div>
+
+  <div v-else-if="program" class="program-detail-page">
     <HeroProgram :program="program" />
 
     <!-- Sticky Navigation Tab Bar -->
@@ -492,13 +178,18 @@ onMounted(() => {
         <section id="overview" class="program-section-block">
           <MotionWrapper variant="fadeUp" :delay="100">
             <div class="program-body-section">
-              <RichTextRenderer :body="program.body" />
+              <RichTextRenderer v-if="program.body?.length" :body="program.body" />
+              <p v-else class="program-body-fallback">{{ program.description }}</p>
             </div>
           </MotionWrapper>
         </section>
 
         <!-- Learning Outcomes -->
-        <section id="outcomes" class="program-section-block">
+        <section
+          v-if="program.outcomes?.length"
+          id="outcomes"
+          class="program-section-block"
+        >
           <MotionWrapper variant="fadeUp" :delay="200" class="outcomes-wrapper">
             <div class="outcomes-header">
               <span class="outcomes-eyebrow">Skills Acquired</span>
@@ -542,7 +233,7 @@ onMounted(() => {
 
         <!-- Facilities & Project Gallery -->
         <section
-          v-if="program.galleryUrls && program.galleryUrls.length > 0"
+          v-if="galleryImageSrcs.length > 0"
           id="gallery"
           class="program-section-block program-gallery"
         >
@@ -552,19 +243,17 @@ onMounted(() => {
           </div>
           <div class="program-gallery__grid">
             <div
-              v-for="(url, gIdx) in program.galleryUrls"
+              v-for="(url, gIdx) in galleryImageSrcs"
               :key="gIdx"
               class="program-gallery__item"
               @click="openLightbox(Number(gIdx))"
             >
-              <NuxtImg
+              <img
                 :src="url"
                 alt="Program gallery asset"
-                sizes="sm:100vw md:50vw lg:33vw xl:400px"
-                format="webp"
                 class="program-gallery__image"
                 loading="lazy"
-              />
+              >
               <div class="program-gallery__item-overlay">
                 <i class="bi bi-zoom-in zoom-icon"></i>
                 <span>View Fullscreen</span>
@@ -603,9 +292,9 @@ onMounted(() => {
               </div>
             </div>
 
-            <div class="spec-requirements">
+            <div v-if="program.requirements" class="spec-requirements">
               <h4 class="spec-req-title">Prerequisites</h4>
-              <p class="spec-req-desc">Active enrollment in an NCAT NBTE academic program (AMS, ATE, or AME schools).</p>
+              <p class="spec-req-desc">{{ program.requirements }}</p>
             </div>
 
             <!-- Automatic participation alert -->
@@ -629,7 +318,7 @@ onMounted(() => {
     </div>
 
     <!-- Related Programs Recommendations Section -->
-    <section class="related-programs-section">
+    <section v-if="relatedPrograms?.length" class="related-programs-section">
       <div class="container">
         <div class="related-header">
           <span class="related-eyebrow">Explore More</span>
@@ -650,7 +339,7 @@ onMounted(() => {
     <!-- Custom Immersive Lightbox Modal -->
     <Transition name="lightbox-fade">
       <div
-        v-if="activePhotoIndex !== null && program.galleryUrls"
+        v-if="activePhotoIndex !== null && galleryImageSrcs.length"
         class="lightbox-overlay"
         @click.self="closeLightbox"
       >
@@ -664,12 +353,12 @@ onMounted(() => {
 
         <div class="lightbox-content-wrapper">
           <img
-            :src="program.galleryUrls[activePhotoIndex]"
+            :src="galleryImageSrcs[activePhotoIndex]"
             alt="Enlarged facility image"
             class="lightbox-main-img"
-          />
+          >
           <div class="lightbox-caption">
-            <span>Facilities & Student Work — Image {{ activePhotoIndex + 1 }} of {{ program.galleryUrls.length }}</span>
+            <span>Facilities & Student Work — Image {{ activePhotoIndex + 1 }} of {{ galleryImageSrcs.length }}</span>
           </div>
         </div>
 
@@ -686,11 +375,29 @@ onMounted(() => {
   background-color: var(--color-surface);
 }
 
+.program-detail-page--loading {
+  padding: var(--space-20) var(--section-padding-x);
+}
+
+.program-body-fallback {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}
+
+.programs-empty {
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+}
+
 .program-sticky-nav-wrapper {
   position: sticky;
-  top: 72px; /* AppNavbar height offset */
+  top: 72px;
   z-index: 50;
-  background: rgba(249, 249, 249, 0.85); /* Matching var(--color-surface) with glass */
+  background: rgba(249, 249, 249, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);
@@ -706,11 +413,11 @@ onMounted(() => {
   gap: var(--space-8);
   padding: var(--space-4) 0;
   overflow-x: auto;
-  scrollbar-width: none; /* Hide scrollbar Firefox */
+  scrollbar-width: none;
 }
 
 .program-sticky-nav::-webkit-scrollbar {
-  display: none; /* Hide scrollbar Chrome/Safari */
+  display: none;
 }
 
 .program-sticky-nav__tab {
@@ -780,7 +487,6 @@ onMounted(() => {
   line-height: var(--leading-relaxed);
 }
 
-/* Outcomes styling */
 .outcomes-wrapper {
   display: flex;
   flex-direction: column;
@@ -878,7 +584,6 @@ onMounted(() => {
   margin: 0;
 }
 
-/* Gallery styling */
 .program-gallery {
   display: flex;
   flex-direction: column;
@@ -978,10 +683,9 @@ onMounted(() => {
   color: var(--color-brand-accent);
 }
 
-/* Sidebar styling */
 .program-sidebar-card {
   position: sticky;
-  top: 170px; /* Offset spacing to sit neatly under header & tabs */
+  top: 170px;
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -1148,7 +852,6 @@ onMounted(() => {
   line-height: var(--leading-normal);
 }
 
-/* Info alert variant — blue tones for informational notices */
 .sidebar-cohort-alert.info-alert {
   background: rgba(107, 89, 255, 0.05);
   border-color: rgba(107, 89, 255, 0.15);
@@ -1189,7 +892,6 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-/* Related programs section */
 .related-programs-section {
   padding: var(--space-20) 0;
   background-color: var(--color-surface-muted);
@@ -1232,7 +934,6 @@ onMounted(() => {
   }
 }
 
-/* Lightbox styles */
 .lightbox-overlay {
   position: fixed;
   inset: 0;
@@ -1342,7 +1043,6 @@ onMounted(() => {
   font-weight: 500;
 }
 
-/* Lightbox transition animation */
 .lightbox-fade-enter-active,
 .lightbox-fade-leave-active {
   transition: opacity 0.3s ease, backdrop-filter 0.3s ease;

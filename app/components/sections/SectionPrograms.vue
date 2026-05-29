@@ -7,8 +7,6 @@ interface Program {
   slug: string
   description: string
   coverImageUrl: string
-  durationWeeks: number
-  level: 'beginner' | 'intermediate' | 'advanced'
   isFeatured?: boolean
 }
 

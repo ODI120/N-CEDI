@@ -1,0 +1,219 @@
+/**
+ * Supabase Storage — bucket registry and URL helpers.
+ *
+ * Buckets (project):
+ *   media, site_assets, gallery_media, program_media, teams_avatars
+ *
+ * Database fields store a storage reference: `bucket:object/path`
+ * Example: program_media:woodwork-furniture/cover-abc.jpg
+ */
+
+export interface ImageTransformOptions {
+  width?: number
+  height?: number
+  quality?: number
+}
+
+/** Canonical bucket ids (must match Supabase Storage). */
+export const STORAGE_BUCKETS = {
+  media: 'media',
+  site_assets: 'site_assets',
+  gallery_media: 'gallery_media',
+  program_media: 'program_media',
+  teams_avatars: 'teams_avatars',
+} as const
+
+export type StorageBucketId = keyof typeof STORAGE_BUCKETS
+
+const BUCKET_IDS = new Set<string>(Object.values(STORAGE_BUCKETS))
+
+const REF_SEPARATOR = ':'
+
+const BUCKET_PATH_PREFIXES: StorageBucketId[] = [
+  STORAGE_BUCKETS.program_media,
+  STORAGE_BUCKETS.gallery_media,
+  STORAGE_BUCKETS.site_assets,
+  STORAGE_BUCKETS.teams_avatars,
+  STORAGE_BUCKETS.media,
+]
+
+export function isStorageBucketId(value: string): value is StorageBucketId {
+  return BUCKET_IDS.has(value)
+}
+
+/** Build value persisted in `cover_image_url`, `gallery_urls`, etc. */
+export function formatStorageRef(bucket: StorageBucketId, path: string): string {
+  const normalized = path.replace(/^\/+/, '')
+  return `${bucket}${REF_SEPARATOR}${normalized}`
+}
+
+/** Parse `bucket:path` or return null if not a storage reference. */
+export function parseStorageRef(
+  ref: string,
+): { bucket: StorageBucketId; path: string } | null {
+  const idx = ref.indexOf(REF_SEPARATOR)
+  if (idx <= 0) return null
+
+  const bucket = ref.slice(0, idx)
+  const path = ref.slice(idx + 1)
+
+  if (!isStorageBucketId(bucket) || !path) return null
+
+  return { bucket, path }
+}
+
+/** `program_media/slug/cover.jpg` → bucket + path */
+function parseBucketSlashRef(ref: string): { bucket: StorageBucketId; path: string } | null {
+  for (const bucket of BUCKET_PATH_PREFIXES) {
+    const prefix = `${bucket}/`
+    if (ref.startsWith(prefix)) {
+      return { bucket, path: ref.slice(prefix.length) }
+    }
+  }
+  return null
+}
+
+export function getSupabaseProjectUrl(): string {
+  const config = useRuntimeConfig()
+  const pub = config.public as Record<string, unknown>
+
+  const candidates = [
+    pub.supabaseUrl,
+    (pub.supabase as { url?: string } | undefined)?.url,
+    process.env.SUPABASE_URL,
+    process.env.NUXT_PUBLIC_SUPABASE_URL,
+  ]
+
+  for (const value of candidates) {
+    if (typeof value === 'string' && value.trim()) {
+      return value.replace(/\/$/, '')
+    }
+  }
+
+  return ''
+}
+
+function appendTransformParams(url: string, options?: ImageTransformOptions): string {
+  if (!options) return url
+
+  const params = new URLSearchParams()
+  if (options.width) params.set('width', String(options.width))
+  if (options.height) params.set('height', String(options.height))
+  if (options.quality) params.set('quality', String(options.quality))
+
+  const qs = params.toString()
+  if (!qs) return url
+
+  return `${url}${url.includes('?') ? '&' : '?'}${qs}`
+}
+
+/** Public object URL for a bucket + path (uses Supabase client when available). */
+export function getStoragePublicUrl(
+  bucket: StorageBucketId,
+  path: string,
+  options?: ImageTransformOptions,
+): string {
+  const objectPath = path.replace(/^\/+/, '')
+
+  try {
+    const client = useSupabaseClient()
+    const { data } = client.storage.from(bucket).getPublicUrl(objectPath)
+    if (data.publicUrl) {
+      return appendTransformParams(data.publicUrl, options)
+    }
+  } catch {
+    // Outside Nuxt/Vue setup — fall through to manual URL
+  }
+
+  const projectUrl = getSupabaseProjectUrl()
+  if (!projectUrl) {
+    return ''
+  }
+
+  const encodedPath = objectPath
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/')
+
+  const base = `${projectUrl}/storage/v1/object/public/${bucket}/${encodedPath}`
+  return appendTransformParams(base, options)
+}
+
+/**
+ * Resolve any stored media value to a browser-ready URL.
+ * Supports storage refs, legacy paths, absolute URLs, and local `/public` paths.
+ */
+export function resolveStorageRef(
+  ref?: string | null,
+  options?: ImageTransformOptions,
+): string {
+  if (!ref) return ''
+
+  const trimmed = ref.trim()
+  if (!trimmed) return ''
+
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed
+  }
+
+  if (trimmed.startsWith('/')) {
+    return trimmed
+  }
+
+  const colonRef = parseStorageRef(trimmed)
+  if (colonRef) {
+    return getStoragePublicUrl(colonRef.bucket, colonRef.path, options)
+  }
+
+  const slashRef = parseBucketSlashRef(trimmed)
+  if (slashRef) {
+    return getStoragePublicUrl(slashRef.bucket, slashRef.path, options)
+  }
+
+  if (trimmed.startsWith('programs/')) {
+    return getStoragePublicUrl(STORAGE_BUCKETS.media, trimmed, options)
+  }
+
+  return getStoragePublicUrl(STORAGE_BUCKETS.program_media, trimmed, options)
+}
+
+export async function uploadStorageObject(
+  client: { storage: { from: (bucket: string) => { upload: (path: string, file: File, opts: object) => Promise<{ error: Error | null }> } } },
+  bucket: StorageBucketId,
+  path: string,
+  file: File,
+  options: { upsert?: boolean } = {},
+): Promise<string> {
+  const objectPath = path.replace(/^\/+/, '')
+  const { error } = await client.storage.from(bucket).upload(objectPath, file, {
+    cacheControl: '3600',
+    upsert: options.upsert ?? false,
+  })
+
+  if (error) {
+    throw new Error(`Upload to ${bucket}/${objectPath} failed: ${error.message}`)
+  }
+
+  return formatStorageRef(bucket, objectPath)
+}
+
+/** Program cover / gallery object path inside `program_media`. */
+export function programMediaObjectPath(
+  slug: string,
+  prefix: 'cover' | 'gallery',
+  filename: string,
+): string {
+  const safeSlug = slug.trim().toLowerCase().replace(/[^a-z0-9-_]+/g, '-') || 'program'
+  const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const uuid =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+  return `${safeSlug}/${prefix}-${uuid}-${safeFilename}`
+}
+
+/** True when the URL should bypass Nuxt Image IPX (external Supabase storage). */
+export function isSupabaseStorageUrl(url: string): boolean {
+  return url.includes('/storage/v1/object/public/')
+}
