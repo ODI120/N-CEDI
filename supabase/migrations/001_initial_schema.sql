@@ -32,7 +32,11 @@ create table if not exists programs (
   title text not null,
   subtitle text,
   description text not null,
+  overview text,
+  lab_experience text,
+  requirements text,
   body jsonb, -- rich text block array
+  outcomes text[] default '{}'::text[] not null,
   duration_weeks integer default 12 not null,
   level text not null check (level in ('beginner', 'intermediate', 'advanced')),
   is_featured boolean default false not null,

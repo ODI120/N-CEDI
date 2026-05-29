@@ -2,6 +2,8 @@
 definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'Gallery | Admin | N-CEDI' })
 
+import { getImageUrl } from '~/utils/imageUrl'
+
 const supabase = useSupabaseClient() as any
 const toast = useToast()
 const search = ref('')
@@ -28,25 +30,65 @@ const deleteOpen = ref(false)
 const mode = ref<'add'|'edit'>('add')
 const saving = ref(false)
 const deleting = ref(false)
+const imageFile = ref<File | null>(null)
 const form = ref({ title: '', image_url: '', media_type: 'image', caption: '', is_featured: false, sort_order: 0 })
 const target = ref<Row | null>(null)
 
-const openAdd = () => { mode.value = 'add'; form.value = { title: '', image_url: '', media_type: 'image', caption: '', is_featured: false, sort_order: 0 }; modalOpen.value = true }
-const openEdit = (r: Row) => { mode.value = 'edit'; target.value = r; form.value = { title: r.title, image_url: r.image_url || '', media_type: r.media_type || 'image', caption: r.caption || '', is_featured: r.is_featured, sort_order: r.sort_order }; modalOpen.value = true }
+const getUploadKey = (file: File) => {
+  const safeFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const uuid = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  return `gallery/${uuid}-${safeFilename}`
+}
+
+const uploadFile = async (file: File, path: string) => {
+  const { error } = await supabase.storage.from('media').upload(path, file, {
+    cacheControl: '3600',
+    upsert: false
+  })
+  if (error) throw error
+  return getImageUrl(path)
+}
+
+const handleImageFileChange = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  imageFile.value = input.files?.[0] ?? null
+}
+
+const openAdd = () => {
+  mode.value = 'add'
+  target.value = null
+  imageFile.value = null
+  form.value = { title: '', image_url: '', media_type: 'image', caption: '', is_featured: false, sort_order: 0 }
+  modalOpen.value = true
+}
+const openEdit = (r: Row) => {
+  mode.value = 'edit'
+  target.value = r
+  imageFile.value = null
+  form.value = { title: r.title, image_url: r.image_url || '', media_type: r.media_type || 'image', caption: r.caption || '', is_featured: r.is_featured, sort_order: r.sort_order }
+  modalOpen.value = true
+}
 const openDelete = (r: Row) => { target.value = r; deleteOpen.value = true }
 
 const save = async () => {
   saving.value = true
   try {
+    const payload = { ...form.value }
+    if (imageFile.value) {
+      const uploadKey = getUploadKey(imageFile.value)
+      payload.image_url = await uploadFile(imageFile.value, uploadKey)
+    }
+
     if (mode.value === 'add') {
-      const { error } = await supabase.from('gallery_items').insert([form.value])
+      const { error } = await supabase.from('gallery_items').insert([payload])
       if (error) throw error
       toast.add({ title: 'Gallery item created', color: 'green' })
     } else {
-      const { error } = await supabase.from('gallery_items').update(form.value).eq('id', target.value!.id)
+      const { error } = await supabase.from('gallery_items').update(payload).eq('id', target.value!.id)
       if (error) throw error
       toast.add({ title: 'Gallery item updated', color: 'green' })
     }
+    imageFile.value = null
     modalOpen.value = false; await refresh()
   } catch (e: any) { toast.add({ title: 'Error', description: e.message, color: 'red' }) }
   finally { saving.value = false }
@@ -99,7 +141,12 @@ const remove = async () => {
 
     <AdminModal :open="modalOpen" :title="mode === 'add' ? 'Add Gallery Item' : 'Edit Gallery Item'" :submit-label="mode === 'add' ? 'Create' : 'Save'" :loading="saving" @close="modalOpen = false" @submit="save">
       <div class="am-field"><label class="am-label">Title</label><input v-model="form.title" class="am-input" /></div>
-      <div class="am-field"><label class="am-label">Image URL</label><input v-model="form.image_url" class="am-input" placeholder="https://..." /></div>
+      <div class="am-field">
+        <label class="am-label">Upload Image</label>
+        <input type="file" accept="image/*" @change="handleImageFileChange" class="am-input" />
+        <p class="am-note" v-if="imageFile">Selected file: {{ imageFile.name }}</p>
+        <p class="am-note" v-else-if="form.image_url">Current image URL: {{ form.image_url }}</p>
+      </div>
       <div class="am-row-2">
         <div class="am-field"><label class="am-label">Media Type</label>
           <select v-model="form.media_type" class="am-select"><option value="image">Image</option><option value="video">Video</option></select>

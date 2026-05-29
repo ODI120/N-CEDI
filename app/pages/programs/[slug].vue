@@ -283,6 +283,17 @@ const defaultPrograms = [
 const program = computed(() => {
   if (dbProgram.value) {
     const p = dbProgram.value as any
+    const fallbackBody = [
+      { type: 'heading', data: { level: 2, text: 'Program Overview' } },
+      { type: 'paragraph', data: { text: p.overview || p.description || '' } }
+    ]
+    if (p.lab_experience) {
+      fallbackBody.push(
+        { type: 'heading', data: { level: 3, text: 'Practical Lab Experience' } },
+        { type: 'paragraph', data: { text: p.lab_experience } }
+      )
+    }
+
     return {
       title: p.title,
       slug: p.slug,
@@ -299,10 +310,9 @@ const program = computed(() => {
         'Develop a complete prototype/project portfolio.',
         'Structure a business plan ready for incubator funding.'
       ],
-      body: p.body || [
-        { type: 'heading', data: { level: 2, text: 'About the Program' } },
-        { type: 'paragraph', data: { text: p.description || '' } }
-      ],
+      body: p.body || fallbackBody,
+      overview: p.overview || undefined,
+      labExperience: p.lab_experience || undefined,
       galleryUrls: p.gallery_urls || []
     }
   }
@@ -339,8 +349,11 @@ const sections = computed(() => {
     { id: 'overview', label: 'Overview' },
     { id: 'outcomes', label: 'Outcomes' }
   ]
+  if (program.value?.labExperience) {
+    list.push({ id: 'lab-experience', label: 'Lab Experience' })
+  }
   if (program.value?.galleryUrls && program.value.galleryUrls.length > 0) {
-    list.push({ id: 'gallery', label: 'Gallery & Labs' })
+    list.push({ id: 'gallery', label: 'Facilities & Work' })
   }
   list.push({ id: 'specifications', label: 'Academic Integration' })
   return list
@@ -505,6 +518,24 @@ onMounted(() => {
                   <p class="outcome-card-pro__text">{{ outcome }}</p>
                 </div>
               </div>
+            </div>
+          </MotionWrapper>
+        </section>
+
+        <!-- Lab Experience Section -->
+        <section
+          v-if="program.labExperience"
+          id="lab-experience"
+          class="program-section-block"
+        >
+          <MotionWrapper variant="fadeUp" :delay="250">
+            <div class="program-body-section">
+              <RichTextRenderer
+                :body="[
+                  { type: 'heading', data: { level: 2, text: 'Practical Lab Experience' } },
+                  { type: 'paragraph', data: { text: program.labExperience } }
+                ]"
+              />
             </div>
           </MotionWrapper>
         </section>

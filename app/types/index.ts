@@ -46,7 +46,11 @@ export interface Program {
   isFeatured: boolean
   isPublished: boolean
   coverImageUrl: string
-  galleryUrls: string[]
+  galleryUrls?: string[]
+  requirements?: string
+  outcomes?: string[]
+  overview?: string
+  labExperience?: string
   metaTitle?: string
   metaDescription?: string
   createdAt: string

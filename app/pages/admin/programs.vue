@@ -6,12 +6,22 @@ type ProgramRow = {
   id: string
   title: string
   slug: string
-  level: 'beginner' | 'intermediate' | 'advanced'
+  subtitle?: string
+  description?: string
+  cover_image_url?: string
   duration_weeks: number
+  level: 'beginner' | 'intermediate' | 'advanced'
   is_published: boolean
   is_featured: boolean
+  requirements?: string
+  outcomes?: string[]
+  overview?: string
+  lab_experience?: string
+  gallery_urls?: string[]
   updated_at: string
 }
+
+import { getImageUrl } from '~/utils/imageUrl'
 
 const supabase = useSupabaseClient() as any
 const toast = useToast()
@@ -45,27 +55,110 @@ const deleteOpen = ref(false)
 const saving = ref(false)
 const deleting = ref(false)
 const mode = ref<'add'|'edit'>('add')
-const form = ref<Partial<ProgramRow>>({
-  title: '', slug: '', level: 'beginner', duration_weeks: 4, is_published: false, is_featured: false
+const coverImageFile = ref<File | null>(null)
+const galleryFiles = ref<File[]>([])
+const form = ref<Partial<ProgramRow> & { outcomesText?: string }>({
+  title: '', slug: '', level: 'beginner', duration_weeks: 4, is_published: false, is_featured: false, outcomesText: '', gallery_urls: []
 })
 const target = ref<ProgramRow | null>(null)
 
-const openAdd = () => { mode.value = 'add'; form.value = { title: '', slug: '', level: 'beginner', duration_weeks: 4, is_published: false, is_featured: false }; modalOpen.value = true }
-const openEdit = (row: ProgramRow) => { mode.value = 'edit'; target.value = row; form.value = { ...row }; modalOpen.value = true }
+const getSlugForStorage = () => {
+  const raw = target.value?.slug || form.value.slug || 'program'
+  return String(raw).trim().toLowerCase().replace(/[^a-z0-9-_]+/g, '-')
+}
+
+const getUploadKey = (file: File, prefix: string) => {
+  const safeFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const uuid = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  return `programs/${getSlugForStorage()}/${prefix}-${uuid}-${safeFilename}`
+}
+
+const uploadFile = async (file: File, path: string) => {
+  const { error } = await supabase.storage.from('media').upload(path, file, {
+    cacheControl: '3600',
+    upsert: false
+  })
+  if (error) throw error
+  return getImageUrl(path)
+}
+
+const handleCoverImageChange = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  coverImageFile.value = input.files?.[0] ?? null
+}
+
+const handleGalleryFilesChange = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  galleryFiles.value = input.files ? Array.from(input.files) : []
+}
+
+const openAdd = () => {
+  mode.value = 'add'
+  target.value = null
+  coverImageFile.value = null
+  galleryFiles.value = []
+  form.value = {
+    title: '',
+    slug: '',
+    level: 'beginner',
+    duration_weeks: 4,
+    is_published: false,
+    is_featured: false,
+    outcomesText: '',
+    gallery_urls: []
+  }
+  modalOpen.value = true
+}
+
+const openEdit = (row: ProgramRow) => {
+  mode.value = 'edit'
+  target.value = row
+  coverImageFile.value = null
+  galleryFiles.value = []
+  form.value = {
+    ...row,
+    outcomesText: row.outcomes?.join('\n') ?? '',
+    gallery_urls: row.gallery_urls || []
+  }
+  modalOpen.value = true
+}
 const openDelete = (row: ProgramRow) => { target.value = row; deleteOpen.value = true }
 
 const save = async () => {
   saving.value = true
   try {
+    const { outcomesText, gallery_urls, ...base } = form.value
+    const incoming: Record<string, unknown> = {
+      ...base,
+      outcomes: outcomesText?.split('\n').map(line => line.trim()).filter(Boolean) ?? [],
+      gallery_urls: gallery_urls?.length ? [...gallery_urls] : []
+    }
+
+    if (coverImageFile.value) {
+      const coverKey = getUploadKey(coverImageFile.value, 'cover')
+      incoming.cover_image_url = await uploadFile(coverImageFile.value, coverKey)
+    }
+
+    if (galleryFiles.value.length > 0) {
+      const existingGalleryUrls = Array.isArray(incoming.gallery_urls) ? [...(incoming.gallery_urls as string[])] : []
+      for (const file of galleryFiles.value) {
+        const galleryKey = getUploadKey(file, 'gallery')
+        existingGalleryUrls.push(await uploadFile(file, galleryKey))
+      }
+      incoming.gallery_urls = existingGalleryUrls
+    }
+
     if (mode.value === 'add') {
-      const { error } = await supabase.from('programs').insert([form.value])
+      const { error } = await supabase.from('programs').insert([incoming])
       if (error) throw error
       toast.add({ title: 'Program Created', color: 'green' })
     } else {
-      const { error } = await supabase.from('programs').update(form.value).eq('id', target.value!.id)
+      const { error } = await supabase.from('programs').update(incoming).eq('id', target.value!.id)
       if (error) throw error
       toast.add({ title: 'Program Updated', color: 'green' })
     }
+    coverImageFile.value = null
+    galleryFiles.value = []
     modalOpen.value = false; await refresh()
   } catch (e: any) { toast.add({ title: 'Error', description: e.message, color: 'red' }) }
   finally { saving.value = false }
@@ -132,8 +225,25 @@ const remove = async () => {
     <!-- Create / Edit Modal -->
     <AdminModal :open="modalOpen" :title="mode === 'add' ? 'Create Program' : 'Edit Program'" :submit-label="mode === 'add' ? 'Create' : 'Save Changes'" :loading="saving" @close="modalOpen = false" @submit="save">
       <div class="am-field"><label class="am-label">Title</label><input v-model="form.title" class="am-input" /></div>
+      <div class="am-field"><label class="am-label">Subtitle</label><input v-model="form.subtitle" class="am-input" /></div>
       <div class="am-field"><label class="am-label">Slug</label><input v-model="form.slug" class="am-input" /></div>
-      <div class="am-row-2">
+      <div class="am-field">
+        <label class="am-label">Cover Image</label>
+        <input type="file" accept="image/*" @change="handleCoverImageChange" class="am-input" />
+        <p class="am-note" v-if="coverImageFile">Selected file: {{ coverImageFile.name }}</p>
+        <p class="am-note" v-else-if="form.cover_image_url">Current image URL: {{ form.cover_image_url }}</p>
+      </div>
+      <div class="am-field"><label class="am-label">Description</label><textarea v-model="form.description" class="am-textarea" rows="3"></textarea></div>
+      <div class="am-field"><label class="am-label">Program Overview</label><textarea v-model="form.overview" class="am-textarea" rows="3"></textarea></div>
+      <div class="am-field"><label class="am-label">Practical Lab Experience</label><textarea v-model="form.lab_experience" class="am-textarea" rows="3"></textarea></div>
+      <div class="am-field"><label class="am-label">Key Learning Outcomes (one per line)</label><textarea v-model="form.outcomesText" class="am-textarea" rows="4"></textarea></div>
+      <div class="am-field">
+        <label class="am-label">Gallery Images</label>
+        <input type="file" accept="image/*" multiple @change="handleGalleryFilesChange" class="am-input" />
+        <p class="am-note" v-if="galleryFiles.length">Selected {{ galleryFiles.length }} files</p>
+        <p class="am-note" v-else-if="form.gallery_urls?.length">Existing {{ form.gallery_urls.length }} gallery images will remain unless new files are uploaded.</p>
+      </div>
+      <div class="am-row-2" style="margin-top:16px">
         <div class="am-field"><label class="am-label">Difficulty Level</label>
           <select v-model="form.level" class="am-select">
             <option value="beginner">Beginner</option>
