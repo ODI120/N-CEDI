@@ -6,8 +6,6 @@ interface ProgramItem {
   title: string
   slug: string
   subtitle?: string
-  level: string
-  durationWeeks: number
 }
 
 interface AppMegaMenuProps {
@@ -51,7 +49,7 @@ const handleKeydown = (event: KeyboardEvent) => {
         <div class="mega-menu__header">
           <div>
             <span class="eyebrow">Our Curriculum</span>
-            <h3 class="mega-menu__title">Explore Programs by Level</h3>
+            <h3 class="mega-menu__title">Explore Skill Development Tracks</h3>
           </div>
           <button
             class="mega-menu__close-btn"
@@ -71,6 +69,7 @@ const handleKeydown = (event: KeyboardEvent) => {
             <div v-for="prog in programs" :key="prog.id" class="mega-menu__col">
               <NuxtLink :to="`/programs/${prog.slug}`" class="mega-menu__link" @click="emit('close')">
                 <span class="mega-menu__link-title">{{ prog.title }}</span>
+                <span v-if="prog.subtitle" class="mega-menu__link-subtitle">{{ prog.subtitle }}</span>
                 <span class="mega-menu__link-meta">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
                   ND1 – HND2 Track
@@ -78,8 +77,12 @@ const handleKeydown = (event: KeyboardEvent) => {
               </NuxtLink>
             </div>
             <div v-if="programs.length === 0" class="mega-menu__empty">
-              No programs found.
+              No published tracks yet.
             </div>
+            <NuxtLink to="/programs" class="mega-menu__view-all" @click="emit('close')">
+              View all skill tracks
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+            </NuxtLink>
           </div>
 
           <!-- Spotlight / CTA Column (NCAT Advert Spot) -->
@@ -296,6 +299,33 @@ const handleKeydown = (event: KeyboardEvent) => {
   font-size: var(--text-sm);
   color: var(--color-brand-primary);
   margin-bottom: var(--space-1);
+}
+
+.mega-menu__link-subtitle {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  line-height: var(--leading-snug);
+  margin-bottom: var(--space-1);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mega-menu__view-all {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-brand-accent);
+  text-decoration: none;
+}
+
+.mega-menu__view-all:hover {
+  text-decoration: underline;
 }
 
 .mega-menu__link-meta {

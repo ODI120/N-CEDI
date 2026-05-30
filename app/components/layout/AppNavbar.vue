@@ -63,7 +63,7 @@
     isMegaMenuOpen.value = !isMegaMenuOpen.value
   }
 
-  const { programs: navbarPrograms } = await usePrograms({ limit: 9 })
+  const { programs: navbarPrograms } = await usePrograms({ orderBy: 'updated_at' })
 
   const programs = computed(() =>
     (navbarPrograms.value ?? []).map((program) => ({
@@ -71,8 +71,6 @@
       title: program.title,
       slug: program.slug,
       subtitle: program.subtitle ?? '',
-      level: 'track',
-      durationWeeks: 0,
     }))
   )
 

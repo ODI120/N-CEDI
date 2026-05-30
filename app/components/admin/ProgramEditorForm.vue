@@ -13,6 +13,8 @@ import {
 } from '~/utils/programAdmin'
 import {
   STORAGE_BUCKETS,
+  collectProgramStorageRefs,
+  deleteStorageRefs,
   programMediaObjectPath,
   uploadStorageObject,
 } from '~/utils/storage'
@@ -24,6 +26,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   saved: [payload: { id: string; slug: string }]
   cancel: []
+  deleted: []
 }>()
 
 const supabase = useSupabaseClient() as any
@@ -32,6 +35,8 @@ const toast = useToast()
 const isCreate = computed(() => !props.programId)
 const activeSection = ref('basics')
 const saving = ref(false)
+const deleting = ref(false)
+const deleteOpen = ref(false)
 const slugTouched = ref(false)
 const coverImageFile = ref<File | null>(null)
 const coverPreviewUrl = ref('')
@@ -172,13 +177,20 @@ const save = async () => {
     hasPendingCover: Boolean(coverImageFile.value),
   })
   if (hasFormErrors(errors.value)) {
-    toast.add({ title: 'Please fix the highlighted fields', color: 'red' })
+    toast.add({
+      title: errors.value.publish ? 'Cannot publish yet' : 'Please fix the highlighted fields',
+      description: errors.value.publish,
+      color: 'red',
+    })
     if (errors.value.title || errors.value.slug || errors.value.description) activeSection.value = 'basics'
     else if (errors.value.coverImageUrl) activeSection.value = 'hero'
+    else if (errors.value.publish) activeSection.value = 'seo'
     return
   }
 
   saving.value = true
+  const previousCoverRef = form.value.coverImageUrl
+
   try {
     const payload = formToDbPayload(form.value)
 
@@ -221,11 +233,36 @@ const save = async () => {
       toast.add({ title: 'Skill track updated', color: 'green' })
       emit('saved', { id: data.id, slug: data.slug })
     }
+
+    if (coverImageFile.value && previousCoverRef) {
+      await deleteStorageRefs(supabase, [previousCoverRef])
+    }
   } catch (error: any) {
     const message = error?.message || 'Unknown error'
     toast.add({ title: 'Could not save program', description: message, color: 'red' })
   } finally {
     saving.value = false
+  }
+}
+
+const removeProgram = async () => {
+  if (!props.programId) return
+  deleting.value = true
+  try {
+    const refs = collectProgramStorageRefs(form.value.coverImageUrl, form.value.galleryUrls)
+    const { error } = await supabase.from('programs').delete().eq('id', props.programId)
+    if (error) throw error
+    if (refs.length) {
+      await deleteStorageRefs(supabase, refs)
+    }
+    toast.add({ title: 'Program deleted', color: 'green' })
+    deleteOpen.value = false
+    emit('deleted')
+  } catch (error: any) {
+    const message = error?.message || 'Unknown error'
+    toast.add({ title: 'Could not delete program', description: message, color: 'red' })
+  } finally {
+    deleting.value = false
   }
 }
 
@@ -490,6 +527,8 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="toggle-grid">
+          <p v-if="errors.publish" class="field-error publish-error">{{ errors.publish }}</p>
+
           <label class="toggle-card" :class="{ 'is-on': form.isPublished }">
             <input v-model="form.isPublished" type="checkbox">
             <div>
@@ -512,9 +551,17 @@ onBeforeUnmount(() => {
     <footer class="program-editor__footer">
       <div class="program-editor__footer-left">
         <button type="button" class="btn btn-ghost" @click="emit('cancel')">Cancel</button>
+        <button
+          v-if="!isCreate"
+          type="button"
+          class="btn btn-danger btn-ghost"
+          @click="deleteOpen = true"
+        >
+          <UIcon name="i-lucide-trash-2" />Delete
+        </button>
         <NuxtLink
-          v-if="previewPath && !isCreate"
-          :to="previewPath"
+          v-if="previewPath"
+          :to="form.isPublished ? previewPath : `/admin/programs/preview/${form.slug}`"
           target="_blank"
           class="btn btn-ghost"
         >
@@ -526,6 +573,19 @@ onBeforeUnmount(() => {
         {{ isCreate ? 'Create program' : 'Save changes' }}
       </button>
     </footer>
+
+    <AdminModal
+      :open="deleteOpen"
+      title="Delete program"
+      subtitle="This permanently removes the program, its public page, and uploaded media files."
+      submit-label="Delete permanently"
+      submit-danger
+      :loading="deleting"
+      @close="deleteOpen = false"
+      @submit="removeProgram"
+    >
+      <p style="color:var(--admin-text-secondary);font-weight:700">{{ form.title || 'Untitled program' }}</p>
+    </AdminModal>
   </div>
 </template>
 
@@ -826,6 +886,10 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--sp-4);
+}
+
+.publish-error {
+  grid-column: 1 / -1;
 }
 
 .toggle-card {

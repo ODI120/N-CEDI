@@ -82,6 +82,7 @@ export function getSupabaseProjectUrl(): string {
     (pub.supabase as { url?: string } | undefined)?.url,
     process.env.SUPABASE_URL,
     process.env.NUXT_PUBLIC_SUPABASE_URL,
+    process.env.NUXT_SUPABASE_URL,
   ]
 
   for (const value of candidates) {
@@ -170,11 +171,15 @@ export function resolveStorageRef(
     return getStoragePublicUrl(slashRef.bucket, slashRef.path, options)
   }
 
-  if (trimmed.startsWith('programs/')) {
+  if (trimmed.startsWith('programs/') || trimmed.startsWith('gallery/')) {
     return getStoragePublicUrl(STORAGE_BUCKETS.media, trimmed, options)
   }
 
-  return getStoragePublicUrl(STORAGE_BUCKETS.program_media, trimmed, options)
+  if (trimmed.startsWith('items/')) {
+    return getStoragePublicUrl(STORAGE_BUCKETS.gallery_media, trimmed, options)
+  }
+
+  return getStoragePublicUrl(STORAGE_BUCKETS.gallery_media, trimmed, options)
 }
 
 export async function uploadStorageObject(
@@ -197,6 +202,28 @@ export async function uploadStorageObject(
   return formatStorageRef(bucket, objectPath)
 }
 
+/** Partner logo path inside `site_assets`. */
+export function partnerLogoObjectPath(filename: string): string {
+  const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const uuid =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+  return `partners/${uuid}-${safeFilename}`
+}
+
+/** Gallery item image path inside `gallery_media`. */
+export function galleryMediaObjectPath(filename: string): string {
+  const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const uuid =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+  return `items/${uuid}-${safeFilename}`
+}
+
 /** Program cover / gallery object path inside `program_media`. */
 export function programMediaObjectPath(
   slug: string,
@@ -211,6 +238,56 @@ export function programMediaObjectPath(
       : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
   return `${safeSlug}/${prefix}-${uuid}-${safeFilename}`
+}
+
+/** Collect non-empty storage refs from a program row or form. */
+export function collectProgramStorageRefs(
+  cover?: string | null,
+  gallery?: string[] | null,
+): string[] {
+  const refs: string[] = []
+  if (cover?.trim()) refs.push(cover.trim())
+  gallery?.forEach((url) => {
+    if (url?.trim()) refs.push(url.trim())
+  })
+  return refs
+}
+
+/** Resolve a stored value to bucket + object path for deletion. */
+export function resolveStorageRefForDelete(
+  ref: string,
+): { bucket: StorageBucketId; path: string } | null {
+  return parseStorageRef(ref) || parseBucketSlashRef(ref)
+}
+
+/** Delete storage objects referenced by program media fields. Best-effort; logs warnings. */
+export async function deleteStorageRefs(
+  client: {
+    storage: {
+      from: (bucket: string) => {
+        remove: (paths: string[]) => Promise<{ error: Error | null }>
+      }
+    }
+  },
+  refs: Array<string | null | undefined>,
+): Promise<void> {
+  const byBucket = new Map<StorageBucketId, string[]>()
+
+  for (const ref of refs) {
+    if (!ref?.trim()) continue
+    const parsed = resolveStorageRefForDelete(ref.trim())
+    if (!parsed) continue
+    const paths = byBucket.get(parsed.bucket) ?? []
+    paths.push(parsed.path)
+    byBucket.set(parsed.bucket, paths)
+  }
+
+  for (const [bucket, paths] of byBucket.entries()) {
+    const { error } = await client.storage.from(bucket).remove(paths)
+    if (error) {
+      console.warn(`[storage] Failed to delete from ${bucket}:`, error.message)
+    }
+  }
 }
 
 /** True when the URL should bypass Nuxt Image IPX (external Supabase storage). */

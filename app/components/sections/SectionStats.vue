@@ -15,19 +15,21 @@ const props = withDefaults(defineProps<SectionStatsProps>(), {
 })
 
 // ─── Live data from Supabase ───────────────────────────────────
-const { stats } = useStats()
+const { stats, pending: statsPending } = await useHomepageStats()
 
-// Gallery slider: published images only, limited to 6
-const { items: galleryItems } = useGallery({ mediaType: 'image', limit: 6 })
+// Gallery slider: published images from DB, with local fallbacks when empty
+const { items: galleryItems } = await useHomepageGallerySlider(6)
 
 // Normalize gallery items so the template stays readable
+const galleryDisplayItems = useGalleryDisplayItems(() => galleryItems.value ?? [])
+
 const gallerySlides = computed(() =>
-  (galleryItems.value ?? []).map((item) => ({
-    id:          item.id,
-    image:       item.mediaUrl,
-    title:       item.title ?? '',
+  galleryDisplayItems.value.map((item) => ({
+    id: item.id,
+    image: item.mediaUrl,
+    title: item.title ?? '',
     description: item.altText ?? '',
-  }))
+  })),
 )
 
 // ─── Slider logic ──────────────────────────────────────────────
@@ -39,14 +41,18 @@ let slideInterval: ReturnType<typeof setInterval> | null = null
 const touchStartX = ref(0)
 const touchEndX = ref(0)
 
+const slideCount = computed(() => gallerySlides.value.length)
+
 const nextSlide = () => {
-  currentSlide.value = (currentSlide.value + 1) % gallerySlides.value.length
+  if (!slideCount.value) return
+  currentSlide.value = (currentSlide.value + 1) % slideCount.value
 }
 
 const prevSlide = () => {
+  if (!slideCount.value) return
   currentSlide.value =
     currentSlide.value === 0
-      ? gallerySlides.value.length - 1
+      ? slideCount.value - 1
       : currentSlide.value - 1
 }
 
@@ -56,7 +62,7 @@ const goToSlide = (index: number) => {
 }
 
 const startInterval = () => {
-  if (slideInterval) return
+  if (slideInterval || !slideCount.value) return
   slideInterval = setInterval(() => {
     if (document.visibilityState === 'visible' && !isHovered.value) {
       nextSlide()
@@ -233,18 +239,20 @@ onUnmounted(() => {
         <MotionWrapper
           v-for="(stat, index) in stats"
           :key="`stat-${stat.id ?? index}`"
-          variant="fadeUp" 
-          :delay="0.3 + (index * 0.1)" 
-          :duration="0.8" 
+          variant="fadeUp"
+          :delay="0.3 + (index * 0.1)"
+          :duration="0.8"
           class="pro-card pro-card--stat"
           :class="`stat-${index + 1}`"
         >
           <div class="pro-card__glow"></div>
           <div class="stat-content">
+            
             <div class="stat-number-wrapper">
               <span v-if="stat.prefix" class="stat-prefix">{{ stat.prefix }}</span>
               <CounterAnimate
                 :target="stat.value"
+                :decimals="Number.isInteger(stat.value) ? 0 : 1"
                 class="stat-number"
               />
               <span v-if="stat.suffix" class="stat-suffix">{{ stat.suffix }}</span>
@@ -252,6 +260,16 @@ onUnmounted(() => {
             <p class="stat-label">{{ stat.label }}</p>
           </div>
         </MotionWrapper>
+
+        <div
+          v-if="statsPending && !stats?.length"
+          class="pro-card pro-card--stat stat-loading"
+          aria-busy="true"
+        >
+          <div class="stat-content">
+            <p class="stat-label">Loading impact stats…</p>
+          </div>
+        </div>
 
       </div>
     </div>
@@ -644,6 +662,19 @@ onUnmounted(() => {
   text-align: center;
   height: 100%;
   padding: var(--space-8) var(--space-4);
+  gap: var(--space-2);
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+  color: rgba(107, 89, 255, 0.85);
+  margin-bottom: var(--space-1);
+}
+
+.stat-loading {
+  grid-column: 2 / 5;
+  grid-row: 2 / 3;
+  opacity: 0.6;
 }
 
 .stat-number-wrapper {

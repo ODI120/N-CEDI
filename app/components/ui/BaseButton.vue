@@ -111,6 +111,7 @@
   background-color: var(--color-brand-accent);
   color: var(--color-text-light);
   border-color: transparent;
+  border-radius: var(--radius-full);
 }
 .base-button--primary:hover:not(.base-button--disabled):not(.base-button--loading) {
   background-color: var(--color-brand-accent);
@@ -121,6 +122,7 @@
   background-color: var(--color-text-light);
   color: var(--color-brand-primary);
   border-color: #6B59FF50;
+  border-radius: var(--radius-full);
 }
 .base-button--secondary:hover:not(.base-button--disabled):not(.base-button--loading) {
   background-color: #6B59FF10;

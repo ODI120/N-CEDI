@@ -8,7 +8,9 @@ usePageSeo({
   description: 'N-CEDI — NCAT Centre for Entrepreneurship Development and Innovation. Empowering Africa\'s next generation of innovators through world-class vocational and tech training in Nigeria.'
 })
 
-const { programs } = await usePrograms({ limit: 6 })
+const { programs } = await useHomepagePrograms(6)
+const { partners: homepagePartners } = await useHomepagePartners(6)
+const displayPartners = useResolvedSectionPartners(homepagePartners)
 
 const testimonials = [
   {
@@ -31,38 +33,6 @@ const testimonials = [
   }
 ]
 
-const partners = [
-  { 
-    id: '1',
-    name: 'Federal Ministry of Innovation, Science and Technology', 
-    acronym: 'FMIST',
-    logoUrl: '/images/fg.png', 
-    description: 'Federal agency driving Nigeria\'s science, technology and innovation policy framework.',
-    websiteUrl: '#',
-    icon: 'bi-bank2',
-    tier: 'platinum' as const 
-  },
-  { 
-    id: '2',
-    name: 'National Board for Technology Incubation', 
-    acronym: 'NBTI',
-    logoUrl: '/images/ncatlogo.png', 
-    description: 'Fostering technology-based entrepreneurship through incubation centres nationwide.',
-    websiteUrl: '#',
-    icon: 'bi-rocket-takeoff',
-    tier: 'platinum' as const 
-  },
-  { 
-    id: '3',
-    name: 'National Board for Technical Education', 
-    acronym: 'NBTE',
-    logoUrl: '/images/nbte.png', 
-    description: 'Regulating and setting standards for technical and vocational education in Nigeria.',
-    websiteUrl: '#',
-    icon: 'bi-mortarboard',
-    tier: 'platinum' as const 
-  }
-]
 </script>
 
 <template>
@@ -86,7 +56,7 @@ const partners = [
     </MotionWrapper>
 
     <MotionWrapper variant="fadeUp" :delay="0.1">
-      <SectionPartners :partners="partners" />
+      <SectionPartners :partners="displayPartners" />
     </MotionWrapper>
 
     <SectionCTA

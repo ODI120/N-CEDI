@@ -56,12 +56,14 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/': { prerender: true },
+    // ISR so homepage stats/gallery/programs reflect DB without full redeploy
+    '/': { isr: 600 },
     '/about': { prerender: true },
-    '/programs/**': { isr: 3600 },
+    '/programs/**': { isr: 900 },
     '/events/**': { isr: 1800 },
     '/blog/**': { isr: 3600 },
-    '/gallery': { isr: 7200 },
+    '/gallery': { isr: 600 },
+    '/partners': { isr: 600 },
     '/admin/**': { ssr: false }
   },
 
@@ -87,7 +89,12 @@ export default defineNuxtConfig({
   },
 
   supabase: {
-    redirect: false
+    redirect: false,
+    url: process.env.SUPABASE_URL || process.env.NUXT_PUBLIC_SUPABASE_URL,
+    key:
+      process.env.SUPABASE_KEY
+      || process.env.SUPABASE_ANON_KEY
+      || process.env.NUXT_PUBLIC_SUPABASE_ANON_KEY,
   },
 
   runtimeConfig: {

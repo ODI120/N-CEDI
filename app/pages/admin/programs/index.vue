@@ -2,11 +2,15 @@
 definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'Programs | Admin | N-CEDI' })
 
+import { collectProgramStorageRefs, deleteStorageRefs } from '~/utils/storage'
+
 type ProgramRow = {
   id: string
   title: string
   slug: string
   subtitle?: string | null
+  cover_image_url?: string | null
+  gallery_urls?: string[] | null
   is_published: boolean
   is_featured: boolean
   updated_at: string
@@ -22,7 +26,7 @@ const statusFilter = ref<'all' | 'published' | 'draft'>('all')
 const { data, pending, refresh } = useAsyncData('admin-programs', async () => {
   let query = supabase
     .from('programs')
-    .select('id, title, slug, subtitle, is_published, is_featured, updated_at')
+    .select('id, title, slug, subtitle, cover_image_url, gallery_urls, is_published, is_featured, updated_at')
     .order('updated_at', { ascending: false })
 
   if (search.value.trim()) {
@@ -52,6 +56,9 @@ const target = ref<ProgramRow | null>(null)
 const fmtDate = (value: string) =>
   new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 
+const previewHref = (row: ProgramRow) =>
+  row.is_published ? `/programs/${row.slug}` : `/admin/programs/preview/${row.slug}`
+
 const openDelete = (row: ProgramRow) => {
   target.value = row
   deleteOpen.value = true
@@ -61,13 +68,27 @@ const remove = async () => {
   if (!target.value) return
   deleting.value = true
   try {
+    const refs = collectProgramStorageRefs(
+      target.value.cover_image_url,
+      target.value.gallery_urls,
+    )
+
     const { error } = await supabase.from('programs').delete().eq('id', target.value.id)
     if (error) throw error
+
+    if (refs.length) {
+      await deleteStorageRefs(supabase, refs)
+    }
+
     toast.add({ title: 'Program deleted', color: 'green' })
     deleteOpen.value = false
     await refresh()
   } catch (error: any) {
-    toast.add({ title: 'Error deleting', description: error.message, color: 'red' })
+    const message = error?.message || 'Unknown error'
+    const hint = message.includes('policy') || message.includes('permission')
+      ? 'Your account may need admin role to delete programs.'
+      : message
+    toast.add({ title: 'Error deleting', description: hint, color: 'red' })
   } finally {
     deleting.value = false
   }
@@ -78,7 +99,7 @@ onMounted(() => {
   if (typeof created === 'string' && created) {
     toast.add({
       title: 'Program created',
-      description: `Live at /programs/${created}`,
+      description: `Preview at /admin/programs/preview/${created}`,
       color: 'green',
     })
   }
@@ -136,13 +157,17 @@ onMounted(() => {
       </template>
       <template #cell-updated_at="{ row }">{{ fmtDate(row.updated_at) }}</template>
       <template #actions="{ row }">
-        <NuxtLink :to="`/programs/${row.slug}`" target="_blank" class="btn btn-ghost btn-icon" title="Preview">
+        <NuxtLink :to="previewHref(row)" target="_blank" class="btn btn-ghost btn-icon" title="Preview">
           <UIcon name="i-lucide-external-link" />
         </NuxtLink>
         <NuxtLink :to="`/admin/programs/${row.id}`" class="btn btn-ghost btn-icon" title="Edit">
           <UIcon name="i-lucide-edit-3" />
         </NuxtLink>
-        <button class="btn btn-danger btn-icon" title="Delete" @click="openDelete(row)">
+        <button
+          class="btn btn-danger btn-icon"
+          title="Delete"
+          @click="openDelete(row)"
+        >
           <UIcon name="i-lucide-trash-2" />
         </button>
       </template>
@@ -151,7 +176,7 @@ onMounted(() => {
     <AdminModal
       :open="deleteOpen"
       title="Delete program"
-      subtitle="This permanently removes the program and its public page."
+      subtitle="This permanently removes the program, its public page, and uploaded media files."
       submit-label="Delete permanently"
       submit-danger
       :loading="deleting"

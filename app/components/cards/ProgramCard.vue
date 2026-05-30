@@ -8,6 +8,7 @@ interface Program {
   description: string
   coverImageUrl: string
   isFeatured?: boolean
+  subtitle?: string
 }
 
 const props = defineProps<{
@@ -74,6 +75,10 @@ onUnmounted(() => {
       <h3 class="program-card-pro__title">
         {{ program.title }}
       </h3>
+
+      <!-- <p v-if="program.subtitle" class="program-card-pro__subtitle">
+        {{ program.subtitle }}
+      </p> -->
 
       <p class="program-card-pro__description">
         {{ program.description }}
@@ -223,8 +228,21 @@ onUnmounted(() => {
   font-weight: 800;
   color: var(--color-brand-primary);
   margin-top: 0;
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
   line-height: var(--leading-tight);
+}
+
+.program-card-pro__subtitle {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-brand-accent);
+  margin: 0 0 var(--space-2);
+  line-height: var(--leading-snug);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .program-card-pro__description {

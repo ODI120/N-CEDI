@@ -2,64 +2,186 @@
 definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'Partners | Admin | N-CEDI' })
 
-const supabase = useSupabaseClient() as any
+import {
+  PARTNER_TIER_OPTIONS,
+  createEmptyPartnerForm,
+  formToPartnerPayload,
+  hasPartnerFormErrors,
+  partnerLogoStorageRefForRow,
+  resolvePartnerLogoUrl,
+  rowToPartnerForm,
+  validatePartnerForm,
+  type PartnerDbRow,
+  type PartnerFormErrors,
+  type PartnerFormState,
+} from '~/utils/partnerAdmin'
+import {
+  deleteStorageRefs,
+  partnerLogoObjectPath,
+  STORAGE_BUCKETS,
+  uploadStorageObject,
+} from '~/utils/storage'
+
+const supabase = useSupabaseClient()
 const toast = useToast()
 const search = ref('')
-
-type Row = { id: string; name: string; logo_url: string | null; website_url: string | null; description: string | null; sort_order: number; is_active: boolean; created_at: string }
+const statusFilter = ref<'all' | 'active' | 'inactive'>('all')
+const tierFilter = ref<'all' | PartnerFormState['tier']>('all')
 
 const { data, pending, refresh } = useAsyncData('admin-partners', async () => {
-  let q = supabase.from('partners').select('*').order('sort_order')
-  if (search.value.trim()) q = q.ilike('name', `%${search.value.trim()}%`)
-  const { data, error } = await q
+  let query = supabase
+    .from('partners')
+    .select('id, name, website_url, logo_url, tier, is_active, display_order, created_at')
+    .order('display_order', { ascending: true })
+
+  if (search.value.trim()) {
+    query = query.ilike('name', `%${search.value.trim()}%`)
+  }
+  if (statusFilter.value === 'active') query = query.eq('is_active', true)
+  if (statusFilter.value === 'inactive') query = query.eq('is_active', false)
+  if (tierFilter.value !== 'all') query = query.eq('tier', tierFilter.value)
+
+  const { data: rows, error } = await query
   if (error) throw error
-  return (data || []) as Row[]
-}, { watch: [search] })
+  return (rows || []) as PartnerDbRow[]
+}, { watch: [search, statusFilter, tierFilter] })
 
 const columns = [
-  { key: 'name', label: 'Partner Name' },
-  { key: 'website_url', label: 'Website' },
+  { key: 'logo', label: '' },
+  { key: 'name', label: 'Partner' },
+  { key: 'tier', label: 'Tier' },
+  { key: 'display_order', label: 'Order', align: 'center' as const },
   { key: 'status', label: 'Status' },
-  { key: 'sort_order', label: 'Order', align: 'center' as const },
 ]
 
 const modalOpen = ref(false)
 const deleteOpen = ref(false)
-const mode = ref<'add'|'edit'>('add')
+const mode = ref<'add' | 'edit'>('add')
 const saving = ref(false)
 const deleting = ref(false)
-const form = ref({ name: '', logo_url: '', website_url: '', description: '', sort_order: 0, is_active: true })
-const target = ref<Row | null>(null)
+const logoFile = ref<File | null>(null)
+const form = ref<PartnerFormState>(createEmptyPartnerForm())
+const errors = ref<PartnerFormErrors>({})
+const target = ref<PartnerDbRow | null>(null)
 
-const openAdd = () => { mode.value = 'add'; form.value = { name: '', logo_url: '', website_url: '', description: '', sort_order: 0, is_active: true }; modalOpen.value = true }
-const openEdit = (r: Row) => { mode.value = 'edit'; target.value = r; form.value = { name: r.name, logo_url: r.logo_url || '', website_url: r.website_url || '', description: r.description || '', sort_order: r.sort_order, is_active: r.is_active }; modalOpen.value = true }
-const openDelete = (r: Row) => { target.value = r; deleteOpen.value = true }
+const previewLogo = computed(() => {
+  if (logoFile.value) return URL.createObjectURL(logoFile.value)
+  if (form.value.logoUrl) return resolvePartnerLogoUrl(form.value.logoUrl)
+  return ''
+})
+
+const nextDisplayOrder = computed(() => {
+  const rows = data.value ?? []
+  if (!rows.length) return 0
+  return Math.max(...rows.map((row) => row.display_order)) + 1
+})
+
+const thumbUrl = (row: PartnerDbRow) => resolvePartnerLogoUrl(row.logo_url)
+
+const handleLogoFileChange = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  logoFile.value = input.files?.[0] ?? null
+}
+
+const openAdd = () => {
+  mode.value = 'add'
+  target.value = null
+  logoFile.value = null
+  form.value = {
+    ...createEmptyPartnerForm(),
+    displayOrder: nextDisplayOrder.value,
+  }
+  errors.value = {}
+  modalOpen.value = true
+}
+
+const openEdit = (row: PartnerDbRow) => {
+  mode.value = 'edit'
+  target.value = row
+  logoFile.value = null
+  form.value = rowToPartnerForm(row)
+  errors.value = {}
+  modalOpen.value = true
+}
+
+const openDelete = (row: PartnerDbRow) => {
+  target.value = row
+  deleteOpen.value = true
+}
 
 const save = async () => {
+  errors.value = validatePartnerForm(form.value, {
+    hasLogoUpload: Boolean(logoFile.value),
+  })
+  if (hasPartnerFormErrors(errors.value)) {
+    toast.add({ title: 'Please fix the highlighted fields', color: 'red' })
+    return
+  }
+
   saving.value = true
   try {
+    if (logoFile.value) {
+      const path = partnerLogoObjectPath(logoFile.value.name)
+      form.value.logoUrl = await uploadStorageObject(
+        supabase,
+        STORAGE_BUCKETS.site_assets,
+        path,
+        logoFile.value,
+      )
+    }
+
+    const payload = formToPartnerPayload(form.value)
+
     if (mode.value === 'add') {
-      const { error } = await supabase.from('partners').insert([form.value])
+      const { error } = await supabase.from('partners').insert([payload])
       if (error) throw error
       toast.add({ title: 'Partner created', color: 'green' })
     } else {
-      const { error } = await supabase.from('partners').update(form.value).eq('id', target.value!.id)
+      const previousRef = target.value ? partnerLogoStorageRefForRow(target.value) : null
+      const { error } = await supabase
+        .from('partners')
+        .update(payload)
+        .eq('id', target.value!.id)
       if (error) throw error
+
+      const newRef = partnerLogoStorageRefForRow({
+        logo_url: form.value.logoUrl,
+      } as PartnerDbRow)
+      if (previousRef && newRef && previousRef !== newRef) {
+        await deleteStorageRefs(supabase, [previousRef])
+      }
+
       toast.add({ title: 'Partner updated', color: 'green' })
     }
-    modalOpen.value = false; await refresh()
-  } catch (e: any) { toast.add({ title: 'Error', description: e.message, color: 'red' }) }
-  finally { saving.value = false }
+
+    logoFile.value = null
+    modalOpen.value = false
+    await refresh()
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Save failed'
+    toast.add({ title: 'Error saving partner', description: message, color: 'red' })
+  } finally {
+    saving.value = false
+  }
 }
 
 const remove = async () => {
+  if (!target.value) return
   deleting.value = true
   try {
-    const { error } = await supabase.from('partners').delete().eq('id', target.value!.id)
+    const storageRef = partnerLogoStorageRefForRow(target.value)
+    const { error } = await supabase.from('partners').delete().eq('id', target.value.id)
     if (error) throw error
-    toast.add({ title: 'Deleted', color: 'green' }); deleteOpen.value = false; await refresh()
-  } catch (e: any) { toast.add({ title: 'Error', description: e.message, color: 'red' }) }
-  finally { deleting.value = false }
+    if (storageRef) await deleteStorageRefs(supabase, [storageRef])
+    toast.add({ title: 'Partner deleted', color: 'green' })
+    deleteOpen.value = false
+    await refresh()
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'Delete failed'
+    toast.add({ title: 'Error deleting partner', description: message, color: 'red' })
+  } finally {
+    deleting.value = false
+  }
 }
 </script>
 
@@ -69,46 +191,192 @@ const remove = async () => {
       <div class="ap-header__left">
         <span class="ap-eyebrow">Partnerships</span>
         <h1 class="ap-title">Partners</h1>
-        <p class="ap-subtitle">Manage institutional and community partner records.</p>
+        <p class="ap-subtitle">
+          Manage institutional and corporate partners for the homepage section and the public partners page.
+          Logos upload to the <code>site_assets</code> bucket.
+        </p>
       </div>
       <div class="ap-header__actions">
-        <button class="btn btn-ghost" @click="refresh()"><UIcon name="i-lucide-refresh-cw" />Refresh</button>
-        <button class="btn btn-primary" @click="openAdd"><UIcon name="i-lucide-plus" />Add Partner</button>
+        <button type="button" class="btn btn-ghost" @click="refresh()">
+          <UIcon name="i-lucide-refresh-cw" />Refresh
+        </button>
+        <button type="button" class="btn btn-primary" @click="openAdd">
+          <UIcon name="i-lucide-plus" />Add Partner
+        </button>
       </div>
     </div>
 
     <div class="ap-toolbar">
       <div class="ap-toolbar__left">
-        <div class="ap-search"><UIcon name="i-lucide-search" class="ap-search__icon" /><input v-model="search" class="ap-search__input" placeholder="Search partners..." /></div>
+        <div class="ap-search">
+          <UIcon name="i-lucide-search" class="ap-search__icon" />
+          <input v-model="search" class="ap-search__input" placeholder="Search partners..." />
+        </div>
+        <select v-model="statusFilter" class="am-select" style="max-width: 160px">
+          <option value="all">All statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <select v-model="tierFilter" class="am-select" style="max-width: 160px">
+          <option value="all">All tiers</option>
+          <option v-for="t in PARTNER_TIER_OPTIONS" :key="t.value" :value="t.value">
+            {{ t.label }}
+          </option>
+        </select>
       </div>
     </div>
 
-    <AdminTable :columns="columns" :rows="data || []" :loading="pending" empty-title="No partners yet">
-      <template #cell-name="{ row }"><span class="font-semibold">{{ row.name }}</span></template>
-      <template #cell-website_url="{ row }"><a v-if="row.website_url" :href="row.website_url" target="_blank" class="text-sm" style="color:var(--admin-brand-blue)">{{ row.website_url }}</a><span v-else>—</span></template>
-      <template #cell-status="{ row }"><span class="badge" :class="row.is_active ? 'badge-green' : 'badge-gray'">{{ row.is_active ? 'Active' : 'Inactive' }}</span></template>
-      <template #cell-sort_order="{ row }">{{ row.sort_order }}</template>
+    <AdminTable
+      :columns="columns"
+      :rows="data || []"
+      :loading="pending"
+      empty-title="No partners yet"
+      empty-subtitle="Add sponsors and institutional partners for the homepage and partners page."
+    >
+      <template #cell-logo="{ row }">
+        <div class="thumb-cell">
+          <img v-if="thumbUrl(row)" :src="thumbUrl(row)" alt="" class="thumb-img" />
+        </div>
+      </template>
+      <template #cell-name="{ row }">
+        <span class="font-semibold">{{ row.name }}</span>
+        <a
+          v-if="row.website_url"
+          :href="row.website_url"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="partner-link"
+        >
+          {{ row.website_url }}
+        </a>
+      </template>
+      <template #cell-tier="{ row }">
+        <span class="badge badge-blue">{{ row.tier }}</span>
+      </template>
+      <template #cell-display_order="{ row }">{{ row.display_order }}</template>
+      <template #cell-status="{ row }">
+        <span class="badge" :class="row.is_active ? 'badge-green' : 'badge-gray'">
+          {{ row.is_active ? 'Live' : 'Hidden' }}
+        </span>
+      </template>
       <template #actions="{ row }">
-        <button class="btn btn-ghost btn-icon" @click="openEdit(row)"><UIcon name="i-lucide-edit-3" /></button>
-        <button class="btn btn-danger btn-icon" @click="openDelete(row)"><UIcon name="i-lucide-trash-2" /></button>
+        <button type="button" class="btn btn-ghost btn-icon" title="Edit" @click="openEdit(row)">
+          <UIcon name="i-lucide-edit-3" />
+        </button>
+        <button type="button" class="btn btn-danger btn-icon" title="Delete" @click="openDelete(row)">
+          <UIcon name="i-lucide-trash-2" />
+        </button>
       </template>
     </AdminTable>
 
-    <AdminModal :open="modalOpen" :title="mode === 'add' ? 'New Partner' : 'Edit Partner'" :submit-label="mode === 'add' ? 'Create' : 'Save'" :loading="saving" @close="modalOpen = false" @submit="save">
-      <div class="am-field"><label class="am-label">Name</label><input v-model="form.name" class="am-input" /></div>
-      <div class="am-row-2">
-        <div class="am-field"><label class="am-label">Logo URL</label><input v-model="form.logo_url" class="am-input" placeholder="https://..." /></div>
-        <div class="am-field"><label class="am-label">Website</label><input v-model="form.website_url" class="am-input" placeholder="https://..." /></div>
+    <AdminModal
+      :open="modalOpen"
+      :title="mode === 'add' ? 'New Partner' : 'Edit Partner'"
+      :submit-label="mode === 'add' ? 'Create' : 'Save changes'"
+      :loading="saving"
+      @close="modalOpen = false"
+      @submit="save"
+    >
+      <div class="am-field" :class="{ 'has-error': errors.name }">
+        <label class="am-label">Partner name *</label>
+        <input v-model="form.name" class="am-input" placeholder="e.g. National Board for Technical Education" />
+        <p v-if="errors.name" class="field-error">{{ errors.name }}</p>
       </div>
-      <div class="am-field"><label class="am-label">Description</label><textarea v-model="form.description" class="am-textarea" /></div>
+
       <div class="am-row-2">
-        <div class="am-field"><label class="am-label">Sort Order</label><input v-model.number="form.sort_order" type="number" class="am-input" /></div>
-        <div class="am-field" style="justify-content:flex-end"><label class="am-checkbox-row"><input type="checkbox" v-model="form.is_active" /> Active</label></div>
+        <div class="am-field">
+          <label class="am-label">Tier</label>
+          <select v-model="form.tier" class="am-select">
+            <option v-for="t in PARTNER_TIER_OPTIONS" :key="t.value" :value="t.value">
+              {{ t.label }}
+            </option>
+          </select>
+        </div>
+        <div class="am-field" :class="{ 'has-error': errors.displayOrder }">
+          <label class="am-label">Display order</label>
+          <input v-model.number="form.displayOrder" type="number" min="0" class="am-input" />
+          <p v-if="errors.displayOrder" class="field-error">{{ errors.displayOrder }}</p>
+        </div>
       </div>
+
+      <div class="am-field" :class="{ 'has-error': errors.logoUrl }">
+        <label class="am-label">Logo *</label>
+        <input type="file" accept="image/*" class="am-input" @change="handleLogoFileChange" />
+        <p v-if="logoFile" class="am-note">Selected: {{ logoFile.name }}</p>
+        <p v-else-if="form.logoUrl && mode === 'edit'" class="am-note">Current logo stored in site_assets</p>
+        <p v-if="errors.logoUrl" class="field-error">{{ errors.logoUrl }}</p>
+        <img v-if="previewLogo" :src="previewLogo" alt="Logo preview" class="logo-preview" />
+      </div>
+
+      <div class="am-field">
+        <label class="am-label">Website URL</label>
+        <input v-model="form.websiteUrl" class="am-input" placeholder="https://example.gov.ng" />
+      </div>
+
+      <label class="am-checkbox-row">
+        <input v-model="form.isActive" type="checkbox" />
+        Active on public site
+      </label>
+      <p class="am-note">Homepage shows active platinum partners first (up to six by display order).</p>
     </AdminModal>
 
-    <AdminModal :open="deleteOpen" title="Delete Partner" submit-label="Delete" submit-danger :loading="deleting" @close="deleteOpen = false" @submit="remove">
-      <p style="color:var(--admin-text-secondary)">Permanently delete <strong>{{ target?.name }}</strong>?</p>
+    <AdminModal
+      :open="deleteOpen"
+      title="Delete partner"
+      submit-label="Delete permanently"
+      submit-danger
+      :loading="deleting"
+      @close="deleteOpen = false"
+      @submit="remove"
+    >
+      <p style="color: var(--admin-text-secondary); font-weight: 700">{{ target?.name }}</p>
     </AdminModal>
   </section>
 </template>
+
+<style scoped>
+.thumb-cell {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--admin-radius-md);
+  overflow: hidden;
+  background: var(--admin-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.partner-link {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--admin-brand-blue);
+  margin-top: 2px;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logo-preview {
+  margin-top: var(--sp-3);
+  max-height: 80px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.field-error {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--admin-brand-red);
+}
+
+.has-error .am-input {
+  border-color: var(--admin-brand-red);
+}
+</style>

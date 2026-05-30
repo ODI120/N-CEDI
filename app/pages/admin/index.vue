@@ -6,7 +6,7 @@ type DashboardTab = 'overview' | 'content' | 'engagement' | 'system'
 
 type CountTable = 'programs' | 'events' | 'posts' | 'gallery_items' | 'inquiries' | 'site_stats' | 'partners' | 'team_members' | 'projects' | 'testimonials' | 'categories'
 
-type ProgramSignal = { id: string; title: string; slug: string; level: 'beginner' | 'intermediate' | 'advanced'; is_published: boolean; is_featured: boolean; updated_at: string }
+type ProgramSignal = { id: string; title: string; slug: string; is_published: boolean; is_featured: boolean; updated_at: string }
 type InquirySignal = { id: string; name: string; email: string; subject: string | null; type: 'general' | 'partnership' | 'enrollment' | 'media'; is_read: boolean; created_at: string }
 type AdminProfile = { role: 'super_admin' | 'admin' | 'editor' | 'viewer'; is_active: boolean }
 
@@ -94,7 +94,7 @@ async function countRows(table: CountTable, apply?: (query: any) => any) {
 }
 
 async function fetchRecentPrograms() {
-  const { data, error } = await supabase.from('programs').select('id, title, slug, level, is_published, is_featured, updated_at').order('updated_at', { ascending: false }).limit(5)
+  const { data, error } = await supabase.from('programs').select('id, title, slug, is_published, is_featured, updated_at').order('updated_at', { ascending: false }).limit(5)
   if (error && error.code !== '42P01') throw error
   return (data || []) as ProgramSignal[]
 }
@@ -241,7 +241,9 @@ async function fetchCurrentAdmin() {
               <div v-for="p in dashboard.recentPrograms" :key="p.id" class="dash-row">
                 <div class="dash-row__left">
                   <div class="dash-row__title">{{ p.title }}</div>
-                  <div class="dash-row__meta"><span style="text-transform:capitalize">{{ p.level }}</span> · Updated {{ new Date(p.updated_at).toLocaleDateString() }}</div>
+                  <div class="dash-row__meta">
+                    {{ p.is_featured ? 'Featured track' : 'Standard track' }} · Updated {{ new Date(p.updated_at).toLocaleDateString() }}
+                  </div>
                 </div>
                 <span class="badge" :class="p.is_published ? 'badge-green' : 'badge-gray'">{{ p.is_published ? 'Published' : 'Draft' }}</span>
               </div>

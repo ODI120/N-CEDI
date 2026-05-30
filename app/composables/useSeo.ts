@@ -1,12 +1,9 @@
 /**
  * N-CEDI — usePageSeo
- *
- * One-call composable that wires up both `useSeoMeta()` (from Nuxt) and
- * `useSchemaOrg()` (from `nuxt-schema-org`) for every page.
- *
- * Usage:
- *   usePageSeo({ title: 'Programs', description: 'Explore our programs.' })
  */
+
+import type { ProgramDetail } from '~/composables/usePrograms'
+import { resolveProgramMediaUrl } from '~/utils/programAdmin'
 
 interface PageSeoOptions {
   title: string
@@ -20,53 +17,100 @@ const SITE_NAME = 'N-CEDI'
 const TWITTER_HANDLE = '@ncedi_ng'
 const DEFAULT_OG_IMAGE = '/og/default.jpg'
 
+export function resolveAbsoluteMediaUrl(url?: string | null): string {
+  if (!url) {
+    return resolveAbsoluteMediaUrl(DEFAULT_OG_IMAGE)
+  }
+
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+
+  if (url.startsWith('/')) {
+    const siteUrl = useSiteConfig().url || 'https://ncedi.edu.ng'
+    return `${siteUrl.replace(/\/$/, '')}${url}`
+  }
+
+  const resolved = resolveProgramMediaUrl(url)
+  return resolved || resolveAbsoluteMediaUrl(DEFAULT_OG_IMAGE)
+}
+
 export function usePageSeo(options: PageSeoOptions) {
   const {
     title,
     description,
     image = DEFAULT_OG_IMAGE,
     type = 'website',
-    publishedAt
+    publishedAt,
   } = options
 
+  const absoluteImage = resolveAbsoluteMediaUrl(image)
   const fullTitle = `${title} | ${SITE_NAME}`
 
-  // Standard + Open Graph + Twitter meta
   useSeoMeta({
     title: fullTitle,
     description,
     ogTitle: fullTitle,
     ogDescription: description,
-    ogImage: image,
+    ogImage: absoluteImage,
     ogType: type,
     ogSiteName: SITE_NAME,
     twitterCard: 'summary_large_image',
     twitterSite: TWITTER_HANDLE,
     twitterTitle: fullTitle,
     twitterDescription: description,
-    twitterImage: image
+    twitterImage: absoluteImage,
   })
 
-  // Structured data (JSON-LD)
   if (type === 'article' && publishedAt) {
     useSchemaOrg([
       defineArticle({
         headline: title,
         description,
-        image,
+        image: absoluteImage,
         datePublished: publishedAt,
         publisher: {
           name: SITE_NAME,
-          logo: DEFAULT_OG_IMAGE
-        }
-      })
+          logo: resolveAbsoluteMediaUrl(DEFAULT_OG_IMAGE),
+        },
+      }),
     ])
   } else {
     useSchemaOrg([
       defineWebPage({
         name: fullTitle,
-        description
-      })
+        description,
+      }),
     ])
   }
+}
+
+export function useProgramPageSeo(program: ProgramDetail) {
+  const description =
+    program.metaDescription
+    || program.subtitle
+    || program.description
+
+  const image = resolveAbsoluteMediaUrl(program.coverImageUrl)
+
+  usePageSeo({
+    title: program.metaTitle || program.title,
+    description,
+    image,
+  })
+
+  useSchemaOrg([
+    {
+      '@type': 'Course',
+      name: program.title,
+      description,
+      image,
+      provider: {
+        '@type': 'Organization',
+        name: SITE_NAME,
+        url: useSiteConfig().url || 'https://ncedi.edu.ng',
+      },
+      url: `${(useSiteConfig().url || 'https://ncedi.edu.ng').replace(/\/$/, '')}/programs/${program.slug}`,
+    },
+  ])
 }

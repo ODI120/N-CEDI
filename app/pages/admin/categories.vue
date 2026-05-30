@@ -6,7 +6,20 @@ const supabase = useSupabaseClient() as any
 const toast = useToast()
 const search = ref('')
 
-type Row = { id: string; name: string; slug: string; description: string | null; created_at: string }
+type Row = {
+  id: string
+  name: string
+  slug: string
+  category_type: string
+  created_at: string
+}
+
+const CATEGORY_TYPES = [
+  { value: 'gallery', label: 'Gallery' },
+  { value: 'program', label: 'Program' },
+  { value: 'blog', label: 'Blog' },
+  { value: 'event', label: 'Event' },
+] as const
 
 const { data, pending, refresh } = useAsyncData('admin-categories', async () => {
   let q = supabase.from('categories').select('*').order('name')
@@ -19,7 +32,7 @@ const { data, pending, refresh } = useAsyncData('admin-categories', async () => 
 const columns = [
   { key: 'name', label: 'Name' },
   { key: 'slug', label: 'Slug' },
-  { key: 'description', label: 'Description' },
+  { key: 'category_type', label: 'Type' },
 ]
 
 // CRUD
@@ -28,22 +41,37 @@ const deleteOpen = ref(false)
 const mode = ref<'add'|'edit'>('add')
 const saving = ref(false)
 const deleting = ref(false)
-const form = ref({ name: '', slug: '', description: '' })
+const form = ref({ name: '', slug: '', category_type: 'gallery' as string })
 const target = ref<Row | null>(null)
 
-const openAdd = () => { mode.value = 'add'; form.value = { name: '', slug: '', description: '' }; modalOpen.value = true }
-const openEdit = (r: Row) => { mode.value = 'edit'; target.value = r; form.value = { name: r.name, slug: r.slug, description: r.description || '' }; modalOpen.value = true }
+const openAdd = () => {
+  mode.value = 'add'
+  form.value = { name: '', slug: '', category_type: 'gallery' }
+  modalOpen.value = true
+}
+const openEdit = (r: Row) => {
+  mode.value = 'edit'
+  target.value = r
+  form.value = { name: r.name, slug: r.slug, category_type: r.category_type }
+  modalOpen.value = true
+}
 const openDelete = (r: Row) => { target.value = r; deleteOpen.value = true }
 
 const save = async () => {
   saving.value = true
   try {
+    const payload = {
+      name: form.value.name.trim(),
+      slug: form.value.slug.trim(),
+      category_type: form.value.category_type,
+    }
+
     if (mode.value === 'add') {
-      const { error } = await supabase.from('categories').insert([form.value])
+      const { error } = await supabase.from('categories').insert([payload])
       if (error) throw error
       toast.add({ title: 'Category created', color: 'green' })
     } else {
-      const { error } = await supabase.from('categories').update(form.value).eq('id', target.value!.id)
+      const { error } = await supabase.from('categories').update(payload).eq('id', target.value!.id)
       if (error) throw error
       toast.add({ title: 'Category updated', color: 'green' })
     }
@@ -93,7 +121,9 @@ const remove = async () => {
     <AdminTable :columns="columns" :rows="data || []" :loading="pending" empty-title="No categories yet" empty-text="Create your first content category.">
       <template #cell-name="{ row }"><span class="font-semibold">{{ row.name }}</span></template>
       <template #cell-slug="{ row }"><code class="text-xs" style="color:var(--admin-text-muted)">{{ row.slug }}</code></template>
-      <template #cell-description="{ row }"><span class="text-sm" style="color:var(--admin-text-secondary)">{{ row.description || '—' }}</span></template>
+      <template #cell-category_type="{ row }">
+        <span class="badge badge-blue">{{ row.category_type }}</span>
+      </template>
       <template #actions="{ row }">
         <button class="btn btn-ghost btn-icon" @click="openEdit(row)" title="Edit"><UIcon name="i-lucide-edit-3" /></button>
         <button class="btn btn-danger btn-icon" @click="openDelete(row)" title="Delete"><UIcon name="i-lucide-trash-2" /></button>
@@ -102,8 +132,13 @@ const remove = async () => {
 
     <AdminModal :open="modalOpen" :title="mode === 'add' ? 'New Category' : 'Edit Category'" :submit-label="mode === 'add' ? 'Create' : 'Save'" :loading="saving" @close="modalOpen = false" @submit="save">
       <div class="am-field"><label class="am-label">Name</label><input v-model="form.name" class="am-input" placeholder="e.g. Technology" /></div>
-      <div class="am-field"><label class="am-label">Slug</label><input v-model="form.slug" class="am-input" placeholder="e.g. technology" /></div>
-      <div class="am-field"><label class="am-label">Description</label><textarea v-model="form.description" class="am-textarea" placeholder="Optional description..." /></div>
+      <div class="am-field"><label class="am-label">Slug</label><input v-model="form.slug" class="am-input" placeholder="e.g. labs" /></div>
+      <div class="am-field">
+        <label class="am-label">Type</label>
+        <select v-model="form.category_type" class="am-select">
+          <option v-for="t in CATEGORY_TYPES" :key="t.value" :value="t.value">{{ t.label }}</option>
+        </select>
+      </div>
     </AdminModal>
 
     <AdminModal :open="deleteOpen" title="Delete Category" subtitle="This action cannot be undone." submit-label="Delete" submit-danger :loading="deleting" @close="deleteOpen = false" @submit="remove">

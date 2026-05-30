@@ -1,19 +1,19 @@
 <script setup lang="ts">
-import HeroInner from '~/components/sections/HeroInner.vue'
-import ProgramCard from '~/components/cards/ProgramCard.vue'
-import MotionWrapper from '~/components/motion/MotionWrapper.vue'
-import { usePageSeo } from '~/composables/useSeo'
+  import HeroInner from '~/components/sections/HeroInner.vue'
+  import ProgramCard from '~/components/cards/ProgramCard.vue'
+  import MotionWrapper from '~/components/motion/MotionWrapper.vue'
+  import { usePageSeo } from '~/composables/useSeo'
 
-usePageSeo({
-  title: 'Entrepreneurship & Innovation Programs',
-  description: 'Explore N-CEDI\'s professional vocational and technology tracks, designed to equip you with real-world entrepreneurial skills.'
-})
+  usePageSeo({
+    title: 'Entrepreneurship & Innovation Programs',
+    description: 'Explore N-CEDI\'s professional vocational and technology tracks, designed to equip you with real-world entrepreneurial skills.'
+  })
 
-const { programs, pending } = await usePrograms()
+  const { programs, pending, error, refresh } = await usePrograms({ orderBy: 'updated_at' })
 
-const breadcrumbs = [
-  { label: 'Programs', to: '/programs' }
-]
+  const breadcrumbs = [
+    { label: 'Programs', to: '/programs' }
+  ]
 </script>
 
 <template>
@@ -37,7 +37,12 @@ const breadcrumbs = [
           </MotionWrapper>
         </div>
 
-        <div v-if="pending" class="programs-grid programs-grid--loading">
+        <div v-if="error" class="programs-empty-state">
+          <p class="programs-empty">Could not load programs. Please try again.</p>
+          <BaseButton variant="secondary" size="md" @click="refresh()">Retry</BaseButton>
+        </div>
+
+        <div v-else-if="pending" class="programs-grid programs-grid--loading">
           <p class="programs-empty">Loading programs…</p>
         </div>
 

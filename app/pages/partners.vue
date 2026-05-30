@@ -4,102 +4,37 @@ import HeroInner from '~/components/sections/HeroInner.vue'
 import MotionWrapper from '~/components/motion/MotionWrapper.vue'
 import BaseButton from '~/components/ui/BaseButton.vue'
 import { usePageSeo } from '~/composables/useSeo'
-import { useSupabase } from '~/composables/useSupabase'
+import { usePartnersForDisplay } from '~/composables/usePartnerLogoUrl'
+import type { PartnerTier } from '~/utils/partnerAdmin'
 
 usePageSeo({
   title: 'Strategic Partners',
-  description: 'Learn about the government agencies, corporate institutions, and foundations sponsoring vocational excellence at N-CEDI.'
+  description:
+    'Learn about the government agencies, corporate institutions, and foundations sponsoring vocational excellence at N-CEDI.',
 })
 
-const { client } = useSupabase()
+const { page, pending, error, refresh } = await usePartnersPage()
 
-const { data: dbPartners } = await useAsyncData('partners-list', async () => {
-  try {
-    const { data, error } = await client
-      .from('partners')
-      .select('*')
-      .eq('is_active', true)
-      .order('display_order', { ascending: true })
-
-    if (error) throw error
-    return data
-  } catch (err) {
-    console.warn('Supabase fetch failed, using fallback static partners list:', err)
-    return null
-  }
-})
-
-const defaultPartners = [
-  {
-    name: 'Federal Ministry of Aviation & Aerospace Development',
-    tier: 'platinum' as const,
-    logoUrl: 'https://images.unsplash.com/photo-1599305445671-ac291c95aba9?q=80&w=200',
-    websiteUrl: 'https://aviation.gov.ng'
-  },
-  {
-    name: 'National Board for Technical Education (NBTE)',
-    tier: 'platinum' as const,
-    logoUrl: 'https://images.unsplash.com/photo-1599305445671-ac291c95aba9?q=80&w=200',
-    websiteUrl: 'https://nbte.gov.ng'
-  },
-  {
-    name: 'Kaduna State Technology Hub',
-    tier: 'gold' as const,
-    logoUrl: 'https://images.unsplash.com/photo-1599305445671-ac291c95aba9?q=80&w=200',
-    websiteUrl: 'https://kdsg.gov.ng'
-  },
-  {
-    name: 'Green Energy Development Initiative',
-    tier: 'gold' as const,
-    logoUrl: 'https://images.unsplash.com/photo-1599305445671-ac291c95aba9?q=80&w=200',
-    websiteUrl: '#'
-  },
-  {
-    name: 'Nigeria Entrepreneurship Council',
-    tier: 'silver' as const,
-    logoUrl: 'https://images.unsplash.com/photo-1599305445671-ac291c95aba9?q=80&w=200',
-    websiteUrl: '#'
-  },
-  {
-    name: 'Kaduna Artisans Cooperative Union',
-    tier: 'community' as const,
-    logoUrl: 'https://images.unsplash.com/photo-1599305445671-ac291c95aba9?q=80&w=200',
-    websiteUrl: '#'
-  }
-]
-
-const partners = computed(() => {
-  if (dbPartners.value && dbPartners.value.length > 0) {
-    return dbPartners.value.map(p => ({
-      name: p.name,
-      tier: (p.tier || 'community') as 'platinum' | 'gold' | 'silver' | 'community',
-      logoUrl: p.logo_url,
-      websiteUrl: p.website_url || '#'
-    }))
-  }
-  return defaultPartners
-})
+const partnerRows = computed(() => page.value?.partners ?? [])
+const fromDatabase = computed(() => page.value?.fromDatabase ?? false)
+const displayPartners = usePartnersForDisplay(partnerRows)
 
 const partnersByTier = computed(() => {
-  const tiers: Record<string, typeof partners.value> = {
+  const tiers: Record<PartnerTier, typeof displayPartners.value> = {
     platinum: [],
     gold: [],
     silver: [],
-    community: []
+    community: [],
   }
-  
-  partners.value.forEach(p => {
-    if (tiers[p.tier]) {
-      tiers[p.tier].push(p)
-    }
+
+  displayPartners.value.forEach((p) => {
+    tiers[p.tier].push(p)
   })
-  
+
   return tiers
 })
 
-const breadcrumbs = [
-  { label: 'Partners', to: '/partners' }
-]
+const breadcrumbs = [{ label: 'Partners', to: '/partners' }]
 </script>
 
 <template>
@@ -110,50 +45,130 @@ const breadcrumbs = [
       :breadcrumbs="breadcrumbs"
     />
 
-    <section class="partners-content">
+    <section class="partners-content" aria-label="Partner organizations">
       <div class="container">
-        <!-- Platinum Tier -->
-        <div v-if="partnersByTier.platinum.length > 0" class="partner-group">
-          <h2 class="partner-group__title">Platinum Institutional Sponsors</h2>
-          <div class="partner-group__grid partner-group__grid--large">
-            <div
-              v-for="(partner, index) in partnersByTier.platinum"
-              :key="index"
-              class="partner-card"
-            >
-              <MotionWrapper variant="fadeUp" :delay="index * 100">
-                <a :href="partner.websiteUrl" target="_blank" rel="noopener noreferrer" class="partner-card__link">
-                  <div class="partner-card__logo-box">
-                    <!-- Placeholder/mock logo representation for nice aesthetics -->
-                    <span class="partner-card__logo-text">{{ partner.name }}</span>
-                  </div>
-                </a>
-              </MotionWrapper>
-            </div>
-          </div>
+        <div v-if="error" class="partners-state partners-state--error">
+          <p>We couldn’t load partners right now.</p>
+          <button type="button" class="btn-retry" @click="refresh()">Try again</button>
         </div>
 
-        <!-- Gold & Silver Tiers -->
-        <div v-if="partnersByTier.gold.length > 0 || partnersByTier.silver.length > 0" class="partner-group">
-          <h2 class="partner-group__title">Corporate & Development Partners</h2>
-          <div class="partner-group__grid partner-group__grid--medium">
-            <div
-              v-for="(partner, index) in [...partnersByTier.gold, ...partnersByTier.silver]"
-              :key="index"
-              class="partner-card"
-            >
-              <MotionWrapper variant="fadeUp" :delay="index * 80">
-                <a :href="partner.websiteUrl" target="_blank" rel="noopener" class="partner-card__link">
-                  <div class="partner-card__logo-box">
-                    <span class="partner-card__logo-text partner-card__logo-text--small">{{ partner.name }}</span>
-                  </div>
-                </a>
-              </MotionWrapper>
-            </div>
-          </div>
+        <p v-else-if="pending && !displayPartners.length" class="partners-state">Loading partners…</p>
+
+        <div
+          v-else-if="!displayPartners.length && !pending"
+          class="partners-state"
+        >
+          <h3>Partners coming soon</h3>
+          <p v-if="!fromDatabase">
+            Published partners from Admin → Partners will appear here.
+          </p>
         </div>
 
-        <!-- Call to Action -->
+        <template v-else>
+          <div v-if="partnersByTier.platinum.length > 0" class="partner-group">
+            <h2 class="partner-group__title">Platinum Institutional Sponsors</h2>
+            <div class="partner-group__grid partner-group__grid--large">
+              <div
+                v-for="(partner, index) in partnersByTier.platinum"
+                :key="partner.id"
+                class="partner-card"
+              >
+                <MotionWrapper variant="fadeUp" :delay="index * 100">
+                  <a
+                    :href="partner.websiteUrl || '#'"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="partner-card__link"
+                  >
+                    <div class="partner-card__logo-box">
+                      <img
+                        v-if="partner.logoUrl"
+                        :src="partner.logoUrl"
+                        :alt="partner.name"
+                        class="partner-card__logo-img"
+                        loading="lazy"
+                      />
+                      <span v-else class="partner-card__logo-text">{{ partner.acronym }}</span>
+                    </div>
+                    <p class="partner-card__name">{{ partner.name }}</p>
+                  </a>
+                </MotionWrapper>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="partnersByTier.gold.length > 0 || partnersByTier.silver.length > 0"
+            class="partner-group"
+          >
+            <h2 class="partner-group__title">Corporate & Development Partners</h2>
+            <div class="partner-group__grid partner-group__grid--medium">
+              <div
+                v-for="(partner, index) in [...partnersByTier.gold, ...partnersByTier.silver]"
+                :key="partner.id"
+                class="partner-card"
+              >
+                <MotionWrapper variant="fadeUp" :delay="index * 80">
+                  <a
+                    :href="partner.websiteUrl || '#'"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="partner-card__link"
+                  >
+                    <div class="partner-card__logo-box">
+                      <img
+                        v-if="partner.logoUrl"
+                        :src="partner.logoUrl"
+                        :alt="partner.name"
+                        class="partner-card__logo-img"
+                        loading="lazy"
+                      />
+                      <span v-else class="partner-card__logo-text partner-card__logo-text--small">
+                        {{ partner.acronym }}
+                      </span>
+                    </div>
+                    <p class="partner-card__name partner-card__name--small">{{ partner.name }}</p>
+                  </a>
+                </MotionWrapper>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="partnersByTier.community.length > 0" class="partner-group">
+            <h2 class="partner-group__title">Community & Cooperative Partners</h2>
+            <div class="partner-group__grid partner-group__grid--medium">
+              <div
+                v-for="(partner, index) in partnersByTier.community"
+                :key="partner.id"
+                class="partner-card"
+              >
+                <MotionWrapper variant="fadeUp" :delay="index * 60">
+                  <a
+                    :href="partner.websiteUrl || '#'"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="partner-card__link"
+                  >
+                    <div class="partner-card__logo-box">
+                      <img
+                        v-if="partner.logoUrl"
+                        :src="partner.logoUrl"
+                        :alt="partner.name"
+                        class="partner-card__logo-img"
+                        loading="lazy"
+                      />
+                      <span v-else class="partner-card__logo-text partner-card__logo-text--small">
+                        {{ partner.acronym }}
+                      </span>
+                    </div>
+                    <p class="partner-card__name partner-card__name--small">{{ partner.name }}</p>
+                  </a>
+                </MotionWrapper>
+              </div>
+            </div>
+          </div>
+        </template>
+
         <div class="partner-cta">
           <MotionWrapper variant="fadeUp">
             <div class="partner-cta__card">
@@ -179,6 +194,26 @@ const breadcrumbs = [
 
 .partners-content {
   padding: var(--section-padding-y) 0;
+}
+
+.partners-state {
+  text-align: center;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-12);
+}
+
+.partners-state--error {
+  color: var(--color-brand-primary);
+}
+
+.btn-retry {
+  margin-top: var(--space-3);
+  font-weight: 600;
+  color: var(--color-brand-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
 }
 
 .partner-group {
@@ -233,32 +268,48 @@ const breadcrumbs = [
 .partner-card__link {
   text-decoration: none;
   display: block;
+  padding: var(--space-6);
+  text-align: center;
 }
 
 .partner-card__logo-box {
-  padding: var(--space-8);
-  min-height: 120px;
+  padding: var(--space-4);
+  min-height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
+}
+
+.partner-card__logo-img {
+  max-width: 100%;
+  max-height: 72px;
+  object-fit: contain;
 }
 
 .partner-card__logo-text {
   font-family: var(--font-display);
-  font-size: var(--text-base);
+  font-size: var(--text-xl);
   font-weight: 800;
   color: var(--color-brand-primary);
-  line-height: var(--leading-tight);
 }
 
 .partner-card__logo-text--small {
-  font-size: var(--text-sm);
-  font-weight: 700;
-  color: var(--color-text-muted);
+  font-size: var(--text-lg);
 }
 
-/* CTA Card */
+.partner-card__name {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin: var(--space-3) 0 0;
+  line-height: var(--leading-snug);
+}
+
+.partner-card__name--small {
+  font-size: var(--text-xs);
+}
+
 .partner-cta {
   max-width: 900px;
   margin: var(--space-12) auto 0 auto;

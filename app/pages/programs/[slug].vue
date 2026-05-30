@@ -1,149 +1,145 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useRoute, createError } from '#app'
-import HeroProgram from '~/components/sections/HeroProgram.vue'
-import RichTextRenderer from '~/components/cms/RichTextRenderer.vue'
-import MotionWrapper from '~/components/motion/MotionWrapper.vue'
-import ProgramCard from '~/components/cards/ProgramCard.vue'
-import { usePageSeo } from '~/composables/useSeo'
+  import { computed, ref, onMounted, onUnmounted } from 'vue'
+  import { useRoute, createError } from '#app'
+  import HeroProgram from '~/components/sections/HeroProgram.vue'
+  import RichTextRenderer from '~/components/cms/RichTextRenderer.vue'
+  import MotionWrapper from '~/components/motion/MotionWrapper.vue'
+  import ProgramCard from '~/components/cards/ProgramCard.vue'
+  import { useProgramPageSeo } from '~/composables/useSeo'
 
-const route = useRoute()
-const slug = route.params.slug as string
+  const route = useRoute()
+  const slug = route.params.slug as string
 
-const { program, pending } = await useProgram(slug)
-const { programs: relatedPrograms } = await usePrograms({ excludeSlug: slug, limit: 2 })
+  const { program, pending, error } = await useProgram(slug)
+  const { programs: relatedPrograms } = await useRelatedPrograms(slug, 2)
 
-if (!program.value) {
-  throw createError({
-    statusCode: 404,
-    statusMessage: `Program "${slug}" not found`,
-    fatal: true,
-  })
-}
-
-usePageSeo({
-  title: program.value.metaTitle || program.value.title,
-  description:
-    program.value.metaDescription
-    || program.value.subtitle
-    || program.value.description,
-  image: resolveProgramCoverForSeo(program.value.coverImageUrl),
-})
-
-const galleryImageSrcs = useProgramGallerySrcs(() => program.value?.galleryUrls)
-
-const activeSection = ref('overview')
-const isNavSticky = ref(false)
-const activePhotoIndex = ref<number | null>(null)
-
-const sections = computed(() => {
-  const list = [{ id: 'overview', label: 'Overview' }]
-  if (program.value?.outcomes?.length) {
-    list.push({ id: 'outcomes', label: 'Outcomes' })
+  if (error.value) {
+    throw error.value
   }
-  if (program.value?.labExperience) {
-    list.push({ id: 'lab-experience', label: 'Lab Experience' })
-  }
-  if (galleryImageSrcs.value.length) {
-    list.push({ id: 'gallery', label: 'Facilities & Work' })
-  }
-  list.push({ id: 'specifications', label: 'Academic Integration' })
-  return list
-})
 
-const scrollToSection = (id: string) => {
-  const el = document.getElementById(id)
-  if (el) {
-    const offset = 145
-    const bodyRect = document.body.getBoundingClientRect().top
-    const elementRect = el.getBoundingClientRect().top
-    const elementPosition = elementRect - bodyRect
-    const offsetPosition = elementPosition - offset
-
-    window.scrollTo({
-      top: offsetPosition,
-      behavior: 'smooth',
+  if (!program.value) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: `Program "${slug}" not found`,
+      fatal: true,
     })
-    activeSection.value = id
   }
-}
 
-const openLightbox = (index: number) => {
-  activePhotoIndex.value = index
-  document.body.style.overflow = 'hidden'
-  window.addEventListener('keydown', handleLightboxKeydown)
-}
+  useProgramPageSeo(program.value)
 
-const closeLightbox = () => {
-  activePhotoIndex.value = null
-  document.body.style.overflow = ''
-  window.removeEventListener('keydown', handleLightboxKeydown)
-}
+  const galleryImageSrcs = useProgramGallerySrcs(() => program.value?.galleryUrls)
 
-const prevPhoto = () => {
-  if (activePhotoIndex.value === null || !galleryImageSrcs.value.length) return
-  activePhotoIndex.value =
-    (activePhotoIndex.value - 1 + galleryImageSrcs.value.length) % galleryImageSrcs.value.length
-}
+  const activeSection = ref('overview')
+  const isNavSticky = ref(false)
+  const activePhotoIndex = ref<number | null>(null)
 
-const nextPhoto = () => {
-  if (activePhotoIndex.value === null || !galleryImageSrcs.value.length) return
-  activePhotoIndex.value = (activePhotoIndex.value + 1) % galleryImageSrcs.value.length
-}
+  const sections = computed(() => {
+    const list = [{ id: 'overview', label: 'Overview' }]
+    if (program.value?.outcomes?.length) {
+      list.push({ id: 'outcomes', label: 'Outcomes' })
+    }
+    if (program.value?.labExperience) {
+      list.push({ id: 'lab-experience', label: 'Lab Experience' })
+    }
+    if (galleryImageSrcs.value.length) {
+      list.push({ id: 'gallery', label: 'Facilities & Work' })
+    }
+    list.push({ id: 'specifications', label: 'Academic Integration' })
+    return list
+  })
 
-const handleLightboxKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape') closeLightbox()
-  if (e.key === 'ArrowLeft') prevPhoto()
-  if (e.key === 'ArrowRight') nextPhoto()
-}
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id)
+    if (el) {
+      const offset = 145
+      const bodyRect = document.body.getBoundingClientRect().top
+      const elementRect = el.getBoundingClientRect().top
+      const elementPosition = elementRect - bodyRect
+      const offsetPosition = elementPosition - offset
 
-const getOutcomeIcon = (index: number) => {
-  const icons = [
-    'bi-journal-check',
-    'bi-cpu',
-    'bi-patch-check',
-    'bi-rocket-takeoff',
-    'bi-tools',
-    'bi-briefcase',
-  ]
-  return icons[index % icons.length]
-}
-
-let observer: IntersectionObserver | null = null
-
-onMounted(() => {
-  const handleScroll = () => {
-    const trigger = document.querySelector('.program-detail-layout')
-    if (trigger) {
-      isNavSticky.value = window.scrollY > trigger.getBoundingClientRect().top + window.scrollY - 160
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth',
+      })
+      activeSection.value = id
     }
   }
-  window.addEventListener('scroll', handleScroll)
 
-  const observerOptions = {
-    root: null,
-    rootMargin: '-160px 0px -50% 0px',
-    threshold: 0,
+  const openLightbox = (index: number) => {
+    activePhotoIndex.value = index
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handleLightboxKeydown)
   }
 
-  observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        activeSection.value = entry.target.id
-      }
-    })
-  }, observerOptions)
+  const closeLightbox = () => {
+    activePhotoIndex.value = null
+    document.body.style.overflow = ''
+    window.removeEventListener('keydown', handleLightboxKeydown)
+  }
 
-  sections.value.forEach((sec) => {
-    const el = document.getElementById(sec.id)
-    if (el) observer?.observe(el)
+  const prevPhoto = () => {
+    if (activePhotoIndex.value === null || !galleryImageSrcs.value.length) return
+    activePhotoIndex.value =
+      (activePhotoIndex.value - 1 + galleryImageSrcs.value.length) % galleryImageSrcs.value.length
+  }
+
+  const nextPhoto = () => {
+    if (activePhotoIndex.value === null || !galleryImageSrcs.value.length) return
+    activePhotoIndex.value = (activePhotoIndex.value + 1) % galleryImageSrcs.value.length
+  }
+
+  const handleLightboxKeydown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') closeLightbox()
+    if (e.key === 'ArrowLeft') prevPhoto()
+    if (e.key === 'ArrowRight') nextPhoto()
+  }
+
+  const getOutcomeIcon = (index: number) => {
+    const icons = [
+      'bi-journal-check',
+      'bi-cpu',
+      'bi-patch-check',
+      'bi-rocket-takeoff',
+      'bi-tools',
+      'bi-briefcase',
+    ]
+    return icons[index % icons.length]
+  }
+
+  let observer: IntersectionObserver | null = null
+  let scrollHandler: (() => void) | null = null
+
+  onMounted(() => {
+    scrollHandler = () => {
+      const trigger = document.querySelector('.program-detail-layout')
+      if (trigger) {
+        isNavSticky.value = window.scrollY > trigger.getBoundingClientRect().top + window.scrollY - 160
+      }
+    }
+    window.addEventListener('scroll', scrollHandler)
+
+    observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          activeSection.value = entry.target.id
+        }
+      })
+    }, {
+      root: null,
+      rootMargin: '-160px 0px -50% 0px',
+      threshold: 0,
+    })
+
+    sections.value.forEach((sec) => {
+      const el = document.getElementById(sec.id)
+      if (el) observer?.observe(el)
+    })
   })
 
   onUnmounted(() => {
-    window.removeEventListener('scroll', handleScroll)
+    if (scrollHandler) window.removeEventListener('scroll', scrollHandler)
     observer?.disconnect()
   })
-})
 </script>
 
 <template>
@@ -205,7 +201,6 @@ onMounted(() => {
                   <i :class="['bi', getOutcomeIcon(Number(oIdx))]"></i>
                 </div>
                 <div class="outcome-card-pro__content">
-                  <h3 class="outcome-card-pro__title">Outcome {{ Number(oIdx) + 1 }}</h3>
                   <p class="outcome-card-pro__text">{{ outcome }}</p>
                 </div>
               </div>

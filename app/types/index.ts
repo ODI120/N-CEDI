@@ -13,7 +13,7 @@ export interface Category {
   id: string
   slug: string
   name: string
-  type: 'blog' | 'gallery' | 'event' | 'program'
+  categoryType: 'blog' | 'gallery' | 'event' | 'program'
   createdAt: string
 }
 
@@ -41,8 +41,6 @@ export interface Program {
   subtitle?: string
   description: string
   body?: Record<string, unknown>[]
-  durationWeeks: number
-  level: 'beginner' | 'intermediate' | 'advanced'
   isFeatured: boolean
   isPublished: boolean
   coverImageUrl: string
@@ -53,6 +51,7 @@ export interface Program {
   labExperience?: string
   metaTitle?: string
   metaDescription?: string
+  categoryId?: string
   createdAt: string
   updatedAt: string
 }

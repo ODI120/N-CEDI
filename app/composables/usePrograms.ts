@@ -2,10 +2,6 @@
  * N-CEDI — usePrograms
  *
  * Fetches published skill tracks from the `programs` table for the public site.
- *
- * Usage:
- *   const { programs } = await usePrograms()
- *   const { program } = await useProgram('fashion-design')
  */
 
 export interface ProgramCard {
@@ -27,6 +23,7 @@ export interface ProgramDetail extends ProgramCard {
   galleryUrls?: string[]
   metaTitle?: string
   metaDescription?: string
+  updatedAt?: string
 }
 
 export interface UseProgramsOptions {
@@ -63,7 +60,6 @@ export function mapProgramCard(row: ProgramRow): ProgramCard {
     slug: row.slug,
     subtitle: row.subtitle ?? undefined,
     description: row.description ?? '',
-    // Raw storage ref from DB — resolve in components via resolveProgramMediaUrl()
     coverImageUrl: row.cover_image_url?.trim() ?? '',
     isFeatured: row.is_featured ?? false,
   }
@@ -94,6 +90,7 @@ export function mapProgramDetail(row: ProgramRow): ProgramDetail {
     galleryUrls: row.gallery_urls?.length ? [...row.gallery_urls] : undefined,
     metaTitle: row.meta_title ?? undefined,
     metaDescription: row.meta_description ?? undefined,
+    updatedAt: row.updated_at ?? undefined,
   }
 }
 
@@ -102,7 +99,7 @@ function buildCacheKey(options: UseProgramsOptions = {}): string {
   return `programs-${orderBy}-${limit ?? 'all'}-${featuredOnly ? 'featured' : 'all'}-${excludeSlug ?? ''}`
 }
 
-async function fetchPublishedPrograms(options: UseProgramsOptions = {}): Promise<ProgramCard[]> {
+export async function fetchPublishedPrograms(options: UseProgramsOptions = {}): Promise<ProgramCard[]> {
   const { client } = useSupabase()
   const { limit, featuredOnly, excludeSlug, orderBy = 'title' } = options
 
@@ -119,13 +116,33 @@ async function fetchPublishedPrograms(options: UseProgramsOptions = {}): Promise
   const { data: rows, error: sbError } = await query
 
   if (sbError) {
-    console.warn('[usePrograms] Supabase error:', sbError.message)
-    return []
+    throw new Error(`[usePrograms] ${sbError.message}`)
   }
 
   if (!rows?.length) return []
 
   return rows.map((row) => mapProgramCard(row as ProgramRow))
+}
+
+/** Homepage: featured tracks first, then fill with latest published. */
+export async function fetchHomepagePrograms(limit = 6): Promise<ProgramCard[]> {
+  const featured = await fetchPublishedPrograms({
+    featuredOnly: true,
+    limit,
+    orderBy: 'updated_at',
+  })
+
+  if (featured.length >= limit) return featured
+
+  const recent = await fetchPublishedPrograms({
+    limit: limit * 2,
+    orderBy: 'updated_at',
+  })
+
+  const seen = new Set(featured.map((p) => p.slug))
+  const filler = recent.filter((p) => !seen.has(p.slug))
+
+  return [...featured, ...filler].slice(0, limit)
 }
 
 export async function usePrograms(options: UseProgramsOptions = {}) {
@@ -135,12 +152,17 @@ export async function usePrograms(options: UseProgramsOptions = {}) {
     { default: () => [] },
   )
 
-  return {
-    programs: data,
-    pending,
-    error,
-    refresh,
-  }
+  return { programs: data, pending, error, refresh }
+}
+
+export async function useHomepagePrograms(limit = 6) {
+  const { data, pending, error, refresh } = await useAsyncData<ProgramCard[]>(
+    `programs-home-${limit}`,
+    () => fetchHomepagePrograms(limit),
+    { default: () => [] },
+  )
+
+  return { programs: data, pending, error, refresh }
 }
 
 export async function useProgram(slug: string) {
@@ -157,8 +179,11 @@ export async function useProgram(slug: string) {
         .maybeSingle()
 
       if (sbError) {
-        console.warn(`[useProgram] Supabase error for "${slug}":`, sbError.message)
-        return null
+        throw createError({
+          statusCode: 503,
+          statusMessage: 'Unable to load program',
+          message: sbError.message,
+        })
       }
 
       if (!row) return null
@@ -168,10 +193,23 @@ export async function useProgram(slug: string) {
     { default: () => null },
   )
 
-  return {
-    program: data,
-    pending,
-    error,
-    refresh,
-  }
+  return { program: data, pending, error, refresh }
+}
+
+/** Related tracks: prefer same featured pool, exclude current slug. */
+export async function useRelatedPrograms(currentSlug: string, limit = 2) {
+  const { data, pending, error, refresh } = await useAsyncData<ProgramCard[]>(
+    `programs-related-${currentSlug}-${limit}`,
+    async () => {
+      const related = await fetchPublishedPrograms({
+        excludeSlug: currentSlug,
+        limit,
+        orderBy: 'updated_at',
+      })
+      return related
+    },
+    { default: () => [] },
+  )
+
+  return { programs: data, pending, error, refresh }
 }

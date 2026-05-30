@@ -18,6 +18,10 @@ const onCancel = () => {
   router.push('/admin/programs')
 }
 
+const onDeleted = () => {
+  router.push('/admin/programs')
+}
+
 onMounted(() => {
   const created = route.query.created
   if (typeof created === 'string' && created) {
@@ -43,7 +47,12 @@ onMounted(() => {
       </div>
     </div>
 
-    <ProgramEditorForm :program-id="programId" @saved="onSaved" @cancel="onCancel" />
+    <ProgramEditorForm
+      :program-id="programId"
+      @saved="onSaved"
+      @cancel="onCancel"
+      @deleted="onDeleted"
+    />
   </section>
 </template>
 
