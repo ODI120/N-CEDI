@@ -123,7 +123,7 @@
             <NuxtLink to="/events" class="app-navbar__nav-link" active-class="active">Events</NuxtLink>
           </li>
           <li>
-            <NuxtLink to="/blog" class="app-navbar__nav-link" active-class="active">Blog</NuxtLink>
+            <!-- <NuxtLink to="/blog" class="app-navbar__nav-link" active-class="active">Blog</NuxtLink> -->
           </li>
           <li>
             <NuxtLink to="/gallery" class="app-navbar__nav-link" active-class="active">Gallery</NuxtLink>
@@ -135,6 +135,7 @@
       </nav>
 
       <!-- Action Button Removed per instructions -->
+       <a href="https://ncat.edu.ng" class="ncat-link btn base-button base-button--secondary  ncat-btn" target="blank"> VISIT NCAT <i class="bi bi-box-arrow-up-right"></i></a>
 
       <!-- Hamburger Menu (Mobile) -->
       <button
@@ -331,6 +332,18 @@
   transform: rotate(180deg);
 }
 
+.ncat-btn{
+  background-color: #6B59FF18;
+  border-radius: 100px;
+  padding: 10px 14px;
+  border: 1px solid #6B59FF18;
+  color: #6B59FF;
+  transition: all 0.2s ease;
+}
+.ncat-btn:hover{
+  background-color: #6B59FF;
+  color: #fff;
+}
 /* Mobile Hamburger Menu */
 .app-navbar__hamburger {
   display: none;

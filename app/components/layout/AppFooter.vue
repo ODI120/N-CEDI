@@ -37,8 +37,8 @@ const handleSubscribe = () => {
             <li><NuxtLink to="/">Home</NuxtLink></li>
             <li><NuxtLink to="/about">About Us</NuxtLink></li>
             <li><NuxtLink to="/events">Events & Seminars</NuxtLink></li>
-            <li><NuxtLink to="/blog">Blog & Research</NuxtLink></li>
-            <li><NuxtLink to="/gallery">Campus Gallery</NuxtLink></li>
+            <!-- <li><NuxtLink to="/blog">Blog & Research</NuxtLink></li> -->
+            <li><NuxtLink to="/gallery">Gallery</NuxtLink></li>
             <li><NuxtLink to="/partners">Our Partners</NuxtLink></li>
           </ul>
         </div>
@@ -51,7 +51,7 @@ const handleSubscribe = () => {
             <li v-for="prog in footerPrograms" :key="prog.slug">
               <NuxtLink :to="`/programs/${prog.slug}`">{{ prog.title }}</NuxtLink>
             </li>
-            <li><NuxtLink to="/contact">Enrollment Inquiry</NuxtLink></li>
+            <!-- <li><NuxtLink to="/contact">Enrollment Inquiry</NuxtLink></li> -->
           </ul>
         </div>
 
@@ -79,9 +79,9 @@ const handleSubscribe = () => {
             </div>
           </form>
 
-          <div class="app-footer__socials">
+          <!-- <div class="app-footer__socials">
             <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-              <span class="social-icon">IN</span>
+              <span class="social-icon">  </span>
             </a>
             <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
               <span class="social-icon">TW</span>
@@ -92,7 +92,7 @@ const handleSubscribe = () => {
             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
               <span class="social-icon">IG</span>
             </a>
-          </div>
+          </div> -->
         </div>
       </div>
 
@@ -103,10 +103,10 @@ const handleSubscribe = () => {
         <p class="app-footer__copyright">
           &copy; {{ new Date().getFullYear() }} N-CEDI (NCAT Centre for Entrepreneurship Development and Innovation). All rights reserved.
         </p>
-        <div class="app-footer__bottom-links">
+        <!-- <div class="app-footer__bottom-links">
           <NuxtLink to="/privacy">Privacy Policy</NuxtLink>
           <NuxtLink to="/terms">Terms of Service</NuxtLink>
-        </div>
+        </div> -->
       </div>
     </div>
   </footer>

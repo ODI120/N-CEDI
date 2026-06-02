@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useTeamMembers } from '~/composables/useTeamMembers'
+
 definePageMeta({
   layout: 'default'
 })
@@ -18,12 +20,7 @@ const milestones = [
   { year: '2024', title: 'Centre of Excellence', badge: 'Excellence', description: 'Named a Centre of Excellence for vocational training and entrepreneurship development in Northern Nigeria.' }
 ]
 
-const team = [
-  { name: 'Dr. Aisha Mohammed', role: 'Director', bio: 'Leading N-CEDI\'s vision for innovation and entrepreneurship excellence in Nigeria.', avatarUrl: '/images/student1.jpg', linkedinUrl: '#' },
-  { name: 'Engr. Bello Abdullahi', role: 'Deputy Director, Programs', bio: 'Overseeing curriculum development and program delivery across all training tracks.', avatarUrl: '/images/student2.jpg', linkedinUrl: '#' },
-  { name: 'Mrs. Grace Okonkwo', role: 'Head of Partnerships', bio: 'Building strategic relationships with government, industry, and international partners.', avatarUrl: '/images/student3.jpg', linkedinUrl: '#' },
-  { name: 'Mr. Ibrahim Musa', role: 'Head of Student Affairs', bio: 'Ensuring student success from track onboarding through graduation and career placement.', avatarUrl: '/images/student4.jpg', linkedinUrl: '#' }
-]
+const { teamMembers } = useTeamMembers()
 </script>
 
 <template>
@@ -147,9 +144,22 @@ const team = [
           </div>
         </MotionWrapper>
 
-        <div class="team-grid">
+        <!-- Empty State -->
+        <div v-if="teamMembers.length === 0" class="team-empty-state">
+          <MotionWrapper variant="fadeUp" :delay="100">
+            <div class="empty-icon-wrap">
+              <UIcon name="i-lucide-users" class="empty-icon" />
+            </div>
+            <h3 class="empty-title">No Leadership Profiles Published</h3>
+            <p class="empty-description">
+              We are currently finalizing our leadership and contributor team list. Please check back shortly to meet the team!
+            </p>
+          </MotionWrapper>
+        </div>
+
+        <div v-else class="team-grid">
           <MotionWrapper
-            v-for="(member, index) in team"
+            v-for="(member, index) in teamMembers"
             :key="member.name"
             variant="fadeUp"
             :delay="index * 0.1"
@@ -295,5 +305,53 @@ const team = [
   padding: 6px 12px;
   border-radius: var(--radius-full);
   border: 1px solid rgba(107, 89, 255, 0.12);
+}
+
+.team-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 600px;
+  margin: var(--space-8) auto;
+  padding: var(--space-12) var(--space-6);
+  border: 1px dashed rgba(107, 89, 255, 0.25);
+  border-radius: var(--radius-2xl);
+  background-color: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(8px);
+}
+
+.empty-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(107, 89, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+  color: var(--color-brand-accent);
+  border: 1px solid rgba(107, 89, 255, 0.15);
+}
+
+.empty-icon {
+  font-size: 2.25rem;
+}
+
+.empty-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  color: var(--color-brand-primary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.empty-description {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+  margin: 0;
 }
 </style>

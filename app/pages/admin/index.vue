@@ -13,6 +13,7 @@ type AdminProfile = { role: 'super_admin' | 'admin' | 'editor' | 'viewer'; is_ac
 const supabase = useSupabaseClient() as any
 const user = useSupabaseUser()
 const toast = useToast()
+const router = useRouter()
 
 const activeTab = ref<DashboardTab>('overview')
 const markingInquiry = ref<string | null>(null)
@@ -110,6 +111,22 @@ async function fetchCurrentAdmin() {
   const { data, error } = await supabase.from('admin_users').select('role, is_active').eq('user_id', user.value.id).maybeSingle()
   if (error) throw error
   return data as AdminProfile | null
+}
+
+const navigateAdminModule = async (module: { label: string; to?: string }, event: MouseEvent) => {
+  event.preventDefault()
+  if (!module.to) return
+
+  try {
+    await router.push(module.to)
+  } catch (err: any) {
+    console.error('[AdminDashboard] navigation failed:', module.to, err)
+    toast.add({
+      title: 'Navigation error',
+      description: `Could not open ${module.label}. ${err?.message ?? 'Check console for details.'}`,
+      color: 'red'
+    })
+  }
 }
 </script>
 
@@ -254,14 +271,20 @@ async function fetchCurrentAdmin() {
 
       <div v-show="activeTab === 'content'" class="tab-panel">
         <div class="dash-grid-3">
-          <div v-for="m in contentModules" :key="m.key" class="glass-card module-card">
+          <button
+            v-for="m in contentModules"
+            :key="m.key"
+            class="glass-card module-card module-card--link"
+            :aria-label="`Open ${m.label}`"
+            @click="navigateAdminModule(m, $event)"
+          >
             <div class="module-card__label"><UIcon :name="m.icon" />{{ m.label }}</div>
             <div class="module-card__value">{{ dashboard?.counts[m.key] ?? 0 }}</div>
             <p class="module-card__desc">{{ m.description }}</p>
             <div class="module-card__footer">
-              <NuxtLink v-if="m.to" :to="m.to" class="btn btn-ghost module-card__btn">Access manager</NuxtLink>
+              <span class="btn btn-ghost module-card__btn">Access manager</span>
             </div>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -413,6 +436,8 @@ async function fetchCurrentAdmin() {
 @media(max-width: 640px) { .dash-grid-3 { grid-template-columns: 1fr; } }
 
 .module-card { padding: 24px; display: flex; flex-direction: column; height: 100%; }
+.module-card--link { cursor: pointer; text-decoration: none; color: inherit; transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+.module-card--link:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2); border-color: rgba(212, 168, 83, 0.3); }
 .module-card__label { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: var(--admin-text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; }
 .module-card__label svg { width: 16px; height: 16px; }
 .module-card__value { font-size: 2.25rem; font-weight: 700; font-family: 'Space Grotesk', sans-serif; margin-bottom: 8px; }

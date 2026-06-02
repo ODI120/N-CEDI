@@ -21,6 +21,7 @@ export const STORAGE_BUCKETS = {
   gallery_media: 'gallery_media',
   program_media: 'program_media',
   teams_avatars: 'teams_avatars',
+  testimonial_avatars: 'testimonial_avatars',
 } as const
 
 export type StorageBucketId = keyof typeof STORAGE_BUCKETS
@@ -224,6 +225,17 @@ export function galleryMediaObjectPath(filename: string): string {
   return `items/${uuid}-${safeFilename}`
 }
 
+/** Media file path inside `media`. */
+export function mediaObjectPath(filename: string): string {
+  const safeFilename = filename.replace(/[^a-zA-Z0-9._\/\-]/g, '_')
+  const uuid =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+  return `${safeFilename}-${uuid}`
+}
+
 /** Program cover / gallery object path inside `program_media`. */
 export function programMediaObjectPath(
   slug: string,
@@ -238,6 +250,28 @@ export function programMediaObjectPath(
       : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
   return `${safeSlug}/${prefix}-${uuid}-${safeFilename}`
+}
+
+/** Testimonial avatar image path inside `testimonial_avatars`. */
+export function testimonialAvatarObjectPath(filename: string): string {
+  const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const uuid =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+  return `avatars/${uuid}-${safeFilename}`
+}
+
+/** Team member avatar image path inside `teams_avatars`. */
+export function teamMemberAvatarObjectPath(filename: string): string {
+  const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const uuid =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+
+  return `avatars/${uuid}-${safeFilename}`
 }
 
 /** Collect non-empty storage refs from a program row or form. */

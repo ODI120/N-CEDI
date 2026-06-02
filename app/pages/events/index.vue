@@ -5,10 +5,11 @@ import EventCard from '~/components/cards/EventCard.vue'
 import MotionWrapper from '~/components/motion/MotionWrapper.vue'
 import { usePageSeo } from '~/composables/useSeo'
 import { useSupabase } from '~/composables/useSupabase'
+import { resolveStorageRef } from '~/utils/storage'
 
 usePageSeo({
-  title: 'Events & Workshops',
-  description: 'Participate in N-CEDI\'s upcoming skills masterclasses, hackathons, open days, and business seminars in Nigeria.'
+  title: 'NCAT Student Events',
+  description: 'Participate in N-CEDI\'s yearly student activities, Entrepreneurship Days, and Student Weeks under NBTE at NCAT.'
 })
 
 const { client } = useSupabase()
@@ -17,75 +18,28 @@ const { data: dbEvents } = await useAsyncData('events-list', async () => {
   try {
     const { data, error } = await client
       .from('events')
-      .select('*')
+      .select('id, slug, title, description, cover_image_url, is_published, created_at')
       .eq('is_published', true)
-      .order('starts_at', { ascending: true })
+      .order('created_at', { ascending: false })
 
     if (error) throw error
     return data
   } catch (err) {
-    console.warn('Supabase fetch failed, using fallback static events:', err)
+    console.error('Supabase fetch failed:', err)
     return null
   }
 })
 
-const defaultEvents = [
-  {
-    title: 'Tech & Vocational Hackathon 2026',
-    slug: 'tech-vocational-hackathon-2026',
-    description: 'A 48-hour challenge where students team up to prototype physical and digital solutions for local market challenges.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800',
-    eventType: 'competition' as const,
-    startsAt: '2026-06-15T09:00:00+01:00',
-    location: 'Main Incubation Hall',
-    isVirtual: false
-  },
-  {
-    title: 'Solar Energy Systems Masterclass',
-    slug: 'solar-energy-systems-masterclass',
-    description: 'Learn the core principles of hybrid inverter configurations and residential battery sizing calculations.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?q=80&w=800',
-    eventType: 'workshop' as const,
-    startsAt: '2026-06-22T10:00:00+01:00',
-    location: 'Energy Lab A',
-    isVirtual: false
-  },
-  {
-    title: 'African Creative Fashion & Bead Exhibition',
-    slug: 'creative-fashion-exhibition',
-    description: 'A public exhibition showcasing high-fashion designs, bead jewelry collection lines, and student project portfolios.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=800',
-    eventType: 'exhibition' as const,
-    startsAt: '2026-07-02T14:00:00+01:00',
-    location: 'N-CEDI Exhibition Pavilion',
-    isVirtual: false
-  },
-  {
-    title: 'Digital Branding for Craft Entrepreneurs',
-    slug: 'digital-branding-seminar',
-    description: 'Master tools, pricing strategies, and social commerce mechanics to scale your vocational workshop business online.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1434626881859-194d67b2b86f?q=80&w=800',
-    eventType: 'seminar' as const,
-    startsAt: '2026-07-10T11:00:00+01:00',
-    location: 'Virtual Classroom (Zoom)',
-    isVirtual: true
-  }
-]
-
 const events = computed(() => {
-  if (dbEvents.value && dbEvents.value.length > 0) {
+  if (dbEvents.value) {
     return dbEvents.value.map(e => ({
       title: e.title,
       slug: e.slug,
       description: e.description || '',
-      coverImageUrl: e.cover_image_url || 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?q=80&w=800',
-      eventType: (e.event_type || 'workshop') as 'workshop' | 'seminar' | 'exhibition' | 'competition' | 'open_day',
-      startsAt: e.starts_at,
-      location: e.location || 'N-CEDI Campus',
-      isVirtual: e.is_virtual || false
+      coverImageUrl: e.cover_image_url ? resolveStorageRef(e.cover_image_url) : ''
     }))
   }
-  return defaultEvents
+  return []
 })
 
 const breadcrumbs = [
@@ -96,14 +50,28 @@ const breadcrumbs = [
 <template>
   <div class="events-page">
     <HeroInner
-      title="Upcoming Events & Workshops"
-      subtitle="Connect with sector experts, participate in practical workshops, and witness student innovation showcases."
+      title="Student Yearly Events"
+      subtitle="Exhibits, Student Weeks, and Entrepreneurship Days for vocational students at NCAT under NBTE."
       :breadcrumbs="breadcrumbs"
     />
 
     <section class="events-section">
       <div class="container">
-        <div class="events-grid">
+        <!-- Empty State -->
+        <div v-if="events.length === 0" class="events-empty-state">
+          <MotionWrapper variant="fadeUp" :delay="100">
+            <div class="empty-icon-wrap">
+              <UIcon name="i-lucide-calendar-x" class="empty-icon" />
+            </div>
+            <h3 class="empty-title">No Yearly Events Scheduled</h3>
+            <p class="empty-description">
+              We are currently organizing upcoming yearly student events. Please check back later or contact the department coordinators for scheduling updates.
+            </p>
+          </MotionWrapper>
+        </div>
+
+        <!-- Grid of Events -->
+        <div v-else class="events-grid">
           <div
             v-for="(event, index) in events"
             :key="event.slug"
@@ -132,6 +100,53 @@ const breadcrumbs = [
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--space-8);
+}
+
+.events-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 600px;
+  margin: var(--space-12) auto;
+  padding: var(--space-12) var(--space-6);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-2xl);
+  background-color: var(--color-surface-inset);
+}
+
+.empty-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(var(--color-brand-primary-rgb, 212, 168, 83), 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+  color: var(--color-brand-primary);
+  border: 1px solid rgba(var(--color-brand-primary-rgb, 212, 168, 83), 0.15);
+}
+
+.empty-icon {
+  font-size: 2.25rem;
+}
+
+.empty-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-brand-primary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.empty-description {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+  margin: 0;
 }
 
 @media (max-width: 768px) {

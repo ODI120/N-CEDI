@@ -62,18 +62,12 @@ export interface Event {
   title: string
   description: string
   body?: Record<string, unknown>[]
-  eventType: 'workshop' | 'seminar' | 'exhibition' | 'competition' | 'open_day'
-  startsAt: string
-  endsAt?: string
-  location?: string
-  isVirtual: boolean
-  meetingUrl?: string
   coverImageUrl: string
-  capacity?: number
-  registrationUrl?: string
+  galleryUrls?: string[]
   isPublished: boolean
   metaTitle?: string
   metaDescription?: string
+  categoryId?: string
   createdAt: string
   updatedAt: string
 }

@@ -79,7 +79,7 @@
 .base-button {
   font-family: var(--font-body);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   cursor: pointer;
   display: inline-flex;
   align-items: center;

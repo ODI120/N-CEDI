@@ -20,8 +20,27 @@ const nav = [
 
 const user = useSupabaseUser()
 const supabase = useSupabaseClient()
+const router = useRouter()
+const route = useRoute()
+const toast = useToast()
 
-const { data: adminProfile } = useAsyncData('sidebar-admin-role', async () => {
+const navigateAdminLink = async (path: string, event: MouseEvent) => {
+  event.preventDefault()
+
+  try {
+    await router.push(path)
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[AdminSidebar] navigation failed:', path, err)
+    toast.add({
+      title: 'Navigation error',
+      description: `Could not open ${path}. ${message || 'Please check console for details.'}`,
+      color: 'warning'
+    })
+  }
+}
+
+const { data: adminProfile } = await useAsyncData<{ role?: string } | null>('sidebar-admin-role', async () => {
   if (!user.value?.id) return null
   const { data } = await supabase
     .from('admin_users')
@@ -29,7 +48,7 @@ const { data: adminProfile } = useAsyncData('sidebar-admin-role', async () => {
     .eq('user_id', user.value.id)
     .maybeSingle()
   return data
-})
+}, { default: () => null })
 </script>
 
 <template>
@@ -47,11 +66,16 @@ const { data: adminProfile } = useAsyncData('sidebar-admin-role', async () => {
     <nav class="sidebar__nav" @wheel.prevent>
       <ul class="sidebar__list">
         <li v-for="item in nav" :key="item.to">
-          <NuxtLink :to="item.to" class="sidebar__link" active-class="is-active">
+          <a
+            :href="item.to"
+            class="sidebar__link"
+            :class="{ 'is-active': item.to === '/admin' ? route.path === '/admin' : route.path.startsWith(item.to) }"
+            @click="navigateAdminLink(item.to, $event)"
+          >
             <UIcon :name="item.icon" class="sidebar__icon" />
             <span class="sidebar__label">{{ item.label }}</span>
             <span class="sidebar__indicator" />
-          </NuxtLink>
+          </a>
         </li>
       </ul>
     </nav>
@@ -59,10 +83,10 @@ const { data: adminProfile } = useAsyncData('sidebar-admin-role', async () => {
     <div class="sidebar__footer">
       <div v-if="user" class="sidebar__profile">
         <div class="profile__avatar">
-          {{ user.email?.[0].toUpperCase() || 'A' }}
+          {{ user?.email?.[0]?.toUpperCase() || 'A' }}
         </div>
         <div class="profile__details">
-          <span class="profile__email" :title="user.email">{{ user.email }}</span>
+          <span class="profile__email" :title="user?.email">{{ user?.email }}</span>
           <span class="profile__role">{{ adminProfile?.role?.replace('_', ' ') || 'Editor' }}</span>
         </div>
       </div>
