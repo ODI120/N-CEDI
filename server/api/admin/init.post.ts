@@ -21,7 +21,26 @@ interface InitAdminRequest {
   initSecret: string // Must match ADMIN_INIT_SECRET in .env
 }
 
+const failedAttempts = new Map<string, { count: number; blockedUntil: number }>()
+const MAX_ATTEMPTS = 5
+const BLOCK_DURATION = 15 * 60 * 1000 // 15 minutes
+
 export default defineEventHandler(async (event) => {
+  const ipAddress = getHeader(event, 'x-forwarded-for') || 
+                   getHeader(event, 'x-real-ip') ||
+                   event.node.req.socket.remoteAddress ||
+                   'unknown'
+
+  // Check if IP is currently blocked
+  const ipRecord = failedAttempts.get(ipAddress)
+  if (ipRecord && ipRecord.blockedUntil > Date.now()) {
+    const minutesLeft = Math.ceil((ipRecord.blockedUntil - Date.now()) / (60 * 1000))
+    throw createError({
+      statusCode: 429,
+      statusMessage: `Too many failed attempts. Setup is blocked for your IP. Try again in ${minutesLeft} minutes.`
+    })
+  }
+
   // 1. Security: Check init secret
   const allowedSecrets = [
     readLocalEnvValue('ADMIN_INIT_SECRET'),
@@ -43,13 +62,25 @@ export default defineEventHandler(async (event) => {
   const body = await readBody<InitAdminRequest>(event)
 
   if (!allowedSecrets.includes(body.initSecret?.trim() || '')) {
+    // Record failed attempt
+    const record = failedAttempts.get(ipAddress) || { count: 0, blockedUntil: 0 }
+    record.count += 1
+    if (record.count >= MAX_ATTEMPTS) {
+      record.blockedUntil = Date.now() + BLOCK_DURATION
+      console.warn(`[SECURITY] IP ${ipAddress} blocked due to too many failed admin init attempts.`)
+    }
+    failedAttempts.set(ipAddress, record)
+
     // Log failed attempt
-    console.warn(`[SECURITY] Failed admin init attempt from ${getHeader(event, 'x-forwarded-for') || getHeader(event, 'user-agent')}`)
+    console.warn(`[SECURITY] Failed admin init attempt from ${ipAddress} - UA: ${getHeader(event, 'user-agent') || 'unknown'}`)
     throw createError({
       statusCode: 401,
       statusMessage: 'Invalid initialization secret.'
     })
   }
+
+  // Reset failures on success
+  failedAttempts.delete(ipAddress)
 
   // 2. Validation
   if (!body.email || !body.temporaryPassword) {
@@ -75,7 +106,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const supabase = await serverSupabaseServiceRole(event)
+    const supabase = await serverSupabaseServiceRole(event) as any
 
     // 3. Check if any admin users exist
     const { data: existingAdmins, error: checkError } = await supabase
@@ -101,7 +132,7 @@ export default defineEventHandler(async (event) => {
     // 4. Create or reuse the auth user.
     // A previous failed setup may have created auth.users without promoting admin_users.
     const currentUser = await serverSupabaseUser(event)
-    let authUser = await findAuthUserByEmail(supabase, body.email)
+    let authUser: any = await findAuthUserByEmail(supabase, body.email)
     let createdAuthUser = false
 
     if (!authUser && currentUser?.email?.toLowerCase() === body.email.trim().toLowerCase()) {
@@ -186,7 +217,7 @@ export default defineEventHandler(async (event) => {
   }
 })
 
-async function findAuthUserByEmail(supabase: Awaited<ReturnType<typeof serverSupabaseServiceRole>>, email: string) {
+async function findAuthUserByEmail(supabase: any, email: string) {
   const normalizedEmail = email.trim().toLowerCase()
   const perPage = 1000
   let page = 1
@@ -202,7 +233,7 @@ async function findAuthUserByEmail(supabase: Awaited<ReturnType<typeof serverSup
       })
     }
 
-    const match = data.users.find(user => user.email?.toLowerCase() === normalizedEmail)
+    const match = data.users.find((user: any) => user.email?.toLowerCase() === normalizedEmail)
     if (match) return match
     if (data.users.length < perPage) return null
 

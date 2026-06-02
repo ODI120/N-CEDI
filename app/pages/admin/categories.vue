@@ -44,6 +44,17 @@ const deleting = ref(false)
 const form = ref({ name: '', slug: '', category_type: 'gallery' as string })
 const target = ref<Row | null>(null)
 
+// Auto-generate slug from name in 'add' mode
+watch(() => form.value.name, (newName) => {
+  if (mode.value === 'add') {
+    form.value.slug = newName
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+  }
+})
+
 const openAdd = () => {
   mode.value = 'add'
   form.value = { name: '', slug: '', category_type: 'gallery' }
@@ -58,11 +69,28 @@ const openEdit = (r: Row) => {
 const openDelete = (r: Row) => { target.value = r; deleteOpen.value = true }
 
 const save = async () => {
+  if (!form.value.name.trim()) {
+    toast.add({ title: 'Validation Error', description: 'Name is required.', color: 'red' })
+    return
+  }
+
+  const sanitizedSlug = form.value.slug
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+
+  if (!sanitizedSlug) {
+    toast.add({ title: 'Validation Error', description: 'A valid slug is required.', color: 'red' })
+    return
+  }
+
   saving.value = true
   try {
     const payload = {
       name: form.value.name.trim(),
-      slug: form.value.slug.trim(),
+      slug: sanitizedSlug,
       category_type: form.value.category_type,
     }
 

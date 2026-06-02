@@ -6,41 +6,7 @@ export interface FetchTestimonialsOptions {
   featuredOnly?: boolean
 }
 
-export const FALLBACK_TESTIMONIALS: Testimonial[] = [
-  {
-    id: 'fallback-1',
-    name: 'Amina Ibrahim',
-    role: 'Fashion Design Graduate, 2024',
-    quote: 'N-CEDI transformed my passion for fashion into a thriving business. The hands-on training and mentorship were exactly what I needed to launch my own brand.',
-    avatarUrl: '/images/student1.jpg',
-    rating: 5,
-    isFeatured: true,
-    isPublished: true,
-    createdAt: '',
-  },
-  {
-    id: 'fallback-2',
-    name: 'Chukwuemeka Obi',
-    role: 'Web Development Graduate, 2023',
-    quote: 'The web development program at N-CEDI gave me the skills to land a remote job with an international company. The curriculum is truly world-class.',
-    avatarUrl: '/images/student2.jpg',
-    rating: 5,
-    isFeatured: true,
-    isPublished: true,
-    createdAt: '',
-  },
-  {
-    id: 'fallback-3',
-    name: 'Fatima Yusuf',
-    role: 'Solar Installation Graduate, 2024',
-    quote: 'As a woman in solar energy, N-CEDI gave me the confidence and technical expertise to lead installation projects across the region.',
-    avatarUrl: '/images/student3.jpg',
-    rating: 5,
-    isFeatured: true,
-    isPublished: true,
-    createdAt: '',
-  },
-]
+
 
 interface TestimonialDbRow {
   id: string
@@ -103,7 +69,7 @@ export async function fetchPublishedTestimonials(
 
       const { data: rowsFallback, error: fallbackError } = await fallbackQuery
       if (fallbackError) throw new Error(`[useTestimonials] ${fallbackError.message}`)
-      return (rowsFallback ?? []).map((row) => mapTestimonialRow(row as TestimonialDbRow))
+      return (rowsFallback ?? []).map((row: any) => mapTestimonialRow(row as TestimonialDbRow))
     }
 
     throw new Error(`[useTestimonials] ${error.message}`)
@@ -111,7 +77,7 @@ export async function fetchPublishedTestimonials(
 
   if (!rows?.length) return []
 
-  return rows.map((row) => mapTestimonialRow(row as TestimonialDbRow))
+  return rows.map((row: any) => mapTestimonialRow(row as TestimonialDbRow))
 }
 
 export async function useTestimonials(options: FetchTestimonialsOptions = {}) {
@@ -131,9 +97,9 @@ export async function useHomepageTestimonials(limit = 6) {
     `testimonials-home-${limit}`,
     async () => {
       const testimonials = await fetchPublishedTestimonials({ limit })
-      return testimonials.length ? testimonials : FALLBACK_TESTIMONIALS.slice(0, limit)
+      return testimonials
     },
-    { default: () => FALLBACK_TESTIMONIALS.slice(0, limit) },
+    { default: () => [] },
   )
 
   return { testimonials: data, pending, error, refresh }

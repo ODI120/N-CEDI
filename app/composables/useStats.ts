@@ -12,52 +12,7 @@ export interface FetchSiteStatsOptions {
   limit?: number
 }
 
-/** Matches seed data in 002_site_stats.sql — used when DB is empty or unavailable. */
-export const FALLBACK_SITE_STATS: SiteStat[] = [
-  {
-    id: 'fallback-1',
-    value: 1200,
-    suffix: '+',
-    label: 'Trained Graduates',
-    icon: 'bi-people-fill',
-    displayOrder: 1,
-    isPublished: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'fallback-2',
-    value: 85,
-    suffix: '%',
-    label: 'Employment Rate',
-    icon: 'bi-briefcase-fill',
-    displayOrder: 2,
-    isPublished: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'fallback-3',
-    value: 45,
-    suffix: '+',
-    label: 'Partner Startups',
-    icon: 'bi-rocket-takeoff-fill',
-    displayOrder: 3,
-    isPublished: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'fallback-4',
-    value: 12,
-    label: 'Tech & Vocational Labs',
-    icon: 'bi-cpu-fill',
-    displayOrder: 4,
-    isPublished: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-]
+
 
 /** Homepage bento grid is designed for up to four KPI cards. */
 export const HOMEPAGE_STAT_LIMIT = 4
@@ -84,7 +39,7 @@ export async function fetchPublishedSiteStats(
 
   if (!rows?.length) return []
 
-  return rows.map((row) => mapSiteStatRow(row as SiteStatDbRow))
+  return rows.map((row: any) => mapSiteStatRow(row as SiteStatDbRow))
 }
 
 export async function useStats(options: FetchSiteStatsOptions = {}) {
@@ -104,16 +59,15 @@ export async function useStats(options: FetchSiteStatsOptions = {}) {
   }
 }
 
-/** Homepage section: published stats from DB, else seeded fallbacks (max 4). */
+/** Homepage section: published stats from DB (max 4). */
 export async function useHomepageStats() {
   const { data, pending, error, refresh } = await useAsyncData<SiteStat[]>(
     'site-stats-home',
     async () => {
       const stats = await fetchPublishedSiteStats({ limit: HOMEPAGE_STAT_LIMIT })
-      if (stats.length) return stats
-      return FALLBACK_SITE_STATS.slice(0, HOMEPAGE_STAT_LIMIT)
+      return stats
     },
-    { default: () => FALLBACK_SITE_STATS },
+    { default: () => [] },
   )
 
   return {

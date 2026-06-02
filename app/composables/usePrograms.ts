@@ -121,7 +121,7 @@ export async function fetchPublishedPrograms(options: UseProgramsOptions = {}): 
 
   if (!rows?.length) return []
 
-  return rows.map((row) => mapProgramCard(row as ProgramRow))
+  return rows.map((row: any) => mapProgramCard(row as ProgramRow))
 }
 
 /** Homepage: featured tracks first, then fill with latest published. */

@@ -21,38 +21,7 @@ export interface FetchPartnersOptions {
   limit?: number
 }
 
-export const FALLBACK_HOMEPAGE_PARTNERS: SectionPartnerDisplay[] = [
-  {
-    id: 'fallback-1',
-    name: 'Federal Ministry of Innovation, Science and Technology',
-    acronym: 'FMIST',
-    logoUrl: '/images/fg.png',
-    description: '',
-    websiteUrl: undefined,
-    icon: 'bi-bank2',
-    tier: 'platinum',
-  },
-  {
-    id: 'fallback-2',
-    name: 'National Board for Technology Incubation',
-    acronym: 'NBTI',
-    logoUrl: '/images/ncatlogo.png',
-    description: '',
-    websiteUrl: undefined,
-    icon: 'bi-rocket-takeoff',
-    tier: 'platinum',
-  },
-  {
-    id: 'fallback-3',
-    name: 'National Board for Technical Education',
-    acronym: 'NBTE',
-    logoUrl: '/images/nbte.png',
-    description: '',
-    websiteUrl: undefined,
-    icon: 'bi-mortarboard',
-    tier: 'platinum',
-  },
-]
+
 
 export async function fetchPartners(options: FetchPartnersOptions = {}): Promise<Partner[]> {
   const { client } = useSupabase()
@@ -95,13 +64,13 @@ export async function useHomepagePartners(limit = 6) {
     `partners-home-${limit}`,
     async () => {
       const all = await fetchPartners({ activeOnly: true, limit: 50 })
-      if (!all.length) return FALLBACK_HOMEPAGE_PARTNERS
+      if (!all.length) return []
 
       const platinum = all.filter((p) => p.tier === 'platinum')
       const picked = (platinum.length ? platinum : all).slice(0, limit)
       return picked.map(mapPartnerToSectionDisplay)
     },
-    { default: () => FALLBACK_HOMEPAGE_PARTNERS },
+    { default: () => [] },
   )
 
   return { partners: data, pending, error, refresh }

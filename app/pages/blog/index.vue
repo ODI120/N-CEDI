@@ -29,42 +29,11 @@ const { data: dbPosts } = await useAsyncData('blog-posts', async () => {
   }
 })
 
-const defaultPosts = [
-  {
-    title: 'The Future of Solar Energy in Northern Nigeria',
-    slug: 'future-solar-energy-nigeria',
-    excerpt: 'Exploring the massive economic potential of distributed mini-grids and professional training frameworks to power local businesses.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?q=80&w=800',
-    publishedAt: '2026-05-10T08:00:00+01:00',
-    readTimeMinutes: 5,
-    category: { name: 'Renewables', slug: 'renewables' },
-    author: { name: 'Dr. Ibrahim Yusuf', role: 'Energy Advisor', avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200' }
-  },
-  {
-    title: 'Bridging the Gap: Tech Meets Craftsmanship',
-    slug: 'bridging-gap-tech-craft',
-    excerpt: 'How traditional carpentry and garment fabrication are leveraging modern user interface designs and smart technologies to capture global markets.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=800',
-    publishedAt: '2026-05-02T09:00:00+01:00',
-    readTimeMinutes: 6,
-    category: { name: 'Tech & Craft', slug: 'tech-craft' },
-    author: { name: 'Engr. Sarah Alabi', role: 'Innovation Lead', avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200' }
-  },
-  {
-    title: 'Incubation Success: How Halima Built Bello Couture',
-    slug: 'halima-bello-couture',
-    excerpt: 'An interview with a Cohort 2 design graduate who turned a ₦150k N-CEDI seed grant into a multi-city sustainable fashion boutique.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=800',
-    publishedAt: '2026-04-18T10:00:00+01:00',
-    readTimeMinutes: 4,
-    category: { name: 'Incubation', slug: 'incubation' },
-    author: { name: 'Michael Obi', role: 'Communications Officer', avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=200' }
-  }
-]
+
 
 const posts = computed(() => {
   if (dbPosts.value && dbPosts.value.length > 0) {
-    return dbPosts.value.map(p => ({
+    return dbPosts.value.map((p: any) => ({
       title: p.title,
       slug: p.slug,
       excerpt: p.excerpt || '',
@@ -75,7 +44,7 @@ const posts = computed(() => {
       author: p.author ? { name: p.author.name, role: p.author.role, avatarUrl: p.author.avatar_url } : { name: 'N-CEDI Team', role: 'Staff' }
     }))
   }
-  return defaultPosts
+  return []
 })
 
 const breadcrumbs = [
@@ -93,13 +62,27 @@ const breadcrumbs = [
 
     <section class="blog-section">
       <div class="container">
-        <div class="blog-grid">
+        <!-- Empty State -->
+        <div v-if="posts.length === 0" class="blog-empty-state">
+          <MotionWrapper variant="fadeUp" :delay="100">
+            <div class="empty-icon-wrap">
+              <UIcon name="i-lucide-newspaper" class="empty-icon" />
+            </div>
+            <h3 class="empty-title">No Blog Posts Yet</h3>
+            <p class="empty-description">
+              We haven't published any articles or insights yet. Please check back later for updates from the N-CEDI team.
+            </p>
+          </MotionWrapper>
+        </div>
+
+        <!-- Grid of Posts -->
+        <div v-else class="blog-grid">
           <div
             v-for="(post, index) in posts"
             :key="post.slug"
             class="blog-grid__item"
           >
-            <MotionWrapper variant="fadeUp" :delay="index * 100" :duration="0.6">
+            <MotionWrapper variant="fadeUp" :delay="Number(index) * 100" :duration="0.6">
               <BlogCard :post="post" />
             </MotionWrapper>
           </div>
@@ -136,5 +119,53 @@ const breadcrumbs = [
     grid-template-columns: 1fr;
     gap: var(--space-6);
   }
+}
+
+/* Empty State Styling */
+.blog-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  max-width: 600px;
+  margin: var(--space-12) auto;
+  padding: var(--space-12) var(--space-6);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-2xl);
+  background-color: var(--color-surface-inset);
+}
+
+.empty-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(var(--color-brand-primary-rgb, 212, 168, 83), 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+  color: var(--color-brand-primary);
+  border: 1px solid rgba(var(--color-brand-primary-rgb, 212, 168, 83), 0.15);
+}
+
+.empty-icon {
+  font-size: 2.25rem;
+}
+
+.empty-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-brand-primary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.empty-description {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+  margin: 0;
 }
 </style>

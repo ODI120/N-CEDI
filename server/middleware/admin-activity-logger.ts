@@ -10,7 +10,7 @@
  * - Error attempts
  */
 
-import { serverSupabaseUser } from '#supabase/server'
+import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
 
 interface AdminActivityLog {
   user_id: string
@@ -41,14 +41,14 @@ export default defineEventHandler(async (event) => {
     const statusCode = event.node.res.statusCode || 200
 
     logAdminActivity({
-      url: event.node.req.url,
-      method: event.node.req.method,
+      url: event.node.req.url || '',
+      method: event.node.req.method || '',
       statusCode,
       duration,
       event
     })
 
-    return originalEnd.apply(event.node.res, args)
+    return (originalEnd as any).apply(event.node.res, args)
   }
 })
 
@@ -93,10 +93,25 @@ async function logAdminActivity(
       params.statusCode >= 400
     ) {
       console.info(`[ADMIN_AUDIT] ${JSON.stringify(logEntry)}`)
-    }
 
-    // TODO: In production, store to audit_logs table in Supabase
-    // This would require a service role context
+      try {
+        const supabaseService = await serverSupabaseServiceRole(params.event) as any
+        const resourceName = params.url.split('?')[0]
+        const { error: dbError } = await supabaseService.from('audit_logs').insert([
+          {
+            action: `${params.method} ${resourceName}`,
+            user_email: user.email || 'unknown',
+            resource: resourceName,
+            details: JSON.stringify(logEntry)
+          }
+        ])
+        if (dbError) {
+          console.error('[ADMIN_AUDIT] Database log error:', dbError)
+        }
+      } catch (dbEx) {
+        console.error('[ADMIN_AUDIT] Failed to write log to DB:', dbEx)
+      }
+    }
   } catch (error) {
     console.error('[ADMIN_AUDIT] Failed to log activity:', error)
   }

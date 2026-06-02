@@ -15,9 +15,8 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '~/types/database.types'
 
 export function useSupabase() {
-  const client = useSupabaseClient<Database>() as SupabaseClient<Database>
+  const client = useSupabaseClient() as any
   return { client }
 }

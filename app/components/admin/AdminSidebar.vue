@@ -6,11 +6,11 @@ const nav = [
   { label: 'Categories', to: '/admin/categories', icon: 'i-lucide-tags' },
   { label: 'Events', to: '/admin/events', icon: 'i-lucide-calendar-days' },
   { label: 'Gallery', to: '/admin/gallery', icon: 'i-lucide-images' },
-  { label: 'Inquiries', to: '/admin/inquiries', icon: 'i-lucide-inbox' },
+  // { label: 'Inquiries', to: '/admin/inquiries', icon: 'i-lucide-inbox' },
   { label: 'Partners', to: '/admin/partners', icon: 'i-lucide-handshake' },
-  { label: 'Posts', to: '/admin/posts', icon: 'i-lucide-newspaper' },
+  // { label: 'Posts', to: '/admin/posts', icon: 'i-lucide-newspaper' },
   { label: 'Programs', to: '/admin/programs', icon: 'i-lucide-graduation-cap' },
-  { label: 'Projects', to: '/admin/projects', icon: 'i-lucide-folder-kanban' },
+  // { label: 'Projects', to: '/admin/projects', icon: 'i-lucide-folder-kanban' },
   { label: 'Site Stats', to: '/admin/site-stats', icon: 'i-lucide-bar-chart-3' },
   { label: 'Team Members', to: '/admin/team-members', icon: 'i-lucide-users' },
   { label: 'Testimonials', to: '/admin/testimonials', icon: 'i-lucide-message-square-quote' },
@@ -48,7 +48,7 @@ const { data: adminProfile } = await useAsyncData<{ role?: string } | null>('sid
     .eq('user_id', user.value.id)
     .maybeSingle()
   return data
-}, { default: () => null })
+}, { default: () => null, watch: [user] })
 </script>
 
 <template>

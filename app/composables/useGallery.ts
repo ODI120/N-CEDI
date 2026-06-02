@@ -33,38 +33,7 @@ export interface GalleryPageData {
   fromDatabase: boolean
 }
 
-const FALLBACK_SLIDES: GalleryItem[] = [
-  {
-    id: 'fallback-1',
-    mediaUrl: '/images/student2.jpg',
-    mediaType: 'image',
-    title: 'Robotics Lab',
-    altText: 'Students working on advanced robotics and automation',
-    displayOrder: 1,
-    isPublished: true,
-    createdAt: '',
-  },
-  {
-    id: 'fallback-2',
-    mediaUrl: '/images/student3.jpg',
-    mediaType: 'image',
-    title: 'Coding Bootcamp',
-    altText: 'Intensive software engineering programs',
-    displayOrder: 2,
-    isPublished: true,
-    createdAt: '',
-  },
-  {
-    id: 'fallback-3',
-    mediaUrl: '/images/student4.jpg',
-    mediaType: 'image',
-    title: 'Aviation Tech',
-    altText: 'State of the art aviation training facilities',
-    displayOrder: 3,
-    isPublished: true,
-    createdAt: '',
-  },
-]
+
 
 /** Published rows for the public gallery page. */
 export async function fetchGalleryPageData(limit = 500): Promise<GalleryPageData> {
@@ -133,7 +102,7 @@ export async function fetchPublishedGalleryItems(
 
   if (!rows?.length) return []
 
-  return rows.map((row) => mapGalleryRow(row as GalleryItemDbRow))
+  return rows.map((row: any) => mapGalleryRow(row as GalleryItemDbRow))
 }
 
 export async function useGallery(options: GalleryOptions = {}) {
@@ -176,14 +145,13 @@ export async function useGalleryPage(limit = 500) {
   }
 }
 
-/** Homepage bento slider — DB first, local image fallbacks only when empty. */
+/** Homepage bento slider — DB first. */
 export async function useHomepageGallerySlider(limit = 6) {
   const { data, pending, error, refresh } = await useAsyncData<GalleryItem[]>(
     `gallery-home-slider-${limit}`,
     async () => {
       const items = await fetchPublishedGalleryItems({ mediaType: 'image', limit })
-      if (items.length) return items
-      return FALLBACK_SLIDES.slice(0, limit)
+      return items
     },
     { default: () => [] },
   )

@@ -135,7 +135,7 @@
       </nav>
 
       <!-- Action Button Removed per instructions -->
-       <a href="https://ncat.edu.ng" class="ncat-link btn base-button base-button--secondary  ncat-btn" target="blank"> VISIT NCAT <i class="bi bi-box-arrow-up-right"></i></a>
+       <a href="https://www.ncat.gov.ng" class="ncat-link btn base-button base-button--secondary  ncat-btn" target="blank"> VISIT NCAT <i class="bi bi-box-arrow-up-right"></i></a>
 
       <!-- Hamburger Menu (Mobile) -->
       <button

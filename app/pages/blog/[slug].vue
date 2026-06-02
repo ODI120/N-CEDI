@@ -30,72 +30,7 @@ const { data: dbPost } = await useAsyncData(`post-${slug}`, async () => {
   }
 })
 
-// Detailed static fallback blog posts
-const defaultPosts = [
-  {
-    title: 'The Future of Solar Energy in Northern Nigeria',
-    slug: 'future-solar-energy-nigeria',
-    excerpt: 'Exploring the massive economic potential of distributed mini-grids and professional training frameworks to power local businesses.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?q=80&w=1200',
-    publishedAt: '2026-05-10T08:00:00+01:00',
-    readTimeMinutes: 5,
-    category: { name: 'Renewables', slug: 'renewables' },
-    author: { name: 'Dr. Ibrahim Yusuf', role: 'Energy Advisor', avatarUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200' },
-    body: [
-      {
-        type: 'paragraph',
-        data: { text: 'Nigeria faces unique challenges in grid power distribution. However, this deficit presents a massive opportunity for solar tech solutions. At N-CEDI, we focus on training certified installers who can deploy and service solar hybrid systems across urban and rural communities.' }
-      },
-      {
-        type: 'heading',
-        data: { level: 2, text: 'The Economic Case for Solar In Kaduna & Environs' }
-      },
-      {
-        type: 'paragraph',
-        data: { text: 'With high insolation levels in Northern Nigeria, solar power yields significant energy per square meter. Commercial enterprises like cold storage spaces, agricultural processing units, and school facilities are rapidly transitioning to solar arrays.' }
-      },
-      {
-        type: 'quote',
-        data: {
-          text: 'Off-grid solar is not just an alternative energy source; it is the cornerstone of new enterprise creation in northern Kaduna.',
-          caption: 'Dr. Ibrahim Yusuf'
-        }
-      }
-    ]
-  },
-  {
-    title: 'Bridging the Gap: Tech Meets Craftsmanship',
-    slug: 'bridging-gap-tech-craft',
-    excerpt: 'How traditional carpentry and garment fabrication are leveraging modern user interface designs and smart technologies to capture global markets.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1531403009284-440f080d1e12?q=80&w=1200',
-    publishedAt: '2026-05-02T09:00:00+01:00',
-    readTimeMinutes: 6,
-    category: { name: 'Tech & Craft', slug: 'tech-craft' },
-    author: { name: 'Engr. Sarah Alabi', role: 'Innovation Lead', avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200' },
-    body: [
-      {
-        type: 'paragraph',
-        data: { text: 'Vocational work is traditionally seen as isolated from the software developer ecosystem. At N-CEDI, we are breaking down this barrier. Our students in Web Design collaborate directly with Woodwork and Fashion departments to deploy online commerce systems, customize 3D furniture models, and design IoT-interactive clothing.' }
-      }
-    ]
-  },
-  {
-    title: 'Incubation Success: How Halima Built Bello Couture',
-    slug: 'halima-bello-couture',
-    excerpt: 'An interview with a Cohort 2 design graduate who turned a ₦150k N-CEDI seed grant into a multi-city sustainable fashion boutique.',
-    coverImageUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=1200',
-    publishedAt: '2026-04-18T10:00:00+01:00',
-    readTimeMinutes: 4,
-    category: { name: 'Incubation', slug: 'incubation' },
-    author: { name: 'Michael Obi', role: 'Communications Officer', avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=200' },
-    body: [
-      {
-        type: 'paragraph',
-        data: { text: 'When Halima Bello enrolled in our Fashion Design track, she was seeking to move away from generic designs. Under the mentorship of our industry leads, she mastered tailoring mechanics, digital pattern making, and structured collections scheduling. Following graduation, she pitched her capsule collection and secured a ₦150,000 equity-free seed grant.' }
-      }
-    ]
-  }
-]
+
 
 const post = computed(() => {
   if (dbPost.value) {
@@ -116,8 +51,7 @@ const post = computed(() => {
     }
   }
 
-  const fallback = defaultPosts.find(p => p.slug === slug)
-  return fallback || null
+  return null
 })
 
 if (!post.value) {
@@ -129,18 +63,23 @@ if (!post.value) {
 }
 
 // Wire SEO
-usePageSeo({
-  title: post.value.title,
-  description: post.value.excerpt,
-  image: post.value.coverImageUrl,
-  type: 'article',
-  publishedAt: post.value.publishedAt
-})
+if (post.value) {
+  usePageSeo({
+    title: post.value.title,
+    description: post.value.excerpt,
+    image: post.value.coverImageUrl,
+    type: 'article',
+    publishedAt: post.value.publishedAt
+  })
+}
 
-const breadcrumbs = computed(() => [
-  { label: 'Blog', to: '/blog' },
-  { label: post.value.title, to: `/blog/${post.value.slug}` }
-])
+const breadcrumbs = computed(() => {
+  if (!post.value) return []
+  return [
+    { label: 'Blog', to: '/blog' },
+    { label: post.value.title, to: `/blog/${post.value.slug}` }
+  ]
+})
 </script>
 
 <template>

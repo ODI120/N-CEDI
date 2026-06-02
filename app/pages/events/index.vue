@@ -32,7 +32,7 @@ const { data: dbEvents } = await useAsyncData('events-list', async () => {
 
 const events = computed(() => {
   if (dbEvents.value) {
-    return dbEvents.value.map(e => ({
+    return dbEvents.value.map((e: any) => ({
       title: e.title,
       slug: e.slug,
       description: e.description || '',
@@ -77,7 +77,7 @@ const breadcrumbs = [
             :key="event.slug"
             class="events-grid__item"
           >
-            <MotionWrapper variant="fadeUp" :delay="index * 100" :duration="0.6">
+            <MotionWrapper variant="fadeUp" :delay="Number(index) * 100" :duration="0.6">
               <EventCard :event="event" />
             </MotionWrapper>
           </div>

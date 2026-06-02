@@ -1,26 +1,16 @@
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
-
-  interface Partner {
-    id: string
-    name: string
-    acronym: string
-    logoUrl: string
-    description: string
-    websiteUrl?: string
-    icon: string
-    tier: 'platinum'
-  }
+  import { ref, onMounted, computed } from 'vue'
+  import type { SectionPartnerDisplay } from '~/composables/usePartners'
 
   interface SectionPartnersProps {
-    partners?: Partner[]
+    partners?: SectionPartnerDisplay[]
   }
 
   const props = withDefaults(defineProps<SectionPartnersProps>(), {
     partners: () => []
   })
 
-  const defaultPartners: Partner[] = [
+  const defaultPartners: SectionPartnerDisplay[] = [
     {
       id: '1',
       name: 'Federal Ministry of Innovation, Science and Technology',
@@ -49,8 +39,6 @@
       tier: 'platinum'
     }
   ]
-
-  import { computed } from 'vue'
 
   const partnersList = computed(() => {
     return props.partners.length > 0 ? props.partners : defaultPartners

@@ -225,7 +225,7 @@ function isMissingCategoryTypeColumn(message: string): boolean {
  * (or known gallery slugs) so older Supabase schemas do not 400.
  */
 export async function fetchGalleryFilterCategories(): Promise<GalleryFilterCategory[]> {
-  const client = useSupabaseClient()
+  const client = useSupabaseClient() as any
 
   const typed = await client
     .from('categories')
@@ -234,7 +234,7 @@ export async function fetchGalleryFilterCategories(): Promise<GalleryFilterCateg
     .order('name', { ascending: true })
 
   if (!typed.error) {
-    return (typed.data ?? []).map((row) => ({
+    return (typed.data ?? []).map((row: any) => ({
       id: row.id,
       name: row.name,
       slug: row.slug,
@@ -255,7 +255,7 @@ export async function fetchGalleryFilterCategories(): Promise<GalleryFilterCateg
   }
 
   const rows = fallback.data ?? []
-  const galleryLike = rows.filter((row) => GALLERY_CATEGORY_SLUGS.has(row.slug))
+  const galleryLike = rows.filter((row: any) => GALLERY_CATEGORY_SLUGS.has(row.slug))
   return galleryLike.length ? galleryLike : rows
 }
 

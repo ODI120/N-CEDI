@@ -1,19 +1,13 @@
 /**
- * Admin Users Management API
+ * Admin Users Collection API
  * 
  * Endpoints:
- * - GET /api/admin/users - List all admin users (admin+ only)
- * - POST /api/admin/users - Create/enroll new admin (super_admin only)
- * - PATCH /api/admin/users/[id] - Update admin user (admin+ only)
- * - DELETE /api/admin/users/[id] - Deactivate admin (super_admin only)
- * 
- * Security:
- * - All endpoints require authentication
- * - Role-based access control enforced
- * - Audit logging for all changes
+ * - GET  /api/admin/users - List all admin users (editor+ only)
+ * - POST /api/admin/users - Enroll a new admin user (super_admin only)
  */
 
 import { serverSupabaseServiceRole, serverSupabaseUser } from '#supabase/server'
+import { webcrypto } from 'node:crypto'
 
 type AdminRole = 'super_admin' | 'admin' | 'editor' | 'viewer'
 
@@ -27,7 +21,6 @@ interface ListAdminsResponse {
     created_at: string
     updated_at: string
   }>
-  error?: string
 }
 
 interface CreateAdminRequest {
@@ -36,16 +29,11 @@ interface CreateAdminRequest {
   temporaryPassword?: string
 }
 
-interface UpdateAdminRequest {
-  role?: AdminRole
-  is_active?: boolean
-}
-
 export default defineEventHandler(async (event): Promise<any> => {
-  const supabase = await serverSupabaseServiceRole(event)
+  const supabase = await serverSupabaseServiceRole(event) as any
   const user = await serverSupabaseUser(event)
 
-  // Require authentication
+  // 1. Require authentication
   if (!user) {
     throw createError({
       statusCode: 401,
@@ -53,7 +41,7 @@ export default defineEventHandler(async (event): Promise<any> => {
     })
   }
 
-  // Check if user has admin access
+  // 2. Check caller permission
   const { data: adminRecord, error: adminCheckError } = await supabase
     .from('admin_users')
     .select('role, is_active')
@@ -61,6 +49,11 @@ export default defineEventHandler(async (event): Promise<any> => {
     .maybeSingle()
 
   if (adminCheckError || !adminRecord || !adminRecord.is_active) {
+    console.error('[ADMIN_API_DEBUG] --- AUTH CHECK FAILED ---')
+    console.error('[ADMIN_API_DEBUG] Authenticated User ID:', user.id)
+    console.error('[ADMIN_API_DEBUG] Authenticated User Email:', user.email)
+    console.error('[ADMIN_API_DEBUG] adminCheckError:', adminCheckError)
+    console.error('[ADMIN_API_DEBUG] adminRecord:', adminRecord)
     throw createError({
       statusCode: 403,
       statusMessage: 'Insufficient permissions.'
@@ -73,7 +66,7 @@ export default defineEventHandler(async (event): Promise<any> => {
   // GET /api/admin/users - List all admin users
   // ─────────────────────────────────────────────────────────────
   if (method === 'GET') {
-    // Require editor role or higher
+    // Requires editor role or higher
     if (!['super_admin', 'admin', 'editor'].includes(adminRecord.role)) {
       throw createError({
         statusCode: 403,
@@ -94,22 +87,23 @@ export default defineEventHandler(async (event): Promise<any> => {
       })
     }
 
-    // Join with auth users to get emails
-    const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
-
-    if (authError) {
+    // Retrieve auth.users to map user_id -> email
+    let allAuthUsers: any[] = []
+    try {
+      allAuthUsers = await fetchAllAuthUsers(supabase)
+    } catch (authError) {
       console.error('[ADMIN_API] Error fetching auth users:', authError)
       throw createError({
         statusCode: 500,
-        statusMessage: 'Failed to fetch user emails.'
+        statusMessage: 'Failed to retrieve user email mappings.'
       })
     }
 
-    const userEmailMap = new Map(authUsers.users.map(u => [u.id, u.email]))
+    const userEmailMap = new Map(allAuthUsers.map(u => [u.id, u.email]))
 
     return {
       success: true,
-      data: admins.map(admin => ({
+      data: admins.map((admin: any) => ({
         ...admin,
         email: userEmailMap.get(admin.user_id) || 'unknown'
       }))
@@ -117,14 +111,14 @@ export default defineEventHandler(async (event): Promise<any> => {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // POST /api/admin/users - Create/enroll new admin
+  // POST /api/admin/users - Enroll new admin
   // ─────────────────────────────────────────────────────────────
   if (method === 'POST') {
-    // Require super_admin role
+    // Requires super_admin role
     if (adminRecord.role !== 'super_admin') {
       throw createError({
         statusCode: 403,
-        statusMessage: 'Only super_admin can create admin users.'
+        statusMessage: 'Only super_admin can enroll new admin users.'
       })
     }
 
@@ -153,8 +147,8 @@ export default defineEventHandler(async (event): Promise<any> => {
       })
     }
 
+    // Check if user already exists in auth.users
     const existingUser = await findAuthUserByEmail(supabase, body.email)
-
     if (existingUser) {
       throw createError({
         statusCode: 409,
@@ -162,9 +156,9 @@ export default defineEventHandler(async (event): Promise<any> => {
       })
     }
 
-    // Create auth user (temporary password)
     const tempPassword = body.temporaryPassword || generateSecurePassword()
 
+    // Create auth user
     const { data: newAuthUser, error: authCreateError } = await supabase.auth.admin.createUser({
       email: body.email,
       password: tempPassword,
@@ -179,38 +173,37 @@ export default defineEventHandler(async (event): Promise<any> => {
       console.error('[ADMIN_API] Auth user creation failed:', authCreateError)
       throw createError({
         statusCode: 500,
-        statusMessage: `Failed to create user: ${authCreateError.message}`
+        statusMessage: `Failed to create user account: ${authCreateError.message}`
       })
     }
 
-    // Promote the admin record.
-    // The auth.users trigger may already have inserted a default viewer row.
+    // Insert/upsert into admin_users (to handle trigger race-conditions)
     const { data: newAdmin, error: adminCreateError } = await supabase
       .from('admin_users')
       .upsert({
         user_id: newAuthUser.user?.id,
         role: body.role,
-        is_active: true
+        is_active: true,
+        updated_at: new Date().toISOString()
       }, { onConflict: 'user_id' })
       .select()
       .single()
 
     if (adminCreateError) {
-      console.error('[ADMIN_API] Admin record creation failed:', adminCreateError)
-      // Clean up auth user
+      console.error('[ADMIN_API] Admin record promotion failed:', adminCreateError)
+      // Rollback auth user creation
       await supabase.auth.admin.deleteUser(newAuthUser.user!.id)
       throw createError({
         statusCode: 500,
-        statusMessage: 'Failed to create admin record.'
+        statusMessage: 'Failed to create administrative record.'
       })
     }
 
-    // Log the action
     console.info(`[ADMIN_API] New admin enrolled: ${body.email} with role ${body.role} by ${user.email}`)
 
     return {
       success: true,
-      message: 'Admin user created successfully.',
+      message: 'Admin user enrolled successfully.',
       user: {
         user_id: newAdmin.user_id,
         email: body.email,
@@ -220,161 +213,19 @@ export default defineEventHandler(async (event): Promise<any> => {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // PATCH /api/admin/users/[id] - Update admin user
-  // ─────────────────────────────────────────────────────────────
-  if (method === 'PATCH') {
-    const userId = getRouterParam(event, 'id')
-
-    if (!userId) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'User ID is required.'
-      })
-    }
-
-    // Only super_admin can update others; users can update self
-    if (userId !== user.id && adminRecord.role !== 'super_admin') {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'Cannot update other users.'
-      })
-    }
-
-    const body = await readBody<UpdateAdminRequest>(event)
-
-    const updates: any = {}
-
-    if (body.role !== undefined) {
-      if (adminRecord.role !== 'super_admin') {
-        throw createError({
-          statusCode: 403,
-          statusMessage: 'Only super_admin can change roles.'
-        })
-      }
-
-      const validRoles: AdminRole[] = ['super_admin', 'admin', 'editor', 'viewer']
-      if (!validRoles.includes(body.role)) {
-        throw createError({
-          statusCode: 400,
-          statusMessage: `Invalid role. Must be one of: ${validRoles.join(', ')}`
-        })
-      }
-
-      updates.role = body.role
-    }
-
-    if (body.is_active !== undefined) {
-      if (adminRecord.role !== 'super_admin') {
-        throw createError({
-          statusCode: 403,
-          statusMessage: 'Only super_admin can deactivate users.'
-        })
-      }
-
-      updates.is_active = body.is_active
-    }
-
-    if (Object.keys(updates).length === 0) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'No updates provided.'
-      })
-    }
-
-    const { data: updatedAdmin, error: updateError } = await supabase
-      .from('admin_users')
-      .update({
-        ...updates,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', userId)
-      .select()
-      .single()
-
-    if (updateError) {
-      console.error('[ADMIN_API] Admin update failed:', updateError)
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Failed to update admin user.'
-      })
-    }
-
-    console.info(`[ADMIN_API] Admin updated: ${userId} - changes: ${JSON.stringify(updates)} by ${user.email}`)
-
-    return {
-      success: true,
-      message: 'Admin user updated successfully.',
-      user: updatedAdmin
-    }
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // DELETE /api/admin/users/[id] - Deactivate admin
-  // ─────────────────────────────────────────────────────────────
-  if (method === 'DELETE') {
-    const userId = getRouterParam(event, 'id')
-
-    if (!userId) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'User ID is required.'
-      })
-    }
-
-    // Only super_admin can delete
-    if (adminRecord.role !== 'super_admin') {
-      throw createError({
-        statusCode: 403,
-        statusMessage: 'Only super_admin can deactivate users.'
-      })
-    }
-
-    // Prevent deactivating self
-    if (userId === user.id) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Cannot deactivate your own account.'
-      })
-    }
-
-    // Soft delete: set is_active to false
-    const { error: deleteError } = await supabase
-      .from('admin_users')
-      .update({ is_active: false, updated_at: new Date().toISOString() })
-      .eq('user_id', userId)
-
-    if (deleteError) {
-      console.error('[ADMIN_API] Admin deactivation failed:', deleteError)
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Failed to deactivate admin user.'
-      })
-    }
-
-    console.warn(`[ADMIN_API] Admin deactivated: ${userId} by ${user.email}`)
-
-    return {
-      success: true,
-      message: 'Admin user deactivated successfully.'
-    }
-  }
-
   throw createError({
     statusCode: 405,
     statusMessage: 'Method not allowed.'
   })
 })
 
-// ─────────────────────────────────────────────────────────────
-// Utility Functions
-// ─────────────────────────────────────────────────────────────
+// Helper functions
 
 function generateSecurePassword(length: number = 16): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
   let result = ''
   const randomValues = new Uint8Array(length)
-  crypto.getRandomValues(randomValues)
+  webcrypto.getRandomValues(randomValues)
   for (let i = 0; i < length; i++) {
     result += chars[(randomValues[i] ?? 0) % chars.length]
   }
@@ -388,19 +239,39 @@ async function findAuthUserByEmail(supabase: any, email: string) {
 
   while (true) {
     const { data, error } = await supabase.auth.admin.listUsers({ page, perPage })
-
     if (error) {
       console.error('[ADMIN_API] Auth user lookup failed:', error)
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Failed to check existing auth users.'
-      })
+      throw error
     }
+    if (!data?.users || data.users.length === 0) break
 
-    const match = data.users.find((user: { email?: string | null }) => user.email?.toLowerCase() === normalizedEmail)
+    const match = data.users.find((u: { email?: string | null }) => u.email?.toLowerCase() === normalizedEmail)
     if (match) return match
-    if (data.users.length < perPage) return null
+    if (data.users.length < perPage) break
 
     page += 1
   }
+  return null
+}
+
+async function fetchAllAuthUsers(supabase: any): Promise<any[]> {
+  const allUsers: any[] = []
+  const perPage = 1000
+  let page = 1
+
+  while (true) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage })
+    if (error) {
+      console.error('[ADMIN_API] Error fetching auth users page:', error)
+      throw error
+    }
+    if (!data?.users || data.users.length === 0) break
+
+    allUsers.push(...data.users)
+    if (data.users.length < perPage) break
+
+    page += 1
+  }
+
+  return allUsers
 }

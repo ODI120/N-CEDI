@@ -60,7 +60,7 @@ const { data: dashboard, pending, refresh } = useAsyncData('admin-dashboard-tabs
   ])
 
   return { counts: Object.fromEntries(countResults) as Record<CountTable, number>, unreadInquiries, publishedPrograms, unpublishedPrograms, featuredPrograms, recentPrograms, recentInquiries, currentAdmin }
-})
+}, { watch: [user] })
 
 const totalContent = computed(() => {
   const c = dashboard.value?.counts
