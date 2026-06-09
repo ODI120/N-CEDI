@@ -18,19 +18,33 @@ const currentUser = useSupabaseUser()
 const toast = useToast()
 const search = ref('')
 
+const currentUserId = computed(() => currentUser.value?.id || (currentUser.value as any)?.sub)
+
 // Fetch current user's profile to enforce client-side UI gating
 const { data: currentUserProfile } = useAsyncData('current-user-profile', async () => {
-  if (!currentUser.value?.id) return null
+  if (!currentUserId.value) return null
   const { data, error } = await supabase
     .from('admin_users')
     .select('role')
-    .eq('user_id', currentUser.value.id)
+    .eq('user_id', currentUserId.value)
     .maybeSingle()
   if (error) console.error('[UsersPage] Error fetching user role:', error)
   return data
 }, { watch: [currentUser] })
 
+const router = useRouter()
 const isSuperAdmin = computed(() => currentUserProfile.value?.role === 'super_admin')
+
+watch(currentUserProfile, (profile) => {
+  if (profile && profile.role !== 'super_admin') {
+    toast.add({
+      title: 'Access Denied',
+      description: 'You do not have permission to access the admin users list.',
+      color: 'red'
+    })
+    router.push('/admin')
+  }
+}, { immediate: true })
 
 // Fetch the list of admin users
 const { data: adminUsers, pending, error, refresh } = useAsyncData('admin-users-list', async () => {
@@ -61,6 +75,12 @@ const deleting = ref(false)
 const form = ref({ email: '', role: 'viewer' as AdminRole, temporaryPassword: '' })
 const enrolledPassword = ref('')
 const targetUser = ref<AdminUserRow | null>(null)
+
+// Edit Role States
+const editRoleOpen = ref(false)
+const updatingRole = ref(false)
+const editRoleForm = ref({ role: 'viewer' as AdminRole })
+const editRoleTargetUser = ref<AdminUserRow | null>(null)
 
 // Actions
 const openAddModal = () => {
@@ -101,7 +121,7 @@ const handleEnrollAdmin = async () => {
 }
 
 const handleToggleStatus = async (row: AdminUserRow) => {
-  if (row.user_id === currentUser.value?.id) {
+  if (row.user_id === currentUserId.value) {
     toast.add({ title: 'Operation Prevented', description: 'You cannot deactivate your own account.', color: 'yellow' })
     return
   }
@@ -123,7 +143,7 @@ const handleToggleStatus = async (row: AdminUserRow) => {
 }
 
 const openDeleteModal = (row: AdminUserRow) => {
-  if (row.user_id === currentUser.value?.id) {
+  if (row.user_id === currentUserId.value) {
     toast.add({ title: 'Operation Prevented', description: 'You cannot delete your own account.', color: 'yellow' })
     return
   }
@@ -151,6 +171,36 @@ const handleDeleteAdmin = async () => {
     })
   } finally {
     deleting.value = false
+  }
+}
+
+const openEditRoleModal = (row: AdminUserRow) => {
+  editRoleTargetUser.value = row
+  editRoleForm.value.role = row.role
+  editRoleOpen.value = true
+}
+
+const handleUpdateRole = async () => {
+  if (!editRoleTargetUser.value) return
+
+  updatingRole.value = true
+  try {
+    await $fetch(`/api/admin/users/${editRoleTargetUser.value.user_id}`, {
+      method: 'PATCH',
+      body: { role: editRoleForm.value.role }
+    })
+    toast.add({ title: 'Role Updated Successfully', color: 'green' })
+    editRoleOpen.value = false
+    editRoleTargetUser.value = null
+    await refresh()
+  } catch (e: any) {
+    toast.add({
+      title: 'Update Failed',
+      description: e.data?.statusMessage || e.message || 'An error occurred.',
+      color: 'red'
+    })
+  } finally {
+    updatingRole.value = false
   }
 }
 
@@ -213,7 +263,9 @@ const getRoleBadgeClass = (role: AdminRole) => {
     <!-- Admin Users Table -->
     <AdminTable :columns="columns" :rows="filteredRows" :loading="pending" empty-title="No administrative users found" empty-text="Try adjusting your search criteria or register a new admin.">
       <template #cell-email="{ row }">
-        <div class="font-semibold">{{ row.email }}</div>
+        <NuxtLink :to="`/admin/users/${row.user_id}`" class="font-semibold hover:underline" style="color: var(--admin-primary, #6366f1); display: inline-block;">
+          {{ row.email }}
+        </NuxtLink>
         <div class="text-xs font-mono" style="color:var(--admin-text-muted)">{{ row.user_id }}</div>
       </template>
       <template #cell-role="{ row }">
@@ -230,15 +282,23 @@ const getRoleBadgeClass = (role: AdminRole) => {
         <span class="text-xs" style="color:var(--admin-text-secondary)">{{ formatDate(row.updated_at) }}</span>
       </template>
       <template #actions="{ row }">
-        <div v-if="isSuperAdmin && row.user_id !== currentUser?.id" class="flex gap-2 items-center">
-          <button class="btn btn-ghost" style="font-size:12px;padding:4px 8px" @click="handleToggleStatus(row)">
-            {{ row.is_active ? 'Suspend' : 'Activate' }}
-          </button>
-          <button class="btn btn-danger btn-icon" title="Delete Admin" type="button" @click="openDeleteModal(row)">
-            <UIcon name="i-lucide-trash-2" />
-          </button>
+        <div class="flex gap-2 items-center justify-end">
+          <NuxtLink :to="`/admin/users/${row.user_id}`" class="btn btn-ghost btn-icon" title="View Details">
+            <UIcon name="i-lucide-eye" />
+          </NuxtLink>
+          <div v-if="isSuperAdmin && row.user_id !== currentUserId" class="flex gap-2 items-center">
+            <button class="btn btn-ghost" style="font-size:12px;padding:4px 8px" @click="handleToggleStatus(row)">
+              {{ row.is_active ? 'Suspend' : 'Activate' }}
+            </button>
+            <button class="btn btn-ghost btn-icon" title="Edit Role" type="button" @click="openEditRoleModal(row)">
+              <UIcon name="i-lucide-edit-3" />
+            </button>
+            <button class="btn btn-danger btn-icon" title="Delete Admin" type="button" @click="openDeleteModal(row)">
+              <UIcon name="i-lucide-trash-2" />
+            </button>
+          </div>
+          <span v-else-if="row.user_id === currentUserId" class="text-xs italic" style="color:var(--admin-text-muted)">Self</span>
         </div>
-        <span v-else class="text-xs italic" style="color:var(--admin-text-muted)">Locked</span>
       </template>
     </AdminTable>
 
@@ -276,6 +336,31 @@ const getRoleBadgeClass = (role: AdminRole) => {
         <div class="am-field">
           <label class="am-label">Temporary Password (optional)</label>
           <input v-model="form.temporaryPassword" type="password" class="am-input" placeholder="Leave empty to auto-generate" />
+        </div>
+      </div>
+    </AdminModal>
+
+    <!-- Edit Role Modal -->
+    <AdminModal
+      :open="editRoleOpen"
+      title="Edit Administrator Role"
+      submit-label="Update Role"
+      :loading="updatingRole"
+      @close="editRoleOpen = false"
+      @submit="handleUpdateRole"
+    >
+      <div class="modal-form">
+        <p style="color:var(--admin-text-secondary); margin-bottom: 12px">
+          Modify administrative access permissions for <strong>{{ editRoleTargetUser?.email }}</strong>.
+        </p>
+        <div class="am-field">
+          <label class="am-label">Access Role</label>
+          <select v-model="editRoleForm.role" class="am-select">
+            <option value="viewer">Viewer (Read-only access)</option>
+            <option value="editor">Editor (Create/Edit content)</option>
+            <option value="admin">Admin (Full content CRUD, no security access)</option>
+            <option value="super_admin">Super Admin (Full security & system control)</option>
+          </select>
         </div>
       </div>
     </AdminModal>

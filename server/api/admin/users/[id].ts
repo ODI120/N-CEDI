@@ -31,7 +31,7 @@ export default defineEventHandler(async (event): Promise<any> => {
   const { data: adminRecord, error: adminCheckError } = await supabase
     .from('admin_users')
     .select('role, is_active')
-    .eq('user_id', user.id)
+    .eq('user_id', user.id || (user as any).sub)
     .maybeSingle()
 
   if (adminCheckError || !adminRecord || !adminRecord.is_active) {
@@ -50,6 +50,53 @@ export default defineEventHandler(async (event): Promise<any> => {
   }
 
   const method = getMethod(event)
+
+  // ─────────────────────────────────────────────────────────────
+  // GET /api/admin/users/[id] - Get admin user details
+  // ─────────────────────────────────────────────────────────────
+  if (method === 'GET') {
+    const currentUserId = user.id || (user as any).sub
+    // Only super_admin or the user themselves can view details
+    if (adminRecord.role !== 'super_admin' && currentUserId !== targetUserId) {
+      throw createError({
+        statusCode: 403,
+        statusMessage: 'Insufficient permissions to view administrator details.'
+      })
+    }
+
+    const { data: admin, error: fetchError } = await supabase
+      .from('admin_users')
+      .select('user_id, role, is_active, created_at, updated_at')
+      .eq('user_id', targetUserId)
+      .maybeSingle()
+
+    if (fetchError || !admin) {
+      console.error(`[ADMIN_API] Admin fetch failed for ${targetUserId}:`, fetchError)
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'Admin user not found.'
+      })
+    }
+
+    // Fetch user email from auth
+    let email = 'unknown'
+    try {
+      const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(targetUserId)
+      if (authUser?.user) {
+        email = authUser.user.email || 'unknown'
+      }
+    } catch (e) {
+      console.error(`[ADMIN_API] Error fetching email from auth for ${targetUserId}:`, e)
+    }
+
+    return {
+      success: true,
+      data: {
+        ...admin,
+        email
+      }
+    }
+  }
 
   // ─────────────────────────────────────────────────────────────
   // PATCH /api/admin/users/[id] - Update admin user
@@ -79,7 +126,7 @@ export default defineEventHandler(async (event): Promise<any> => {
 
     if (body.is_active !== undefined) {
       // Prevent self-deactivation
-      if (targetUserId === user.id && !body.is_active) {
+      if (targetUserId === (user.id || (user as any).sub) && !body.is_active) {
         throw createError({
           statusCode: 400,
           statusMessage: 'Cannot deactivate your own account.'
@@ -136,7 +183,7 @@ export default defineEventHandler(async (event): Promise<any> => {
     }
 
     // Prevent self-deletion
-    if (targetUserId === user.id) {
+    if (targetUserId === (user.id || (user as any).sub)) {
       throw createError({
         statusCode: 400,
         statusMessage: 'Cannot delete your own account.'

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import AppLogo from '~/components/AppLogo.vue'
+import { computed } from 'vue'
 
-const nav = [
+const navConfig = [
   { label: 'Overview', to: '/admin', icon: 'i-lucide-layout-dashboard' },
   { label: 'Categories', to: '/admin/categories', icon: 'i-lucide-tags' },
   { label: 'Events', to: '/admin/events', icon: 'i-lucide-calendar-days' },
@@ -24,6 +25,31 @@ const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 
+const currentUserId = computed(() => user.value?.id || (user.value as any)?.sub)
+const selfProfileLink = computed(() => {
+  const id = currentUserId.value
+  return id ? `/admin/users/${id}` : '/admin'
+})
+
+const { data: adminProfile } = useAsyncData<{ role?: string } | null>('sidebar-admin-role', async () => {
+  if (!currentUserId.value) return null
+  const { data } = await supabase
+    .from('admin_users')
+    .select('role')
+    .eq('user_id', currentUserId.value)
+    .maybeSingle()
+  return data
+}, { default: () => null, watch: [user] })
+
+const nav = computed(() => {
+  return navConfig.filter(item => {
+    if (item.to === '/admin/users' || item.to === '/admin/logs') {
+      return adminProfile.value?.role === 'super_admin'
+    }
+    return true
+  })
+})
+
 const navigateAdminLink = async (path: string, event: MouseEvent) => {
   event.preventDefault()
 
@@ -40,15 +66,6 @@ const navigateAdminLink = async (path: string, event: MouseEvent) => {
   }
 }
 
-const { data: adminProfile } = useAsyncData<{ role?: string } | null>('sidebar-admin-role', async () => {
-  if (!user.value?.id) return null
-  const { data } = await supabase
-    .from('admin_users')
-    .select('role')
-    .eq('user_id', user.value.id)
-    .maybeSingle()
-  return data
-}, { default: () => null, watch: [user] })
 </script>
 
 <template>
@@ -81,15 +98,16 @@ const { data: adminProfile } = useAsyncData<{ role?: string } | null>('sidebar-a
     </nav>
 
     <div class="sidebar__footer">
-      <div v-if="user" class="sidebar__profile">
+      <NuxtLink v-if="user" :to="selfProfileLink" class="sidebar__profile" style="text-decoration: none; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(148, 163, 184, 0.12)'" onmouseout="this.style.background='rgba(148, 163, 184, 0.06)'">
         <div class="profile__avatar">
           {{ user?.email?.[0]?.toUpperCase() || 'A' }}
         </div>
-        <div class="profile__details">
+        <div class="profile__details" style="flex: 1; min-width: 0;">
           <span class="profile__email" :title="user?.email">{{ user?.email }}</span>
           <span class="profile__role">{{ adminProfile?.role?.replace('_', ' ') || 'Editor' }}</span>
         </div>
-      </div>
+        <UIcon name="i-lucide-settings" style="width: 14px; height: 14px; color: var(--admin-text-muted);" />
+      </NuxtLink>
       
       <NuxtLink to="/" class="sidebar__footer-link">
         <UIcon name="i-lucide-arrow-left" class="sidebar__footer-icon" />

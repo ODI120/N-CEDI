@@ -71,7 +71,7 @@ async function logAdminActivity(
                      'unknown'
 
     const logEntry: AdminActivityLog = {
-      user_id: user.id,
+      user_id: user.id || (user as any).sub,
       email: user.email || 'unknown',
       action: params.method,
       resource: params.url,

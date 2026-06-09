@@ -45,7 +45,7 @@ export default defineEventHandler(async (event): Promise<any> => {
   const { data: adminRecord, error: adminCheckError } = await supabase
     .from('admin_users')
     .select('role, is_active')
-    .eq('user_id', user.id)
+    .eq('user_id', user.id || (user as any).sub)
     .maybeSingle()
 
   if (adminCheckError || !adminRecord || !adminRecord.is_active) {
@@ -66,8 +66,8 @@ export default defineEventHandler(async (event): Promise<any> => {
   // GET /api/admin/users - List all admin users
   // ─────────────────────────────────────────────────────────────
   if (method === 'GET') {
-    // Requires editor role or higher
-    if (!['super_admin', 'admin', 'editor'].includes(adminRecord.role)) {
+    // Requires super_admin role
+    if (adminRecord.role !== 'super_admin') {
       throw createError({
         statusCode: 403,
         statusMessage: 'Insufficient permissions to list admins.'
