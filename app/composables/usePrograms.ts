@@ -126,18 +126,20 @@ export async function fetchPublishedPrograms(options: UseProgramsOptions = {}): 
 
 /** Homepage: featured tracks first, then fill with latest published. */
 export async function fetchHomepagePrograms(limit = 6): Promise<ProgramCard[]> {
-  const featured = await fetchPublishedPrograms({
-    featuredOnly: true,
-    limit,
-    orderBy: 'updated_at',
-  })
+  // Fetch featured and recent in parallel to avoid a waterfall
+  const [featured, recent] = await Promise.all([
+    fetchPublishedPrograms({
+      featuredOnly: true,
+      limit,
+      orderBy: 'updated_at',
+    }),
+    fetchPublishedPrograms({
+      limit: limit * 2,
+      orderBy: 'updated_at',
+    }),
+  ])
 
   if (featured.length >= limit) return featured
-
-  const recent = await fetchPublishedPrograms({
-    limit: limit * 2,
-    orderBy: 'updated_at',
-  })
 
   const seen = new Set(featured.map((p) => p.slug))
   const filler = recent.filter((p) => !seen.has(p.slug))
@@ -145,8 +147,8 @@ export async function fetchHomepagePrograms(limit = 6): Promise<ProgramCard[]> {
   return [...featured, ...filler].slice(0, limit)
 }
 
-export async function usePrograms(options: UseProgramsOptions = {}) {
-  const { data, pending, error, refresh } = await useAsyncData<ProgramCard[]>(
+export function usePrograms(options: UseProgramsOptions = {}) {
+  const { data, pending, error, refresh } = useAsyncData<ProgramCard[]>(
     buildCacheKey(options),
     () => fetchPublishedPrograms(options),
     { default: () => [] },
@@ -155,8 +157,8 @@ export async function usePrograms(options: UseProgramsOptions = {}) {
   return { programs: data, pending, error, refresh }
 }
 
-export async function useHomepagePrograms(limit = 6) {
-  const { data, pending, error, refresh } = await useAsyncData<ProgramCard[]>(
+export function useHomepagePrograms(limit = 6) {
+  const { data, pending, error, refresh } = useAsyncData<ProgramCard[]>(
     `programs-home-${limit}`,
     () => fetchHomepagePrograms(limit),
     { default: () => [] },
@@ -165,10 +167,10 @@ export async function useHomepagePrograms(limit = 6) {
   return { programs: data, pending, error, refresh }
 }
 
-export async function useProgram(slug: string) {
+export function useProgram(slug: string) {
   const { client } = useSupabase()
 
-  const { data, pending, error, refresh } = await useAsyncData<ProgramDetail | null>(
+  const { data, pending, error, refresh } = useAsyncData<ProgramDetail | null>(
     `program-${slug}`,
     async () => {
       const { data: row, error: sbError } = await client
@@ -197,8 +199,8 @@ export async function useProgram(slug: string) {
 }
 
 /** Related tracks: prefer same featured pool, exclude current slug. */
-export async function useRelatedPrograms(currentSlug: string, limit = 2) {
-  const { data, pending, error, refresh } = await useAsyncData<ProgramCard[]>(
+export function useRelatedPrograms(currentSlug: string, limit = 2) {
+  const { data, pending, error, refresh } = useAsyncData<ProgramCard[]>(
     `programs-related-${currentSlug}-${limit}`,
     async () => {
       const related = await fetchPublishedPrograms({

@@ -63,7 +63,7 @@
     isMegaMenuOpen.value = !isMegaMenuOpen.value
   }
 
-  const { programs: navbarPrograms } = await usePrograms({ orderBy: 'updated_at' })
+  const { programs: navbarPrograms } = usePrograms({ orderBy: 'updated_at' })
 
   const programs = computed(() =>
     (navbarPrograms.value ?? []).map((program) => ({

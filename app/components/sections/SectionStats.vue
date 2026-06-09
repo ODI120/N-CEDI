@@ -14,11 +14,9 @@ const props = withDefaults(defineProps<SectionStatsProps>(), {
   eyebrow: 'Experience',
 })
 
-// ─── Live data from Supabase ───────────────────────────────────
-const { stats, pending: statsPending } = await useHomepageStats()
-
-// Gallery slider: published images from DB, with local fallbacks when empty
-const { items: galleryItems } = await useHomepageGallerySlider(6)
+// ─── Live data from Supabase (parallel fetch) ──────────────
+const { stats, pending: statsPending } = useHomepageStats()
+const { items: galleryItems } = useHomepageGallerySlider(6)
 
 // Normalize gallery items so the template stays readable
 const galleryDisplayItems = useGalleryDisplayItems(() => galleryItems.value ?? [])

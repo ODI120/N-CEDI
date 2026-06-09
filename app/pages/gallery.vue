@@ -11,7 +11,7 @@ usePageSeo({
     "View photos and videos of N-CEDI's modern facility labs, students working, and showcase exhibitions.",
 })
 
-const { gallery, pending, error, refresh } = await useGalleryPage()
+const { gallery, pending, error, refresh } = useGalleryPage()
 
 const activeFilter = ref('all')
 const searchQuery = ref('')

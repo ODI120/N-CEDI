@@ -20,7 +20,7 @@ const milestones = [
   { year: '2024', title: 'Centre of Excellence', badge: 'Excellence', description: 'Named a Centre of Excellence for vocational training and entrepreneurship development in Northern Nigeria.' }
 ]
 
-const { teamMembers } = useTeamMembers()
+const { teamMembers, loading } = useTeamMembers()
 </script>
 
 <template>
@@ -144,8 +144,17 @@ const { teamMembers } = useTeamMembers()
           </div>
         </MotionWrapper>
 
+        <!-- Loading Skeleton -->
+        <div v-if="loading && teamMembers.length === 0" class="team-grid">
+          <div v-for="n in 3" :key="n" class="team-skeleton-card">
+            <div class="skeleton-avatar"></div>
+            <div class="skeleton-text skeleton-name"></div>
+            <div class="skeleton-text skeleton-role"></div>
+          </div>
+        </div>
+
         <!-- Empty State -->
-        <div v-if="teamMembers.length === 0" class="team-empty-state">
+        <div v-else-if="teamMembers.length === 0" class="team-empty-state">
           <MotionWrapper variant="fadeUp" :delay="100">
             <div class="empty-icon-wrap">
               <UIcon name="i-lucide-users" class="empty-icon" />
@@ -353,5 +362,47 @@ const { teamMembers } = useTeamMembers()
   color: var(--color-text-muted);
   line-height: var(--leading-normal);
   margin: 0;
+}
+
+/* ─── Team Skeleton Skeletons ─── */
+@keyframes teamPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+.team-skeleton-card {
+  padding: var(--space-8) var(--space-6);
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: var(--radius-2xl);
+  border: 1px solid rgba(107, 89, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  text-align: center;
+}
+
+.skeleton-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(107, 89, 255, 0.05);
+  animation: teamPulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-text {
+  background: rgba(107, 89, 255, 0.05);
+  height: 16px;
+  border-radius: var(--radius-sm);
+  animation: teamPulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-name {
+  width: 60%;
+}
+
+.skeleton-role {
+  width: 40%;
+  height: 12px;
 }
 </style>

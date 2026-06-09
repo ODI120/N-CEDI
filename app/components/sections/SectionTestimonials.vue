@@ -12,9 +12,12 @@ interface Testimonial {
 
 interface SectionTestimonialsProps {
   testimonials: Testimonial[]
+  loading?: boolean
 }
 
-const props = defineProps<SectionTestimonialsProps>()
+const props = withDefaults(defineProps<SectionTestimonialsProps>(), {
+  loading: false
+})
 const activeIndex = ref(0)
 
 const activeTestimonial = computed(() => props.testimonials?.[activeIndex.value])
@@ -35,7 +38,26 @@ const selectTestimonial = (index: number) => {
         </MotionWrapper>
       </div>
 
-      <div v-if="testimonials && testimonials.length > 0" class="testimonials-grid">
+      <!-- Skeleton Loading State -->
+      <div v-if="loading && (!testimonials || testimonials.length === 0)" class="testimonials-grid">
+        <div class="statement-card-wrapper">
+          <div class="statement-card testimonial-skeleton">
+            <div class="statement-card__glow"></div>
+            <div class="statement-card__content">
+              <div class="skeleton-line skeleton-quote-1"></div>
+              <div class="skeleton-line skeleton-quote-2"></div>
+              <div class="skeleton-line skeleton-author"></div>
+            </div>
+          </div>
+        </div>
+        <div class="avatar-selector">
+          <div class="avatar-list">
+            <div v-for="n in 3" :key="n" class="avatar-skeleton-pulse"></div>
+          </div>
+        </div>
+      </div>
+
+      <div v-else-if="testimonials && testimonials.length > 0" class="testimonials-grid">
         
         <!-- Massive Statement Card -->
         <MotionWrapper variant="fadeUp" :delay="0.1" class="statement-card-wrapper">
@@ -358,5 +380,32 @@ const selectTestimonial = (index: number) => {
     width: 48px;
     height: 48px;
   }
+}
+
+/* ─── Skeleton Animations ─── */
+@keyframes testimonialPulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.55; }
+}
+
+.testimonial-skeleton .skeleton-line {
+  background: rgba(255, 255, 255, 0.08);
+  height: 20px;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+  animation: testimonialPulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-quote-1 { width: 85%; margin-inline: auto; }
+.skeleton-quote-2 { width: 65%; margin-inline: auto; }
+.skeleton-author { width: 35%; margin-inline: auto; height: 16px !important; margin-top: var(--space-8); }
+
+.avatar-skeleton-pulse {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  animation: testimonialPulse 1.5s infinite ease-in-out;
 }
 </style>

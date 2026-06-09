@@ -13,7 +13,7 @@ usePageSeo({
     'Learn about the government agencies, corporate institutions, and foundations sponsoring vocational excellence at N-CEDI.',
 })
 
-const { page, pending, error, refresh } = await usePartnersPage()
+const { page, pending, error, refresh } = usePartnersPage()
 
 const partnerRows = computed(() => page.value?.partners ?? [])
 const fromDatabase = computed(() => page.value?.fromDatabase ?? false)

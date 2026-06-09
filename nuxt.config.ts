@@ -39,7 +39,17 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', type: 'image/png', href: '/logo.png' },
         { rel: 'apple-touch-icon', href: '/logo.png' },
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,400;0,700;1,100;1,400;1,700&family=DM+Sans:wght@400;700&family=Sora:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap' }
+        // Preconnect to font origins for faster resolution
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        // Async font loading — prevents render-blocking
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,400;0,700;1,100;1,400;1,700&family=DM+Sans:wght@400;700&family=Sora:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap', media: 'print', onload: "this.media='all'" },
+        // Async Bootstrap Icons — prevents render-blocking
+        { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css', media: 'print', onload: "this.media='all'" },
+        // DNS prefetch for Supabase API
+        { rel: 'dns-prefetch', href: process.env.SUPABASE_URL || process.env.NUXT_PUBLIC_SUPABASE_URL || '' },
+        // Preconnect to CDN for Bootstrap Icons woff2
+        { rel: 'preconnect', href: 'https://cdn.jsdelivr.net' }
       ]
     },
     pageTransition: {
@@ -57,7 +67,7 @@ export default defineNuxtConfig({
 
   routeRules: {
     // ISR so homepage stats/gallery/programs reflect DB without full redeploy
-    '/': { isr: 600 },
+    '/': { isr: 600, swr: true },
     '/about': { prerender: true },
     '/programs/**': { isr: 900 },
     '/events/**': { isr: 1800 },

@@ -105,11 +105,11 @@ export async function fetchPublishedGalleryItems(
   return rows.map((row: any) => mapGalleryRow(row as GalleryItemDbRow))
 }
 
-export async function useGallery(options: GalleryOptions = {}) {
+export function useGallery(options: GalleryOptions = {}) {
   const { mediaType, categoryId, eventId, programId, limit = 100 } = options
   const cacheKey = `gallery-${mediaType ?? 'all'}-${categoryId ?? ''}-${eventId ?? ''}-${programId ?? ''}-${limit}`
 
-  const { data, pending, error, refresh } = await useAsyncData<GalleryItem[]>(
+  const { data, pending, error, refresh } = useAsyncData<GalleryItem[]>(
     cacheKey,
     () => fetchPublishedGalleryItems(options),
     { default: () => [] },
@@ -124,8 +124,8 @@ export async function useGallery(options: GalleryOptions = {}) {
 }
 
 /** Public /gallery — database only; empty array when no published items. */
-export async function useGalleryPage(limit = 500) {
-  const { data, pending, error, refresh } = await useAsyncData<GalleryPageData>(
+export function useGalleryPage(limit = 500) {
+  const { data, pending, error, refresh } = useAsyncData<GalleryPageData>(
     `gallery-page-${limit}`,
     () => fetchGalleryPageData(limit),
     {
@@ -146,14 +146,14 @@ export async function useGalleryPage(limit = 500) {
 }
 
 /** Homepage bento slider — DB first. */
-export async function useHomepageGallerySlider(limit = 6) {
-  const { data, pending, error, refresh } = await useAsyncData<GalleryItem[]>(
+export function useHomepageGallerySlider(limit = 6) {
+  const { data, pending, error, refresh } = useAsyncData<GalleryItem[]>(
     `gallery-home-slider-${limit}`,
     async () => {
       const items = await fetchPublishedGalleryItems({ mediaType: 'image', limit })
       return items
     },
-    { default: () => [] },
+    { default: () => [], lazy: true },
   )
 
   return { items: data, pending, error, refresh }

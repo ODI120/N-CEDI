@@ -45,11 +45,11 @@ export async function fetchPartners(options: FetchPartnersOptions = {}): Promise
   return ((rows ?? []) as PartnerDbRow[]).map(mapPartnerRow)
 }
 
-export async function usePartners(options: FetchPartnersOptions = {}) {
+export function usePartners(options: FetchPartnersOptions = {}) {
   const { activeOnly = true, tier, limit = 100 } = options
   const cacheKey = `partners-${activeOnly}-${tier ?? 'all'}-${limit}`
 
-  const { data, pending, error, refresh } = await useAsyncData<Partner[]>(
+  const { data, pending, error, refresh } = useAsyncData<Partner[]>(
     cacheKey,
     () => fetchPartners(options),
     { default: () => [] },
@@ -59,8 +59,8 @@ export async function usePartners(options: FetchPartnersOptions = {}) {
 }
 
 /** Homepage institutional anchors — active partners, prefer platinum. */
-export async function useHomepagePartners(limit = 6) {
-  const { data, pending, error, refresh } = await useAsyncData<SectionPartnerDisplay[]>(
+export function useHomepagePartners(limit = 6) {
+  const { data, pending, error, refresh } = useAsyncData<SectionPartnerDisplay[]>(
     `partners-home-${limit}`,
     async () => {
       const all = await fetchPartners({ activeOnly: true, limit: 50 })
@@ -70,7 +70,7 @@ export async function useHomepagePartners(limit = 6) {
       const picked = (platinum.length ? platinum : all).slice(0, limit)
       return picked.map(mapPartnerToSectionDisplay)
     },
-    { default: () => [] },
+    { default: () => [], lazy: true },
   )
 
   return { partners: data, pending, error, refresh }
@@ -82,8 +82,8 @@ export interface PartnersPageData {
 }
 
 /** Public /partners page. */
-export async function usePartnersPage() {
-  const { data, pending, error, refresh } = await useAsyncData<PartnersPageData>(
+export function usePartnersPage() {
+  const { data, pending, error, refresh } = useAsyncData<PartnersPageData>(
     'partners-page',
     async () => {
       const partners = await fetchPartners({ activeOnly: true, limit: 200 })

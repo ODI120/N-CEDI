@@ -8,10 +8,14 @@ usePageSeo({
   description: 'N-CEDI — NCAT Centre for Entrepreneurship Development and Innovation. Empowering Africa\'s next generation of innovators through world-class vocational and tech training in Nigeria.'
 })
 
+// Programs are above the fold, so we await them for SSR
 const { programs } = await useHomepagePrograms(6)
-const { partners: homepagePartners } = await useHomepagePartners(6)
+
+// Below fold data is loaded lazily (non-blocking)
+const { partners: homepagePartners } = useHomepagePartners(6)
 const displayPartners = useResolvedSectionPartners(homepagePartners)
-const { testimonials } = await useHomepageTestimonials(6)
+
+const { testimonials, pending: testimonialsPending } = useHomepageTestimonials(6)
 
 </script>
 
@@ -32,7 +36,7 @@ const { testimonials } = await useHomepageTestimonials(6)
     </MotionWrapper>
 
     <MotionWrapper variant="fadeUp" :delay="0.1">
-      <SectionTestimonials :testimonials="testimonials" />
+      <SectionTestimonials :testimonials="testimonials ?? []" :loading="testimonialsPending" />
     </MotionWrapper>
 
     <MotionWrapper variant="fadeUp" :delay="0.1">

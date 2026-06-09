@@ -42,10 +42,10 @@ export async function fetchPublishedSiteStats(
   return rows.map((row: any) => mapSiteStatRow(row as SiteStatDbRow))
 }
 
-export async function useStats(options: FetchSiteStatsOptions = {}) {
+export function useStats(options: FetchSiteStatsOptions = {}) {
   const cacheKey = `site-stats-${options.limit ?? 'all'}`
 
-  const { data, pending, error, refresh } = await useAsyncData<SiteStat[]>(
+  const { data, pending, error, refresh } = useAsyncData<SiteStat[]>(
     cacheKey,
     () => fetchPublishedSiteStats(options),
     { default: () => [] },
@@ -60,8 +60,8 @@ export async function useStats(options: FetchSiteStatsOptions = {}) {
 }
 
 /** Homepage section: published stats from DB (max 4). */
-export async function useHomepageStats() {
-  const { data, pending, error, refresh } = await useAsyncData<SiteStat[]>(
+export function useHomepageStats() {
+  const { data, pending, error, refresh } = useAsyncData<SiteStat[]>(
     'site-stats-home',
     async () => {
       const stats = await fetchPublishedSiteStats({ limit: HOMEPAGE_STAT_LIMIT })

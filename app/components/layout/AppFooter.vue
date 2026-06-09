@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import AppLogo from '~/components/AppLogo.vue'
 
-const { programs: footerPrograms } = await usePrograms({ orderBy: 'updated_at' })
+const { programs: footerPrograms } = usePrograms({ orderBy: 'updated_at' })
 
 const email = ref('')
 const isSubscribed = ref(false)

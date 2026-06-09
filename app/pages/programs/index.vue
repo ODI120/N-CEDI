@@ -9,7 +9,7 @@
     description: 'Explore N-CEDI\'s professional vocational and technology tracks, designed to equip you with real-world entrepreneurial skills.'
   })
 
-  const { programs, pending, error, refresh } = await usePrograms({ orderBy: 'updated_at' })
+  const { programs, pending, error, refresh } = usePrograms({ orderBy: 'updated_at' })
 
   const breadcrumbs = [
     { label: 'Programs', to: '/programs' }
