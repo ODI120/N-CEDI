@@ -40,7 +40,7 @@ const navigateAdminLink = async (path: string, event: MouseEvent) => {
   }
 }
 
-const { data: adminProfile } = await useAsyncData<{ role?: string } | null>('sidebar-admin-role', async () => {
+const { data: adminProfile } = useAsyncData<{ role?: string } | null>('sidebar-admin-role', async () => {
   if (!user.value?.id) return null
   const { data } = await supabase
     .from('admin_users')

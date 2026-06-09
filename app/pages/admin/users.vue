@@ -19,7 +19,7 @@ const toast = useToast()
 const search = ref('')
 
 // Fetch current user's profile to enforce client-side UI gating
-const { data: currentUserProfile } = await useAsyncData('current-user-profile', async () => {
+const { data: currentUserProfile } = useAsyncData('current-user-profile', async () => {
   if (!currentUser.value?.id) return null
   const { data, error } = await supabase
     .from('admin_users')

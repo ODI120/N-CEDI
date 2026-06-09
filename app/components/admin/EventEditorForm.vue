@@ -50,33 +50,38 @@ const sections = [
   { id: 'seo', label: 'SEO & Settings', icon: 'i-lucide-settings-2' },
 ]
 
-const { data: categories } = await useAsyncData('admin-event-categories', async () => {
+const { data: categories } = useAsyncData('admin-event-categories', async () => {
   const { data } = await supabase
     .from('categories')
     .select('id, name')
     .eq('category_type', 'event')
     .order('name')
   return data ?? []
-})
+}, { default: () => [] })
 
-if (props.eventId) {
-  const { data: row, error } = await useAsyncData(`admin-event-${props.eventId}`, async () => {
-    const { data, error: fetchError } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', props.eventId!)
-      .maybeSingle()
-    if (fetchError) throw fetchError
-    return data as EventDbRow | null
-  })
+const { data: row, pending: eventPending, error } = useAsyncData(`admin-event-${props.eventId}`, async () => {
+  if (!props.eventId) return null
+  const { data, error: fetchError } = await supabase
+    .from('events')
+    .select('*')
+    .eq('id', props.eventId!)
+    .maybeSingle()
+  if (fetchError) throw fetchError
+  return data as EventDbRow | null
+}, { immediate: Boolean(props.eventId) })
 
-  if (error.value || !row.value) {
-    throw createError({ statusCode: 404, statusMessage: 'Event not found' })
+watch(row, (newRow) => {
+  if (newRow) {
+    form.value = rowToEventForm(newRow)
+    slugTouched.value = true
   }
+}, { immediate: true })
 
-  form.value = rowToEventForm(row.value)
-  slugTouched.value = true
-}
+watch(error, (newErr) => {
+  if (newErr) {
+    toast.add({ title: 'Error loading event details', description: newErr.message, color: 'red' })
+  }
+})
 
 watch(
   () => form.value.title,
@@ -314,242 +319,249 @@ onBeforeUnmount(() => {
 
     <!-- Main Content Area -->
     <div class="event-editor__main">
-      <!-- 1. Basics Section -->
-      <section v-show="activeSection === 'basics'" class="editor-section">
-        <div class="editor-section__header">
-          <h2>Basic Information</h2>
-          <p>Core details of the event shown on listing cards and headers.</p>
-        </div>
+      <div v-if="eventPending" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--sp-12) 0; color: var(--admin-text-muted);">
+        <UIcon name="i-lucide-loader-2" class="spin" style="font-size: 2rem; margin-bottom: var(--sp-4);" />
+        <p>Loading event data...</p>
+      </div>
 
-        <div class="am-field" :class="{ 'has-error': errors.title }">
-          <label class="am-label">Event Title *</label>
-          <input v-model="form.title" class="am-input" placeholder="e.g. NCAT Entrepreneurship Day" />
-          <p v-if="errors.title" class="field-error">{{ errors.title }}</p>
-        </div>
+      <template v-else>
+        <!-- 1. Basics Section -->
+        <section v-show="activeSection === 'basics'" class="editor-section">
+          <div class="editor-section__header">
+            <h2>Basic Information</h2>
+            <p>Core details of the event shown on listing cards and headers.</p>
+          </div>
 
-        <div class="am-field" :class="{ 'has-error': errors.slug }">
-          <label class="am-label">URL Slug *</label>
-          <div class="slug-row">
-            <span class="slug-prefix">/events/</span>
-            <input
-              v-model="form.slug"
-              class="am-input"
-              placeholder="ncat-entrepreneurship-day"
-              @input="slugTouched = true"
+          <div class="am-field" :class="{ 'has-error': errors.title }">
+            <label class="am-label">Event Title *</label>
+            <input v-model="form.title" class="am-input" placeholder="e.g. NCAT Entrepreneurship Day" />
+            <p v-if="errors.title" class="field-error">{{ errors.title }}</p>
+          </div>
+
+          <div class="am-field" :class="{ 'has-error': errors.slug }">
+            <label class="am-label">URL Slug *</label>
+            <div class="slug-row">
+              <span class="slug-prefix">/events/</span>
+              <input
+                v-model="form.slug"
+                class="am-input"
+                placeholder="ncat-entrepreneurship-day"
+                @input="slugTouched = true"
+              />
+            </div>
+            <p v-if="errors.slug" class="field-error">{{ errors.slug }}</p>
+          </div>
+
+          <div class="am-field" :class="{ 'has-error': errors.description }">
+            <label class="am-label">Short Description *</label>
+            <textarea
+              v-model="form.description"
+              class="am-textarea"
+              rows="3"
+              placeholder="A brief card summary of the yearly event."
             />
-          </div>
-          <p v-if="errors.slug" class="field-error">{{ errors.slug }}</p>
-        </div>
-
-        <div class="am-field" :class="{ 'has-error': errors.description }">
-          <label class="am-label">Short Description *</label>
-          <textarea
-            v-model="form.description"
-            class="am-textarea"
-            rows="3"
-            placeholder="A brief card summary of the yearly event."
-          />
-          <p v-if="errors.description" class="field-error">{{ errors.description }}</p>
-        </div>
-
-        <div class="am-field">
-          <label class="am-label">Category</label>
-          <select v-model="form.categoryId" class="am-select">
-            <option value="">No category</option>
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-          </select>
-        </div>
-      </section>
-
-      <!-- 2. Media Section -->
-      <section v-show="activeSection === 'media'" class="editor-section">
-        <div class="editor-section__header">
-          <h2>Media & Cover Gallery</h2>
-          <p>Configure the cover image and the gallery slider for the details page.</p>
-        </div>
-
-        <!-- Cover Image -->
-        <div class="am-field" :class="{ 'has-error': errors.coverImageUrl }">
-          <label class="am-label">Primary Card Cover / Thumbnail *</label>
-          <div class="hero-preview" :class="{ 'hero-preview--empty': !mainPreviewUrl }">
-            <img v-if="mainPreviewUrl" :src="mainPreviewUrl" alt="Cover preview">
-            <div v-else class="hero-preview__placeholder">
-              <UIcon name="i-lucide-image" />
-              <span>No cover image uploaded</span>
-            </div>
-            <div v-if="mainPreviewUrl" class="hero-preview__overlay">
-              <p>{{ form.title || 'Event Title' }}</p>
-            </div>
-          </div>
-          <label class="upload-dropzone">
-            <input type="file" accept="image/*" hidden @change="onCoverChange">
-            <UIcon name="i-lucide-upload-cloud" />
-            <span>{{ coverImageFile ? coverImageFile.name : 'Choose cover image to upload' }}</span>
-          </label>
-          <p v-if="errors.coverImageUrl" class="field-error">{{ errors.coverImageUrl }}</p>
-          <p class="field-hint">Stored in the "media" bucket. Recommended size: 1200x675 (16:9 ratio).</p>
-        </div>
-
-        <!-- Slider Gallery -->
-        <div class="am-field">
-          <label class="am-label">Details Page Gallery Slider Images</label>
-          <div v-if="form.galleryUrls.length" class="gallery-grid">
-            <figure v-for="(url, index) in form.galleryUrls" :key="`saved-${index}`" class="gallery-item">
-              <img :src="resolveEventMediaUrl(url)" alt="Gallery image">
-              <button type="button" class="gallery-item__remove" @click="removeGalleryUrl(index)">
-                <UIcon name="i-lucide-x" />
-              </button>
-            </figure>
+            <p v-if="errors.description" class="field-error">{{ errors.description }}</p>
           </div>
 
-          <div v-if="galleryFiles.length" class="gallery-pending">
-            <p class="field-hint">{{ galleryFiles.length }} new file(s) will upload on save</p>
-            <ul>
-              <li v-for="(file, index) in galleryFiles" :key="`${file.name}-${index}`">
-                {{ file.name }}
-                <button type="button" class="link-btn" @click="removePendingGalleryFile(index)">Remove</button>
-              </li>
-            </ul>
+          <div class="am-field">
+            <label class="am-label">Category</label>
+            <select v-model="form.categoryId" class="am-select">
+              <option value="">No category</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+            </select>
+          </div>
+        </section>
+
+        <!-- 2. Media Section -->
+        <section v-show="activeSection === 'media'" class="editor-section">
+          <div class="editor-section__header">
+            <h2>Media & Cover Gallery</h2>
+            <p>Configure the cover image and the gallery slider for the details page.</p>
           </div>
 
-          <label class="upload-dropzone" style="margin-top:var(--sp-2)">
-            <input type="file" accept="image/*" multiple hidden @change="onGalleryChange">
-            <UIcon name="i-lucide-images" />
-            <span>Add gallery images for the slider</span>
-          </label>
-        </div>
-      </section>
-
-      <!-- 3. Details Content (Block-level editor) -->
-      <section v-show="activeSection === 'content'" class="editor-section">
-        <div class="editor-section__header">
-          <h2>Rich Text Details</h2>
-          <p>Build the main page layout visually by adding paragraph, heading, list, or quote blocks.</p>
-        </div>
-
-        <div class="blocks-container">
-          <div v-if="form.body.length === 0" class="blocks-empty">
-            <UIcon name="i-lucide-scroll" class="blocks-empty__icon" />
-            <p>Your details page is empty. Start adding blocks below.</p>
-          </div>
-
-          <div v-for="(block, idx) in form.body" :key="idx" class="block-card">
-            <div class="block-card__header">
-              <span class="block-card__title">
-                <UIcon :name="block.type === 'paragraph' ? 'i-lucide-align-left' : block.type === 'heading' ? 'i-lucide-heading' : block.type === 'quote' ? 'i-lucide-quote' : 'i-lucide-list'" />
-                {{ block.type.charAt(0).toUpperCase() + block.type.slice(1) }} Block
-              </span>
-              <div class="block-card__actions">
-                <button type="button" class="btn btn-ghost btn-icon" :disabled="idx === 0" @click="moveBlock(idx, -1)" title="Move Up">
-                  <UIcon name="i-lucide-arrow-up" />
-                </button>
-                <button type="button" class="btn btn-ghost btn-icon" :disabled="idx === form.body.length - 1" @click="moveBlock(idx, 1)" title="Move Down">
-                  <UIcon name="i-lucide-arrow-down" />
-                </button>
-                <button type="button" class="btn btn-danger btn-icon" @click="removeBlock(idx)" title="Delete Block">
-                  <UIcon name="i-lucide-trash-2" />
-                </button>
+          <!-- Cover Image -->
+          <div class="am-field" :class="{ 'has-error': errors.coverImageUrl }">
+            <label class="am-label">Primary Card Cover / Thumbnail *</label>
+            <div class="hero-preview" :class="{ 'hero-preview--empty': !mainPreviewUrl }">
+              <img v-if="mainPreviewUrl" :src="mainPreviewUrl" alt="Cover preview">
+              <div v-else class="hero-preview__placeholder">
+                <UIcon name="i-lucide-image" />
+                <span>No cover image uploaded</span>
+              </div>
+              <div v-if="mainPreviewUrl" class="hero-preview__overlay">
+                <p>{{ form.title || 'Event Title' }}</p>
               </div>
             </div>
+            <label class="upload-dropzone">
+              <input type="file" accept="image/*" hidden @change="onCoverChange">
+              <UIcon name="i-lucide-upload-cloud" />
+              <span>{{ coverImageFile ? coverImageFile.name : 'Choose cover image to upload' }}</span>
+            </label>
+            <p v-if="errors.coverImageUrl" class="field-error">{{ errors.coverImageUrl }}</p>
+            <p class="field-hint">Stored in the "media" bucket. Recommended size: 1200x675 (16:9 ratio).</p>
+          </div>
 
-            <div class="block-card__body">
-              <!-- Paragraph Input -->
-              <div v-if="block.type === 'paragraph'">
-                <textarea v-model="block.data.text" class="am-textarea" rows="4" placeholder="Type paragraph content here (supports basic HTML tags)..." />
-              </div>
+          <!-- Slider Gallery -->
+          <div class="am-field">
+            <label class="am-label">Details Page Gallery Slider Images</label>
+            <div v-if="form.galleryUrls.length" class="gallery-grid">
+              <figure v-for="(url, index) in form.galleryUrls" :key="`saved-${index}`" class="gallery-item">
+                <img :src="resolveEventMediaUrl(url)" alt="Gallery image">
+                <button type="button" class="gallery-item__remove" @click="removeGalleryUrl(index)">
+                  <UIcon name="i-lucide-x" />
+                </button>
+              </figure>
+            </div>
 
-              <!-- Heading Input -->
-              <div v-else-if="block.type === 'heading'" class="heading-block-inputs">
-                <select v-model="block.data.level" class="am-select select-level">
-                  <option :value="2">Heading 2 (Large)</option>
-                  <option :value="3">Heading 3 (Medium)</option>
-                  <option :value="4">Heading 4 (Small)</option>
-                </select>
-                <input v-model="block.data.text" class="am-input" placeholder="Type heading text..." />
-              </div>
+            <div v-if="galleryFiles.length" class="gallery-pending">
+              <p class="field-hint">{{ galleryFiles.length }} new file(s) will upload on save</p>
+              <ul>
+                <li v-for="(file, index) in galleryFiles" :key="`${file.name}-${index}`">
+                  {{ file.name }}
+                  <button type="button" class="link-btn" @click="removePendingGalleryFile(index)">Remove</button>
+                </li>
+              </ul>
+            </div>
 
-              <!-- Quote Input -->
-              <div v-else-if="block.type === 'quote'" class="quote-block-inputs">
-                <textarea v-model="block.data.text" class="am-textarea" rows="2" placeholder="Enter quote text..." />
-                <input v-model="block.data.caption" class="am-input" style="margin-top:var(--sp-2)" placeholder="Attribution (e.g. John Doe, Student Union Leader)..." />
-              </div>
+            <label class="upload-dropzone" style="margin-top:var(--sp-2)">
+              <input type="file" accept="image/*" multiple hidden @change="onGalleryChange">
+              <UIcon name="i-lucide-images" />
+              <span>Add gallery images for the slider</span>
+            </label>
+          </div>
+        </section>
 
-              <!-- List Input -->
-              <div v-else-if="block.type === 'list'" class="list-block-inputs">
-                <div class="list-style-selector">
-                  <label class="radio-label">
-                    <input type="radio" v-model="block.data.style" value="unordered" /> Bulleted List
-                  </label>
-                  <label class="radio-label" style="margin-left:var(--sp-4)">
-                    <input type="radio" v-model="block.data.style" value="ordered" /> Numbered List
-                  </label>
-                </div>
-                <div class="list-items">
-                  <div v-for="(item, itemIdx) in block.data.items" :key="itemIdx" class="list-item-row">
-                    <span class="list-item-bullet">{{ block.data.style === 'ordered' ? `${itemIdx + 1}.` : '•' }}</span>
-                    <input v-model="block.data.items[itemIdx]" class="am-input list-item-input" placeholder="List item text..." />
-                    <button type="button" class="btn btn-danger btn-icon" @click="removeListItem(idx, itemIdx)" title="Remove item">
-                      <UIcon name="i-lucide-minus" />
-                    </button>
-                  </div>
-                  <button type="button" class="btn btn-ghost btn-sm" @click="addListItem(idx)" style="margin-top:var(--sp-2)">
-                    <UIcon name="i-lucide-plus" /> Add List Item
+        <!-- 3. Details Content (Block-level editor) -->
+        <section v-show="activeSection === 'content'" class="editor-section">
+          <div class="editor-section__header">
+            <h2>Rich Text Details</h2>
+            <p>Build the main page layout visually by adding paragraph, heading, list, or quote blocks.</p>
+          </div>
+
+          <div class="blocks-container">
+            <div v-if="form.body.length === 0" class="blocks-empty">
+              <UIcon name="i-lucide-scroll" class="blocks-empty__icon" />
+              <p>Your details page is empty. Start adding blocks below.</p>
+            </div>
+
+            <div v-for="(block, idx) in form.body" :key="idx" class="block-card">
+              <div class="block-card__header">
+                <span class="block-card__title">
+                  <UIcon :name="block.type === 'paragraph' ? 'i-lucide-align-left' : block.type === 'heading' ? 'i-lucide-heading' : block.type === 'quote' ? 'i-lucide-quote' : 'i-lucide-list'" />
+                  {{ block.type.charAt(0).toUpperCase() + block.type.slice(1) }} Block
+                </span>
+                <div class="block-card__actions">
+                  <button type="button" class="btn btn-ghost btn-icon" :disabled="idx === 0" @click="moveBlock(idx, -1)" title="Move Up">
+                    <UIcon name="i-lucide-arrow-up" />
+                  </button>
+                  <button type="button" class="btn btn-ghost btn-icon" :disabled="idx === form.body.length - 1" @click="moveBlock(idx, 1)" title="Move Down">
+                    <UIcon name="i-lucide-arrow-down" />
+                  </button>
+                  <button type="button" class="btn btn-danger btn-icon" @click="removeBlock(idx)" title="Delete Block">
+                    <UIcon name="i-lucide-trash-2" />
                   </button>
                 </div>
               </div>
+
+              <div class="block-card__body">
+                <!-- Paragraph Input -->
+                <div v-if="block.type === 'paragraph'">
+                  <textarea v-model="block.data.text" class="am-textarea" rows="4" placeholder="Type paragraph content here (supports basic HTML tags)..." />
+                </div>
+
+                <!-- Heading Input -->
+                <div v-else-if="block.type === 'heading'" class="heading-block-inputs">
+                  <select v-model="block.data.level" class="am-select select-level">
+                    <option :value="2">Heading 2 (Large)</option>
+                    <option :value="3">Heading 3 (Medium)</option>
+                    <option :value="4">Heading 4 (Small)</option>
+                  </select>
+                  <input v-model="block.data.text" class="am-input" placeholder="Type heading text..." />
+                </div>
+
+                <!-- Quote Input -->
+                <div v-else-if="block.type === 'quote'" class="quote-block-inputs">
+                  <textarea v-model="block.data.text" class="am-textarea" rows="2" placeholder="Enter quote text..." />
+                  <input v-model="block.data.caption" class="am-input" style="margin-top:var(--sp-2)" placeholder="Attribution (e.g. John Doe, Student Union Leader)..." />
+                </div>
+
+                <!-- List Input -->
+                <div v-else-if="block.type === 'list'" class="list-block-inputs">
+                  <div class="list-style-selector">
+                    <label class="radio-label">
+                      <input type="radio" v-model="block.data.style" value="unordered" /> Bulleted List
+                    </label>
+                    <label class="radio-label" style="margin-left:var(--sp-4)">
+                      <input type="radio" v-model="block.data.style" value="ordered" /> Numbered List
+                    </label>
+                  </div>
+                  <div class="list-items">
+                    <div v-for="(item, itemIdx) in block.data.items" :key="itemIdx" class="list-item-row">
+                      <span class="list-item-bullet">{{ block.data.style === 'ordered' ? `${itemIdx + 1}.` : '•' }}</span>
+                      <input v-model="block.data.items[itemIdx]" class="am-input list-item-input" placeholder="List item text..." />
+                      <button type="button" class="btn btn-danger btn-icon" @click="removeListItem(idx, itemIdx)" title="Remove item">
+                        <UIcon name="i-lucide-minus" />
+                      </button>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm" @click="addListItem(idx)" style="margin-top:var(--sp-2)">
+                      <UIcon name="i-lucide-plus" /> Add List Item
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Add Block Controls -->
-        <div class="add-block-controls">
-          <span class="add-block-label">Insert Block:</span>
-          <div class="add-block-buttons">
-            <button type="button" class="btn btn-secondary btn-sm" @click="addParagraphBlock">
-              <UIcon name="i-lucide-align-left" /> Paragraph
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" @click="addHeadingBlock">
-              <UIcon name="i-lucide-heading" /> Heading
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" @click="addQuoteBlock">
-              <UIcon name="i-lucide-quote" /> Quote
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" @click="addListBlock">
-              <UIcon name="i-lucide-list" /> List
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 4. SEO & Settings Section -->
-      <section v-show="activeSection === 'seo'" class="editor-section">
-        <div class="editor-section__header">
-          <h2>SEO & Settings</h2>
-          <p>Manage metadata and publication visibility on the public site.</p>
-        </div>
-
-        <div class="am-field">
-          <label class="am-label">Meta Title</label>
-          <input v-model="form.metaTitle" class="am-input" placeholder="Defaults to event title" />
-        </div>
-
-        <div class="am-field">
-          <label class="am-label">Meta Description</label>
-          <textarea v-model="form.metaDescription" class="am-textarea" rows="3" placeholder="Search engine description preview" />
-        </div>
-
-        <div class="toggle-grid">
-          <p v-if="errors.publish" class="field-error publish-error">{{ errors.publish }}</p>
-
-          <label class="toggle-card" :class="{ 'is-on': form.isPublished }">
-            <input v-model="form.isPublished" type="checkbox">
-            <div>
-              <strong>Published</strong>
-              <p>Visible to students on the public website event list.</p>
+          <!-- Add Block Controls -->
+          <div class="add-block-controls">
+            <span class="add-block-label">Insert Block:</span>
+            <div class="add-block-buttons">
+              <button type="button" class="btn btn-secondary btn-sm" @click="addParagraphBlock">
+                <UIcon name="i-lucide-align-left" /> Paragraph
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" @click="addHeadingBlock">
+                <UIcon name="i-lucide-heading" /> Heading
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" @click="addQuoteBlock">
+                <UIcon name="i-lucide-quote" /> Quote
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" @click="addListBlock">
+                <UIcon name="i-lucide-list" /> List
+              </button>
             </div>
-          </label>
-        </div>
-      </section>
+          </div>
+        </section>
+
+        <!-- 4. SEO & Settings Section -->
+        <section v-show="activeSection === 'seo'" class="editor-section">
+          <div class="editor-section__header">
+            <h2>SEO & Settings</h2>
+            <p>Manage metadata and publication visibility on the public site.</p>
+          </div>
+
+          <div class="am-field">
+            <label class="am-label">Meta Title</label>
+            <input v-model="form.metaTitle" class="am-input" placeholder="Defaults to event title" />
+          </div>
+
+          <div class="am-field">
+            <label class="am-label">Meta Description</label>
+            <textarea v-model="form.metaDescription" class="am-textarea" rows="3" placeholder="Search engine description preview" />
+          </div>
+
+          <div class="toggle-grid">
+            <p v-if="errors.publish" class="field-error publish-error">{{ errors.publish }}</p>
+
+            <label class="toggle-card" :class="{ 'is-on': form.isPublished }">
+              <input v-model="form.isPublished" type="checkbox">
+              <div>
+                <strong>Published</strong>
+                <p>Visible to students on the public website event list.</p>
+              </div>
+            </label>
+          </div>
+        </section>
+      </template>
     </div>
 
     <!-- Sticky Actions Footer -->

@@ -46,18 +46,19 @@ const { data, pending, refresh } = useAsyncData('admin-gallery', async () => {
   return (rows || []) as GalleryItemDbRow[]
 }, { watch: [search, statusFilter] })
 
-const { data: galleryCategories } = await useAsyncData('admin-gallery-categories', () =>
+const { data: galleryCategories } = useAsyncData('admin-gallery-categories', () =>
   fetchGalleryFilterCategories(),
+  { default: () => [] }
 )
 
-const { data: programOptions } = await useAsyncData('admin-gallery-programs', async () => {
+const { data: programOptions } = useAsyncData('admin-gallery-programs', async () => {
   const { data: rows, error } = await supabase
     .from('programs')
     .select('id, title')
     .order('title')
   if (error) throw error
   return rows ?? []
-})
+}, { default: () => [] })
 
 const columns = [
   { key: 'thumb', label: '' },

@@ -53,33 +53,38 @@ const sections = [
   { id: 'seo', label: 'SEO & Settings', icon: 'i-lucide-settings-2' },
 ]
 
-const { data: categories } = await useAsyncData('admin-program-categories', async () => {
+const { data: categories } = useAsyncData('admin-program-categories', async () => {
   const { data } = await supabase
     .from('categories')
     .select('id, name')
     .eq('category_type', 'program')
     .order('name')
   return data ?? []
-})
+}, { default: () => [] })
 
-if (props.programId) {
-  const { data: row, error } = await useAsyncData(`admin-program-${props.programId}`, async () => {
-    const { data, error: fetchError } = await supabase
-      .from('programs')
-      .select('*')
-      .eq('id', props.programId!)
-      .maybeSingle()
-    if (fetchError) throw fetchError
-    return data as ProgramDbRow | null
-  })
+const { data: row, pending: programPending, error } = useAsyncData(`admin-program-${props.programId}`, async () => {
+  if (!props.programId) return null
+  const { data, error: fetchError } = await supabase
+    .from('programs')
+    .select('*')
+    .eq('id', props.programId!)
+    .maybeSingle()
+  if (fetchError) throw fetchError
+  return data as ProgramDbRow | null
+}, { immediate: Boolean(props.programId) })
 
-  if (error.value || !row.value) {
-    throw createError({ statusCode: 404, statusMessage: 'Program not found' })
+watch(row, (newRow) => {
+  if (newRow) {
+    form.value = rowToProgramForm(newRow)
+    slugTouched.value = true
   }
+}, { immediate: true })
 
-  form.value = rowToProgramForm(row.value)
-  slugTouched.value = true
-}
+watch(error, (newErr) => {
+  if (newErr) {
+    toast.add({ title: 'Error loading program details', description: newErr.message, color: 'red' })
+  }
+})
 
 watch(
   () => form.value.title,
@@ -300,252 +305,259 @@ onBeforeUnmount(() => {
     </aside>
 
     <div class="program-editor__main">
-      <!-- Basics -->
-      <section v-show="activeSection === 'basics'" class="editor-section">
-        <div class="editor-section__header">
-          <h2>Basic information</h2>
-          <p>Core details shown on program cards, navigation, and the hero section.</p>
-        </div>
+      <div v-if="programPending" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--sp-12) 0; color: var(--admin-text-muted);">
+        <UIcon name="i-lucide-loader-2" class="spin" style="font-size: 2rem; margin-bottom: var(--sp-4);" />
+        <p>Loading program data...</p>
+      </div>
 
-        <div class="am-field" :class="{ 'has-error': errors.title }">
-          <label class="am-label">Program title *</label>
-          <input v-model="form.title" class="am-input" placeholder="e.g. Woodwork & Modern Furniture Design" />
-          <p v-if="errors.title" class="field-error">{{ errors.title }}</p>
-        </div>
+      <template v-else>
+        <!-- Basics -->
+        <section v-show="activeSection === 'basics'" class="editor-section">
+          <div class="editor-section__header">
+            <h2>Basic information</h2>
+            <p>Core details shown on program cards, navigation, and the hero section.</p>
+          </div>
 
-        <div class="am-field" :class="{ 'has-error': errors.slug }">
-          <label class="am-label">URL slug *</label>
-          <div class="slug-row">
-            <span class="slug-prefix">/programs/</span>
+          <div class="am-field" :class="{ 'has-error': errors.title }">
+            <label class="am-label">Program title *</label>
+            <input v-model="form.title" class="am-input" placeholder="e.g. Woodwork & Modern Furniture Design" />
+            <p v-if="errors.title" class="field-error">{{ errors.title }}</p>
+          </div>
+
+          <div class="am-field" :class="{ 'has-error': errors.slug }">
+            <label class="am-label">URL slug *</label>
+            <div class="slug-row">
+              <span class="slug-prefix">/programs/</span>
+              <input
+                v-model="form.slug"
+                class="am-input"
+                placeholder="woodwork-furniture-design"
+                @input="slugTouched = true"
+              />
+            </div>
+            <p v-if="errors.slug" class="field-error">{{ errors.slug }}</p>
+          </div>
+
+          <div class="am-field">
+            <label class="am-label">Hero subtitle</label>
             <input
-              v-model="form.slug"
+              v-model="form.subtitle"
               class="am-input"
-              placeholder="woodwork-furniture-design"
-              @input="slugTouched = true"
+              placeholder="One-line value proposition shown under the title on the detail page"
             />
           </div>
-          <p v-if="errors.slug" class="field-error">{{ errors.slug }}</p>
-        </div>
 
-        <div class="am-field">
-          <label class="am-label">Hero subtitle</label>
-          <input
-            v-model="form.subtitle"
-            class="am-input"
-            placeholder="One-line value proposition shown under the title on the detail page"
-          />
-        </div>
-
-        <div class="am-field" :class="{ 'has-error': errors.description }">
-          <label class="am-label">Short description *</label>
-          <textarea
-            v-model="form.description"
-            class="am-textarea"
-            rows="3"
-            placeholder="Used on program cards and listings. Keep it concise and outcome-focused."
-          />
-          <p v-if="errors.description" class="field-error">{{ errors.description }}</p>
-          <p class="field-hint">{{ form.description.length }}/160 characters recommended</p>
-        </div>
-
-        <div class="am-field">
-          <label class="am-label">Category</label>
-          <select v-model="form.categoryId" class="am-select">
-            <option value="">No category</option>
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-          </select>
-        </div>
-      </section>
-
-      <!-- Hero -->
-      <section v-show="activeSection === 'hero'" class="editor-section">
-        <div class="editor-section__header">
-          <h2>Hero & cover image</h2>
-          <p>This image appears behind the program title on the public detail page.</p>
-        </div>
-
-        <div class="hero-preview" :class="{ 'hero-preview--empty': !heroPreviewUrl }">
-          <img v-if="heroPreviewUrl" :src="heroPreviewUrl" alt="Cover preview">
-          <div v-else class="hero-preview__placeholder">
-            <UIcon name="i-lucide-image" />
-            <span>Upload a cover image to preview the hero</span>
-          </div>
-          <div v-if="heroPreviewUrl" class="hero-preview__overlay">
-            <p>{{ form.title || 'Program title' }}</p>
-            <span>{{ form.subtitle || 'Hero subtitle preview' }}</span>
-          </div>
-        </div>
-
-        <div class="am-field" :class="{ 'has-error': errors.coverImageUrl }">
-          <label class="am-label">Cover image *</label>
-          <label class="upload-dropzone">
-            <input type="file" accept="image/*" hidden @change="onCoverChange">
-            <UIcon name="i-lucide-upload-cloud" />
-            <span>{{ coverImageFile ? coverImageFile.name : 'Choose image or drag to upload' }}</span>
-          </label>
-          <p v-if="errors.coverImageUrl" class="field-error">{{ errors.coverImageUrl }}</p>
-          <p v-else-if="form.coverImageUrl && !coverImageFile" class="field-hint">Current cover is saved. Upload a new file to replace it.</p>
-        </div>
-      </section>
-
-      <!-- Content -->
-      <section v-show="activeSection === 'content'" class="editor-section">
-        <div class="editor-section__header">
-          <h2>Page content</h2>
-          <p>Structured copy for the Overview and Lab Experience sections on the public page.</p>
-        </div>
-
-        <div class="am-field">
-          <label class="am-label">Program overview</label>
-          <textarea
-            v-model="form.overview"
-            class="am-textarea"
-            rows="5"
-            placeholder="Describe the track focus, methodology, and who it is for."
-          />
-          <p class="field-hint">Rendered under the “Program Overview” heading.</p>
-        </div>
-
-        <div class="editor-subsection">
-          <h3>Optional student quote</h3>
-          <p class="field-hint">Adds a testimonial block below the overview, like on the woodwork program page.</p>
-          <div class="am-field">
-            <label class="am-label">Quote text</label>
-            <textarea v-model="form.testimonialQuote" class="am-textarea" rows="3" placeholder="Student or alumni quote" />
-          </div>
-          <div class="am-field">
-            <label class="am-label">Quote attribution</label>
-            <input v-model="form.testimonialCaption" class="am-input" placeholder="Name, role, cohort" />
-          </div>
-        </div>
-
-        <div class="am-field">
-          <label class="am-label">Practical lab experience</label>
-          <textarea
-            v-model="form.labExperience"
-            class="am-textarea"
-            rows="4"
-            placeholder="Describe hands-on workshop time, tools used, and project flow."
-          />
-          <p class="field-hint">Shown in its own section when filled in.</p>
-        </div>
-
-        <div class="am-field">
-          <label class="am-label">Prerequisites</label>
-          <textarea
-            v-model="form.requirements"
-            class="am-textarea"
-            rows="3"
-            placeholder="Who can participate and any preparation needed."
-          />
-        </div>
-      </section>
-
-      <!-- Outcomes -->
-      <section v-show="activeSection === 'outcomes'" class="editor-section">
-        <div class="editor-section__header">
-          <h2>Key learning outcomes</h2>
-          <p>Each outcome becomes a card in the “Skills Acquired” grid on the public page.</p>
-        </div>
-
-        <div class="outcomes-list">
-          <div v-for="(outcome, index) in form.outcomes" :key="index" class="outcome-row">
-            <span class="outcome-row__index">{{ index + 1 }}</span>
+          <div class="am-field" :class="{ 'has-error': errors.description }">
+            <label class="am-label">Short description *</label>
             <textarea
-              v-model="form.outcomes[index]"
+              v-model="form.description"
               class="am-textarea"
-              rows="2"
-              :placeholder="`Outcome ${index + 1}`"
+              rows="3"
+              placeholder="Used on program cards and listings. Keep it concise and outcome-focused."
             />
-            <div class="outcome-row__actions">
-              <button type="button" class="btn btn-ghost btn-icon" :disabled="index === 0" @click="moveOutcome(index, -1)">
-                <UIcon name="i-lucide-arrow-up" />
-              </button>
-              <button type="button" class="btn btn-ghost btn-icon" :disabled="index === form.outcomes.length - 1" @click="moveOutcome(index, 1)">
-                <UIcon name="i-lucide-arrow-down" />
-              </button>
-              <button type="button" class="btn btn-danger btn-icon" @click="removeOutcome(index)">
-                <UIcon name="i-lucide-trash-2" />
-              </button>
+            <p v-if="errors.description" class="field-error">{{ errors.description }}</p>
+            <p class="field-hint">{{ form.description.length }}/160 characters recommended</p>
+          </div>
+
+          <div class="am-field">
+            <label class="am-label">Category</label>
+            <select v-model="form.categoryId" class="am-select">
+              <option value="">No category</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+            </select>
+          </div>
+        </section>
+
+        <!-- Hero -->
+        <section v-show="activeSection === 'hero'" class="editor-section">
+          <div class="editor-section__header">
+            <h2>Hero & cover image</h2>
+            <p>This image appears behind the program title on the public detail page.</p>
+          </div>
+
+          <div class="hero-preview" :class="{ 'hero-preview--empty': !heroPreviewUrl }">
+            <img v-if="heroPreviewUrl" :src="heroPreviewUrl" alt="Cover preview">
+            <div v-else class="hero-preview__placeholder">
+              <UIcon name="i-lucide-image" />
+              <span>Upload a cover image to preview the hero</span>
+            </div>
+            <div v-if="heroPreviewUrl" class="hero-preview__overlay">
+              <p>{{ form.title || 'Program title' }}</p>
+              <span>{{ form.subtitle || 'Hero subtitle preview' }}</span>
             </div>
           </div>
-        </div>
 
-        <button type="button" class="btn btn-ghost" @click="addOutcome">
-          <UIcon name="i-lucide-plus" />Add outcome
-        </button>
-      </section>
+          <div class="am-field" :class="{ 'has-error': errors.coverImageUrl }">
+            <label class="am-label">Cover image *</label>
+            <label class="upload-dropzone">
+              <input type="file" accept="image/*" hidden @change="onCoverChange">
+              <UIcon name="i-lucide-upload-cloud" />
+              <span>{{ coverImageFile ? coverImageFile.name : 'Choose image or drag to upload' }}</span>
+            </label>
+            <p v-if="errors.coverImageUrl" class="field-error">{{ errors.coverImageUrl }}</p>
+            <p v-else-if="form.coverImageUrl && !coverImageFile" class="field-hint">Current cover is saved. Upload a new file to replace it.</p>
+          </div>
+        </section>
 
-      <!-- Gallery -->
-      <section v-show="activeSection === 'gallery'" class="editor-section">
-        <div class="editor-section__header">
-          <h2>Facilities & student work</h2>
-          <p>Gallery images for the “Visual Tour” section on the program detail page.</p>
-        </div>
+        <!-- Content -->
+        <section v-show="activeSection === 'content'" class="editor-section">
+          <div class="editor-section__header">
+            <h2>Page content</h2>
+            <p>Structured copy for the Overview and Lab Experience sections on the public page.</p>
+          </div>
 
-        <div v-if="form.galleryUrls.length" class="gallery-grid">
-          <figure v-for="(url, index) in form.galleryUrls" :key="`saved-${index}`" class="gallery-item">
-            <img :src="resolveProgramMediaUrl(url)" alt="Gallery image">
-            <button type="button" class="gallery-item__remove" @click="removeGalleryUrl(index)">
-              <UIcon name="i-lucide-x" />
-            </button>
-          </figure>
-        </div>
+          <div class="am-field">
+            <label class="am-label">Program overview</label>
+            <textarea
+              v-model="form.overview"
+              class="am-textarea"
+              rows="5"
+              placeholder="Describe the track focus, methodology, and who it is for."
+            />
+            <p class="field-hint">Rendered under the “Program Overview” heading.</p>
+          </div>
 
-        <div v-if="galleryFiles.length" class="gallery-pending">
-          <p class="field-hint">{{ galleryFiles.length }} new file(s) will upload on save</p>
-          <ul>
-            <li v-for="(file, index) in galleryFiles" :key="`${file.name}-${index}`">
-              {{ file.name }}
-              <button type="button" class="link-btn" @click="removePendingGalleryFile(index)">Remove</button>
-            </li>
-          </ul>
-        </div>
-
-        <label class="upload-dropzone">
-          <input type="file" accept="image/*" multiple hidden @change="onGalleryChange">
-          <UIcon name="i-lucide-images" />
-          <span>Add gallery images</span>
-        </label>
-      </section>
-
-      <!-- SEO -->
-      <section v-show="activeSection === 'seo'" class="editor-section">
-        <div class="editor-section__header">
-          <h2>SEO & visibility</h2>
-          <p>Control search previews and whether this track appears on the public site.</p>
-        </div>
-
-        <div class="am-field">
-          <label class="am-label">Meta title</label>
-          <input v-model="form.metaTitle" class="am-input" placeholder="Defaults to program title" />
-        </div>
-
-        <div class="am-field">
-          <label class="am-label">Meta description</label>
-          <textarea v-model="form.metaDescription" class="am-textarea" rows="3" placeholder="Search engine description" />
-        </div>
-
-        <div class="toggle-grid">
-          <p v-if="errors.publish" class="field-error publish-error">{{ errors.publish }}</p>
-
-          <label class="toggle-card" :class="{ 'is-on': form.isPublished }">
-            <input v-model="form.isPublished" type="checkbox">
-            <div>
-              <strong>Published</strong>
-              <p>Visible on the public website and program listings.</p>
+          <div class="editor-subsection">
+            <h3>Optional student quote</h3>
+            <p class="field-hint">Adds a testimonial block below the overview, like on the woodwork program page.</p>
+            <div class="am-field">
+              <label class="am-label">Quote text</label>
+              <textarea v-model="form.testimonialQuote" class="am-textarea" rows="3" placeholder="Student or alumni quote" />
             </div>
-          </label>
-
-          <label class="toggle-card" :class="{ 'is-on': form.isFeatured }">
-            <input v-model="form.isFeatured" type="checkbox">
-            <div>
-              <strong>Featured</strong>
-              <p>Highlighted on the homepage and with a featured badge on cards.</p>
+            <div class="am-field">
+              <label class="am-label">Quote attribution</label>
+              <input v-model="form.testimonialCaption" class="am-input" placeholder="Name, role, cohort" />
             </div>
+          </div>
+
+          <div class="am-field">
+            <label class="am-label">Practical lab experience</label>
+            <textarea
+              v-model="form.labExperience"
+              class="am-textarea"
+              rows="4"
+              placeholder="Describe hands-on workshop time, tools used, and project flow."
+            />
+            <p class="field-hint">Shown in its own section when filled in.</p>
+          </div>
+
+          <div class="am-field">
+            <label class="am-label">Prerequisites</label>
+            <textarea
+              v-model="form.requirements"
+              class="am-textarea"
+              rows="3"
+              placeholder="Who can participate and any preparation needed."
+            />
+          </div>
+        </section>
+
+        <!-- Outcomes -->
+        <section v-show="activeSection === 'outcomes'" class="editor-section">
+          <div class="editor-section__header">
+            <h2>Key learning outcomes</h2>
+            <p>Each outcome becomes a card in the “Skills Acquired” grid on the public page.</p>
+          </div>
+
+          <div class="outcomes-list">
+            <div v-for="(outcome, index) in form.outcomes" :key="index" class="outcome-row">
+              <span class="outcome-row__index">{{ index + 1 }}</span>
+              <textarea
+                v-model="form.outcomes[index]"
+                class="am-textarea"
+                rows="2"
+                :placeholder="`Outcome ${index + 1}`"
+              />
+              <div class="outcome-row__actions">
+                <button type="button" class="btn btn-ghost btn-icon" :disabled="index === 0" @click="moveOutcome(index, -1)">
+                  <UIcon name="i-lucide-arrow-up" />
+                </button>
+                <button type="button" class="btn btn-ghost btn-icon" :disabled="index === form.outcomes.length - 1" @click="moveOutcome(index, 1)">
+                  <UIcon name="i-lucide-arrow-down" />
+                </button>
+                <button type="button" class="btn btn-danger btn-icon" @click="removeOutcome(index)">
+                  <UIcon name="i-lucide-trash-2" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-ghost" @click="addOutcome">
+            <UIcon name="i-lucide-plus" />Add outcome
+          </button>
+        </section>
+
+        <!-- Gallery -->
+        <section v-show="activeSection === 'gallery'" class="editor-section">
+          <div class="editor-section__header">
+            <h2>Facilities & student work</h2>
+            <p>Gallery images for the “Visual Tour” section on the program detail page.</p>
+          </div>
+
+          <div v-if="form.galleryUrls.length" class="gallery-grid">
+            <figure v-for="(url, index) in form.galleryUrls" :key="`saved-${index}`" class="gallery-item">
+              <img :src="resolveProgramMediaUrl(url)" alt="Gallery image">
+              <button type="button" class="gallery-item__remove" @click="removeGalleryUrl(index)">
+                <UIcon name="i-lucide-x" />
+              </button>
+            </figure>
+          </div>
+
+          <div v-if="galleryFiles.length" class="gallery-pending">
+            <p class="field-hint">{{ galleryFiles.length }} new file(s) will upload on save</p>
+            <ul>
+              <li v-for="(file, index) in galleryFiles" :key="`${file.name}-${index}`">
+                {{ file.name }}
+                <button type="button" class="link-btn" @click="removePendingGalleryFile(index)">Remove</button>
+              </li>
+            </ul>
+          </div>
+
+          <label class="upload-dropzone">
+            <input type="file" accept="image/*" multiple hidden @change="onGalleryChange">
+            <UIcon name="i-lucide-images" />
+            <span>Add gallery images</span>
           </label>
-        </div>
-      </section>
+        </section>
+
+        <!-- SEO -->
+        <section v-show="activeSection === 'seo'" class="editor-section">
+          <div class="editor-section__header">
+            <h2>SEO & visibility</h2>
+            <p>Control search previews and whether this track appears on the public site.</p>
+          </div>
+
+          <div class="am-field">
+            <label class="am-label">Meta title</label>
+            <input v-model="form.metaTitle" class="am-input" placeholder="Defaults to program title" />
+          </div>
+
+          <div class="am-field">
+            <label class="am-label">Meta description</label>
+            <textarea v-model="form.metaDescription" class="am-textarea" rows="3" placeholder="Search engine description" />
+          </div>
+
+          <div class="toggle-grid">
+            <p v-if="errors.publish" class="field-error publish-error">{{ errors.publish }}</p>
+
+            <label class="toggle-card" :class="{ 'is-on': form.isPublished }">
+              <input v-model="form.isPublished" type="checkbox">
+              <div>
+                <strong>Published</strong>
+                <p>Visible on the public website and program listings.</p>
+              </div>
+            </label>
+
+            <label class="toggle-card" :class="{ 'is-on': form.isFeatured }">
+              <input v-model="form.isFeatured" type="checkbox">
+              <div>
+                <strong>Featured</strong>
+                <p>Highlighted on the homepage and with a featured badge on cards.</p>
+              </div>
+            </label>
+          </div>
+        </section>
+      </template>
     </div>
 
     <footer class="program-editor__footer">
