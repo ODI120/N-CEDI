@@ -6,12 +6,32 @@
   import MotionWrapper from '~/components/motion/MotionWrapper.vue'
   import ProgramCard from '~/components/cards/ProgramCard.vue'
   import { useProgramPageSeo } from '~/composables/useSeo'
+  import { mapProgramDetail, fetchPublishedPrograms } from '~/composables/usePrograms'
 
   const route = useRoute()
   const slug = route.params.slug as string
 
-  const { program, pending, error } = await useProgram(slug)
-  const { programs: relatedPrograms } = await useRelatedPrograms(slug, 2)
+  const { data: program, pending, error } = await useAsyncData(`program-${slug}`, async () => {
+    const { client } = useSupabase()
+    const { data: row, error: sbError } = await client
+      .from('programs')
+      .select('*')
+      .eq('slug', slug)
+      .eq('is_published', true)
+      .maybeSingle()
+
+    if (sbError) throw sbError
+    if (!row) return null
+    return mapProgramDetail(row as any)
+  })
+
+  const { data: relatedPrograms } = await useAsyncData(`programs-related-${slug}`, () => {
+    return fetchPublishedPrograms({
+      excludeSlug: slug,
+      limit: 2,
+      orderBy: 'updated_at',
+    })
+  }, { default: () => [] })
 
   if (error.value) {
     throw error.value
