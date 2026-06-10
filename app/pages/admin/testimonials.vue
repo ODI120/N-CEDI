@@ -25,16 +25,35 @@ const supabase = useSupabaseClient() as any
 const toast = useToast()
 const search = ref('')
 
+const { data: adminProfile } = useNuxtData<{ role?: string } | null>('sidebar-admin-role')
+const canEdit = computed(() => adminProfile.value?.role !== 'viewer')
+const canDelete = computed(() => adminProfile.value?.role === 'admin' || adminProfile.value?.role === 'super_admin')
+
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+watch([search], () => {
+  currentPage.value = 1
+})
+
 const { data, pending, refresh } = useAsyncData('admin-testimonials', async () => {
-  let q = supabase.from('testimonials').select('*').order('sort_order', { ascending: true })
+  let q = supabase.from('testimonials').select('*', { count: 'exact' }).order('sort_order', { ascending: true })
   if (search.value.trim()) q = q.ilike('name', `%${search.value.trim()}%`)
-  const { data, error } = await q
+  
+  const from = (currentPage.value - 1) * pageSize.value
+  const to = from + pageSize.value - 1
+  q = q.range(from, to)
+
+  const { data, count, error } = await q
   if (error) {
-    if (error.code === '42P01') return [] // Table does not exist
+    if (error.code === '42P01') return { rows: [], total: 0 }
     throw error
   }
-  return (data || []) as TestimonialDbRow[]
-}, { watch: [search] })
+  return {
+    rows: (data || []) as TestimonialDbRow[],
+    total: count || 0
+  }
+}, { watch: [currentPage, search] })
 
 const columns = [
   { key: 'avatar', label: '' },
@@ -65,7 +84,7 @@ const previewUrl = computed(() => {
 })
 
 const nextSortOrder = computed(() => {
-  const rows = data.value ?? []
+  const rows = data.value?.rows ?? []
   if (!rows.length) return 0
   return Math.max(...rows.map((row) => row.sort_order ?? 0)) + 1
 })
@@ -102,11 +121,15 @@ const openDelete = (row: TestimonialDbRow) => {
 }
 
 const save = async () => {
+  if (!canEdit.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to edit testimonials.', color: 'error' })
+    return
+  }
   errors.value = validateTestimonialForm(form.value, {
     hasAvatarUpload: Boolean(avatarFile.value),
   })
   if (hasTestimonialFormErrors(errors.value)) {
-    toast.add({ title: 'Please fix the highlighted fields', color: 'red' })
+    toast.add({ title: 'Please fix the highlighted fields', color: 'error' })
     return
   }
 
@@ -127,7 +150,7 @@ const save = async () => {
     if (mode.value === 'add') {
       const { error } = await supabase.from('testimonials').insert([payload])
       if (error) throw error
-      toast.add({ title: 'Testimonial created', color: 'green' })
+      toast.add({ title: 'Testimonial created', color: 'success' })
     } else {
       const previousRef =
         target.value && avatarFile.value
@@ -145,7 +168,7 @@ const save = async () => {
         await deleteStorageRefs(supabase, [previousRef])
       }
 
-      toast.add({ title: 'Testimonial updated', color: 'green' })
+      toast.add({ title: 'Testimonial updated', color: 'success' })
     }
 
     avatarFile.value = null
@@ -153,13 +176,17 @@ const save = async () => {
     await refresh()
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Save failed'
-    toast.add({ title: 'Error saving testimonial', description: message, color: 'red' })
+    toast.add({ title: 'Error saving testimonial', description: message, color: 'error' })
   } finally {
     saving.value = false
   }
 }
 
 const remove = async () => {
+  if (!canDelete.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to delete testimonials.', color: 'error' })
+    return
+  }
   if (!target.value) return
   deleting.value = true
   try {
@@ -167,12 +194,12 @@ const remove = async () => {
     const { error } = await supabase.from('testimonials').delete().eq('id', target.value.id)
     if (error) throw error
     if (storageRef) await deleteStorageRefs(supabase, [storageRef])
-    toast.add({ title: 'Testimonial deleted', color: 'green' })
+    toast.add({ title: 'Testimonial deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Delete failed'
-    toast.add({ title: 'Error deleting testimonial', description: message, color: 'red' })
+    toast.add({ title: 'Error deleting testimonial', description: message, color: 'error' })
   } finally {
     deleting.value = false
   }
@@ -189,7 +216,7 @@ const remove = async () => {
       </div>
       <div class="ap-header__actions">
         <button class="btn btn-ghost" type="button" @click="refresh()"><UIcon name="i-lucide-refresh-cw" />Refresh</button>
-        <button class="btn btn-primary" type="button" @click="openAdd"><UIcon name="i-lucide-plus" />Add Testimonial</button>
+        <button class="btn btn-primary" type="button" @click="openAdd" v-if="canEdit"><UIcon name="i-lucide-plus" />Add Testimonial</button>
       </div>
     </div>
 
@@ -199,22 +226,31 @@ const remove = async () => {
       </div>
     </div>
 
-    <AdminTable :columns="columns" :rows="data || []" :loading="pending" empty-title="No testimonials" empty-subtitle="Add a testimonial for the homepage section.">
+    <AdminTable
+      :columns="columns"
+      :rows="data?.rows || []"
+      :loading="pending"
+      :total-rows="data?.total || 0"
+      :page-size="pageSize"
+      v-model:current-page="currentPage"
+      empty-title="No testimonials"
+      empty-subtitle="Add a testimonial for the homepage section."
+    >
       <template #cell-avatar="{ row }">
-        <div style="width:40px;height:40px;border-radius:50%;background:#e2e8f0;overflow:hidden;flex-shrink:0;">
-          <img v-if="row.avatar_url" :src="resolveTestimonialAvatarUrl(row.avatar_url)" style="width:100%;height:100%;object-fit:cover" :alt="row.name" />
-          <UIcon v-else name="i-lucide-user" style="margin:8px;width:24px;height:24px;color:#94a3b8" />
+        <div class="avatar-container">
+          <img v-if="row.avatar_url" :src="resolveTestimonialAvatarUrl(row.avatar_url)" class="avatar-img" :alt="row.name" />
+          <UIcon v-else name="i-lucide-user" class="avatar-placeholder" />
         </div>
       </template>
       <template #cell-name="{ row }">
         <span class="font-semibold">{{ row.name }}</span>
       </template>
-      <template #cell-role="{ row }"><span style="color:var(--admin-text-secondary)">{{ row.role || '—' }}</span></template>
+      <template #cell-role="{ row }"><span class="text-secondary">{{ row.role || '—' }}</span></template>
       <template #cell-status="{ row }"><span class="badge" :class="row.is_published ? 'badge-green' : 'badge-gray'">{{ row.is_published ? 'Published' : 'Draft' }}</span></template>
       <template #cell-sort_order="{ row }">{{ row.sort_order ?? 0 }}</template>
       <template #actions="{ row }">
-        <button class="btn btn-ghost btn-icon" title="Edit" type="button" @click="openEdit(row)"><UIcon name="i-lucide-edit-3" /></button>
-        <button class="btn btn-danger btn-icon" title="Delete" type="button" @click="openDelete(row)"><UIcon name="i-lucide-trash-2" /></button>
+        <button class="btn btn-ghost btn-icon" title="Edit" type="button" @click="openEdit(row)" v-if="canEdit"><UIcon name="i-lucide-edit-3" /></button>
+        <button class="btn btn-danger btn-icon" title="Delete" type="button" @click="openDelete(row)" v-if="canDelete"><UIcon name="i-lucide-trash-2" /></button>
       </template>
     </AdminTable>
 
@@ -268,8 +304,8 @@ const remove = async () => {
         <p class="field-hint">PNG, JPG, or WebP. Max 5MB.</p>
       </div>
 
-      <div v-if="previewUrl" class="avatar-preview" style="margin:16px 0">
-        <img :src="previewUrl" alt="Avatar preview" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0" />
+      <div v-if="previewUrl" class="avatar-preview">
+        <img :src="previewUrl" alt="Avatar preview" class="preview-img" />
       </div>
 
       <div class="am-row-2">
@@ -278,7 +314,7 @@ const remove = async () => {
           <input v-model.number="form.sortOrder" type="number" class="am-input" />
           <p v-if="errors.sortOrder" class="field-error">{{ errors.sortOrder }}</p>
         </div>
-        <div class="am-field" style="justify-content:flex-end">
+        <div class="am-field flex-end-field">
           <label class="am-checkbox-row">
             <input type="checkbox" v-model="form.isPublished" />
             Published
@@ -288,8 +324,58 @@ const remove = async () => {
     </AdminModal>
 
     <AdminModal :open="deleteOpen" title="Delete Testimonial" submit-label="Delete" submit-danger :loading="deleting" @close="deleteOpen = false" @submit="remove">
-      <p style="color:var(--admin-text-secondary)">Permanently delete <strong>{{ target?.name }}</strong>?</p>
+      <p class="confirm-text">Permanently delete <strong>{{ target?.name }}</strong>?</p>
     </AdminModal>
   </section>
 </template>
+
+<style scoped>
+.avatar-container {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--admin-border-strong);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 20px;
+  height: 20px;
+  color: var(--admin-text-placeholder);
+}
+
+.text-secondary {
+  color: var(--admin-text-secondary);
+}
+
+.avatar-preview {
+  margin: 16px 0;
+}
+
+.preview-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--admin-border);
+}
+
+.flex-end-field {
+  justify-content: flex-end;
+}
+
+.confirm-text {
+  color: var(--admin-text-secondary);
+}
+</style>
 

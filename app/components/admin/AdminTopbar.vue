@@ -9,6 +9,7 @@ const supabase = useSupabaseClient()
 const isSidebarOpen = useState('admin-sidebar-open', () => false)
 
 const signingOut = ref(false)
+const showLogoutConfirm = ref(false)
 const handleSignOut = async () => {
   signingOut.value = true
   try {
@@ -20,11 +21,37 @@ const handleSignOut = async () => {
 }
 
 const title = computed(() => {
-  if (route.path === '/admin') return 'Overview'
-  if (route.path.startsWith('/admin/inquiries')) return 'Inquiries'
-  if (route.path.startsWith('/admin/site-stats')) return 'Site Stats'
-  if (route.path.startsWith('/admin/programs')) return 'Programs'
-  if (route.path.startsWith('/admin/users')) return 'Admin Users'
+  const path = route.path.replace(/\/$/, '')
+  
+  if (path === '/admin') return 'Overview'
+  if (path === '/admin/inquiries') return 'Inquiries'
+  if (path === '/admin/site-stats') return 'Site Stats'
+  if (path === '/admin/categories') return 'Categories'
+  if (path === '/admin/gallery') return 'Gallery'
+  if (path === '/admin/partners') return 'Partners'
+  if (path === '/admin/team-members') return 'Team Members'
+  if (path === '/admin/testimonials') return 'Testimonials'
+  if (path === '/admin/logs') return 'System Logs'
+  if (path === '/admin/posts') return 'Posts'
+  if (path === '/admin/projects') return 'Projects'
+  if (path === '/admin/connection-test') return 'Connection Test'
+  if (path === '/admin/setup') return 'Setup'
+
+  // Events
+  if (path === '/admin/events') return 'Events'
+  if (path === '/admin/events/new') return 'New Event'
+  if (path.startsWith('/admin/events/')) return 'Edit Event'
+
+  // Programs
+  if (path === '/admin/programs') return 'Programs'
+  if (path === '/admin/programs/new') return 'New Program'
+  if (path.startsWith('/admin/programs/preview/')) return 'Program Preview'
+  if (path.startsWith('/admin/programs/')) return 'Edit Program'
+
+  // Users
+  if (path === '/admin/users') return 'Admin Users'
+  if (path.startsWith('/admin/users/')) return 'User Details'
+
   return 'Admin'
 })
 </script>
@@ -59,7 +86,7 @@ const title = computed(() => {
       <button
         class="btn btn-ghost logout-btn"
         :disabled="signingOut"
-        @click="handleSignOut"
+        @click="showLogoutConfirm = true"
       >
         <UIcon name="i-lucide-log-out" />
         <span v-if="signingOut">Signing out...</span>
@@ -67,6 +94,20 @@ const title = computed(() => {
       </button>
     </div>
   </header>
+
+  <AdminModal
+    :open="showLogoutConfirm"
+    title="Sign Out Confirmation"
+    submit-label="Sign out"
+    :submit-danger="true"
+    :loading="signingOut"
+    @close="showLogoutConfirm = false"
+    @submit="handleSignOut"
+  >
+    <p class="logout-confirm-text">
+      Are you sure you want to sign out? Any unsaved changes in active forms will be lost.
+    </p>
+  </AdminModal>
 </template>
 
 <style scoped>
@@ -192,5 +233,11 @@ const title = computed(() => {
   background-color: rgba(239, 68, 68, 0.08) !important;
   color: #ef4444 !important;
   border-color: rgba(239, 68, 68, 0.2) !important;
+}
+
+.logout-confirm-text {
+  font-size: var(--text-sm);
+  color: var(--admin-text-secondary);
+  line-height: 1.5;
 }
 </style>

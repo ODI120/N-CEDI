@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onBeforeRouteLeave } from 'vue-router'
+import { nextTick } from 'vue'
 import {
   createEmptyProgramForm,
   formToDbPayload,
@@ -32,6 +34,10 @@ const emit = defineEmits<{
 const supabase = useSupabaseClient() as any
 const toast = useToast()
 
+const { data: adminProfile } = useNuxtData<{ role?: string } | null>('sidebar-admin-role')
+const canEdit = computed(() => adminProfile.value?.role !== 'viewer')
+const canDelete = computed(() => adminProfile.value?.role === 'admin' || adminProfile.value?.role === 'super_admin')
+
 const isCreate = computed(() => !props.programId)
 const activeSection = ref('basics')
 const saving = ref(false)
@@ -43,6 +49,44 @@ const coverPreviewUrl = ref('')
 const galleryFiles = ref<File[]>([])
 const form = ref<ProgramFormState>(createEmptyProgramForm())
 const errors = ref<ProgramFormErrors>({})
+const isDirty = ref(false)
+
+// Watch form deeply to track user modifications
+watch(form, () => {
+  if (props.programId && programPending.value) return
+  isDirty.value = true
+}, { deep: true })
+
+// BeforeUnload handler for native browser reloads or tab closures
+const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+  if (isDirty.value) {
+    e.preventDefault()
+    e.returnValue = 'You have unsaved changes. Are you sure you want to leave?'
+    return e.returnValue
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('beforeunload', handleBeforeUnload)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+})
+
+// Vue Router guard for internal transitions
+onBeforeRouteLeave((to, from, next) => {
+  if (isDirty.value) {
+    const confirmLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?')
+    if (confirmLeave) {
+      next()
+    } else {
+      next(false)
+    }
+  } else {
+    next()
+  }
+})
 
 const sections = [
   { id: 'basics', label: 'Basics', icon: 'i-lucide-file-text' },
@@ -77,12 +121,15 @@ watch(row, (newRow) => {
   if (newRow) {
     form.value = rowToProgramForm(newRow)
     slugTouched.value = true
+    nextTick(() => {
+      isDirty.value = false
+    })
   }
 }, { immediate: true })
 
 watch(error, (newErr) => {
   if (newErr) {
-    toast.add({ title: 'Error loading program details', description: newErr.message, color: 'red' })
+    toast.add({ title: 'Error loading program details', description: newErr.message, color: 'error' })
   }
 })
 
@@ -177,6 +224,10 @@ const completionChecks = computed(() => [
 ])
 
 const save = async () => {
+  if (!canEdit.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to edit programs.', color: 'error' })
+    return
+  }
   errors.value = validateProgramForm(form.value, {
     isCreate: isCreate.value,
     hasPendingCover: Boolean(coverImageFile.value),
@@ -185,7 +236,7 @@ const save = async () => {
     toast.add({
       title: errors.value.publish ? 'Cannot publish yet' : 'Please fix the highlighted fields',
       description: errors.value.publish,
-      color: 'red',
+      color: 'error',
     })
     if (errors.value.title || errors.value.slug || errors.value.description) activeSection.value = 'basics'
     else if (errors.value.coverImageUrl) activeSection.value = 'hero'
@@ -223,6 +274,7 @@ const save = async () => {
       if (error) throw error
       if (!data?.id) throw new Error('Program was created but no row was returned.')
 
+      isDirty.value = false
       emit('saved', { id: data.id, slug: data.slug })
     } else {
       const { data, error } = await supabase
@@ -235,7 +287,8 @@ const save = async () => {
       if (error) throw error
       if (!data?.id) throw new Error('Program was updated but no row was returned.')
 
-      toast.add({ title: 'Skill track updated', color: 'green' })
+      toast.add({ title: 'Skill track updated', color: 'success' })
+      isDirty.value = false
       emit('saved', { id: data.id, slug: data.slug })
     }
 
@@ -244,13 +297,17 @@ const save = async () => {
     }
   } catch (error: any) {
     const message = error?.message || 'Unknown error'
-    toast.add({ title: 'Could not save program', description: message, color: 'red' })
+    toast.add({ title: 'Could not save program', description: message, color: 'error' })
   } finally {
     saving.value = false
   }
 }
 
 const removeProgram = async () => {
+  if (!canDelete.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to delete programs.', color: 'error' })
+    return
+  }
   if (!props.programId) return
   deleting.value = true
   try {
@@ -260,12 +317,13 @@ const removeProgram = async () => {
     if (refs.length) {
       await deleteStorageRefs(supabase, refs)
     }
-    toast.add({ title: 'Program deleted', color: 'green' })
+    toast.add({ title: 'Program deleted', color: 'success' })
     deleteOpen.value = false
+    isDirty.value = false
     emit('deleted')
   } catch (error: any) {
     const message = error?.message || 'Unknown error'
-    toast.add({ title: 'Could not delete program', description: message, color: 'red' })
+    toast.add({ title: 'Could not delete program', description: message, color: 'error' })
   } finally {
     deleting.value = false
   }
@@ -562,9 +620,9 @@ onBeforeUnmount(() => {
 
     <footer class="program-editor__footer">
       <div class="program-editor__footer-left">
-        <button type="button" class="btn btn-ghost" @click="emit('cancel')">Cancel</button>
+        <button type="button" class="btn btn-ghost" @click="isDirty = false; emit('cancel')">Cancel</button>
         <button
-          v-if="!isCreate"
+          v-if="!isCreate && canDelete"
           type="button"
           class="btn btn-danger btn-ghost"
           @click="deleteOpen = true"

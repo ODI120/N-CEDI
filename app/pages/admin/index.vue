@@ -80,9 +80,9 @@ const markInquiryRead = async (row: InquirySignal) => {
   try {
     const { error } = await supabase.from('inquiries').update({ is_read: true }).eq('id', row.id)
     if (error) throw error
-    toast.add({ title: 'Marked as read', color: 'green' })
+    toast.add({ title: 'Marked as read', color: 'success' })
     await refresh()
-  } catch (e: any) { toast.add({ title: 'Error', description: e.message, color: 'red' }) }
+  } catch (e: any) { toast.add({ title: 'Error', description: e.message, color: 'error' }) }
   finally { markingInquiry.value = null }
 }
 
@@ -124,7 +124,7 @@ const navigateAdminModule = async (module: { label: string; to?: string }, event
     toast.add({
       title: 'Navigation error',
       description: `Could not open ${module.label}. ${err?.message ?? 'Check console for details.'}`,
-      color: 'red'
+      color: 'error'
     })
   }
 }

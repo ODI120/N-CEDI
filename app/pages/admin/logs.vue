@@ -51,7 +51,7 @@ watch(currentUserProfile, (profile) => {
     toast.add({
       title: 'Access Denied',
       description: 'You do not have permission to access the system audit logs.',
-      color: 'red'
+      color: 'error'
     })
     router.push('/admin')
   }

@@ -6,6 +6,19 @@ const router = useRouter()
 const toast = useToast()
 const programId = route.params.id as string
 
+const { data: adminProfile } = useNuxtData<{ role?: string } | null>('sidebar-admin-role')
+
+watch(adminProfile, (profile) => {
+  if (profile && profile.role === 'viewer') {
+    toast.add({
+      title: 'Access Denied',
+      description: 'Your role does not have permission to edit programs.',
+      color: 'error'
+    })
+    router.push('/admin/programs')
+  }
+}, { immediate: true })
+
 useSeoMeta({ title: 'Edit Program | Admin | N-CEDI' })
 
 const onSaved = () => {
@@ -28,7 +41,7 @@ onMounted(() => {
     toast.add({
       title: 'Program created',
       description: `Saved successfully. Publish when ready to go live at /programs/${created}.`,
-      color: 'green',
+      color: 'success',
     })
   }
 })

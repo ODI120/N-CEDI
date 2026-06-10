@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useSupabaseClient } from '#imports';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 
 definePageMeta({
   layout: 'admin'
@@ -12,6 +12,33 @@ useSeoMeta({
 
 const supabase = useSupabaseClient();
 const result = ref('Loading diagnostics...');
+
+const currentUser = useSupabaseUser()
+const currentUserId = computed(() => currentUser.value?.id || (currentUser.value as any)?.sub)
+const toast = useToast()
+const router = useRouter()
+
+const { data: currentUserProfile } = useAsyncData('current-user-profile', async () => {
+  if (!currentUserId.value) return null
+  const { data, error } = await supabase
+    .from('admin_users')
+    .select('role')
+    .eq('user_id', currentUserId.value)
+    .maybeSingle()
+  if (error) console.error('[ConnectionTestPage] Error fetching user role:', error)
+  return data
+}, { watch: [currentUser] })
+
+watch(currentUserProfile, (profile) => {
+  if (profile && profile.role !== 'super_admin') {
+    toast.add({
+      title: 'Access Denied',
+      description: 'You do not have permission to access the system diagnostic tools.',
+      color: 'error'
+    })
+    router.push('/admin')
+  }
+}, { immediate: true })
 
 onMounted(async () => {
   try {
@@ -50,15 +77,15 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div class="glass-card diagnostic-block mt-6">
+    <div class="glass-card diagnostic-block">
       <div class="diagnostic-title">
         <UIcon name="i-lucide-activity" class="diag-icon" />
         <span>Connectivity Diagnostics</span>
       </div>
-      <div class="diagnostic-result font-mono text-sm bg-slate-900 text-emerald-400 p-4 rounded-xl border border-slate-800">
+      <div class="diagnostic-result">
         {{ result }}
       </div>
-      <div class="info-block mt-4 text-xs text-(--admin-text-muted)">
+      <div class="info-block">
         This checks the status of your current auth token against the <code>admin_users</code> RBAC table schema.
       </div>
     </div>
@@ -98,6 +125,7 @@ onMounted(async () => {
 .diagnostic-block {
   padding: var(--space-6);
   max-width: 640px;
+  margin-top: var(--space-6);
 }
 
 .diagnostic-title {
@@ -117,7 +145,20 @@ onMounted(async () => {
 }
 
 .diagnostic-result {
+  font-family: monospace;
+  font-size: var(--text-sm);
+  background: #0f172a;
+  color: #10b981;
+  padding: 16px;
+  border-radius: var(--admin-radius-md);
+  border: 1px solid var(--admin-border);
   line-height: var(--leading-relaxed);
   word-break: break-all;
+}
+
+.info-block {
+  margin-top: 16px;
+  font-size: var(--text-xs);
+  color: var(--admin-text-muted);
 }
 </style>

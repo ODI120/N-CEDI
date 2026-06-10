@@ -21,19 +21,38 @@ const CATEGORY_TYPES = [
   { value: 'event', label: 'Event' },
 ] as const
 
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+watch([search], () => {
+  currentPage.value = 1
+})
+
 const { data, pending, refresh } = useAsyncData('admin-categories', async () => {
-  let q = supabase.from('categories').select('*').order('name')
+  let q = supabase.from('categories').select('*', { count: 'exact' }).order('name')
   if (search.value.trim()) q = q.ilike('name', `%${search.value.trim()}%`)
-  const { data, error } = await q
+  
+  const from = (currentPage.value - 1) * pageSize.value
+  const to = from + pageSize.value - 1
+  q = q.range(from, to)
+
+  const { data, count, error } = await q
   if (error) throw error
-  return (data || []) as Row[]
-}, { watch: [search] })
+  return {
+    rows: (data || []) as Row[],
+    total: count || 0
+  }
+}, { watch: [currentPage, search] })
 
 const columns = [
   { key: 'name', label: 'Name' },
   { key: 'slug', label: 'Slug' },
   { key: 'category_type', label: 'Type' },
 ]
+
+const { data: adminProfile } = useNuxtData<{ role?: string } | null>('sidebar-admin-role')
+const canEdit = computed(() => adminProfile.value?.role !== 'viewer')
+const canDelete = computed(() => adminProfile.value?.role === 'admin' || adminProfile.value?.role === 'super_admin')
 
 // CRUD
 const modalOpen = ref(false)
@@ -69,8 +88,12 @@ const openEdit = (r: Row) => {
 const openDelete = (r: Row) => { target.value = r; deleteOpen.value = true }
 
 const save = async () => {
+  if (!canEdit.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to edit categories.', color: 'error' })
+    return
+  }
   if (!form.value.name.trim()) {
-    toast.add({ title: 'Validation Error', description: 'Name is required.', color: 'red' })
+    toast.add({ title: 'Validation Error', description: 'Name is required.', color: 'error' })
     return
   }
 
@@ -82,7 +105,7 @@ const save = async () => {
     .replace(/^-|-$/g, '')
 
   if (!sanitizedSlug) {
-    toast.add({ title: 'Validation Error', description: 'A valid slug is required.', color: 'red' })
+    toast.add({ title: 'Validation Error', description: 'A valid slug is required.', color: 'error' })
     return
   }
 
@@ -97,24 +120,28 @@ const save = async () => {
     if (mode.value === 'add') {
       const { error } = await supabase.from('categories').insert([payload])
       if (error) throw error
-      toast.add({ title: 'Category created', color: 'green' })
+      toast.add({ title: 'Category created', color: 'success' })
     } else {
       const { error } = await supabase.from('categories').update(payload).eq('id', target.value!.id)
       if (error) throw error
-      toast.add({ title: 'Category updated', color: 'green' })
+      toast.add({ title: 'Category updated', color: 'success' })
     }
     modalOpen.value = false; await refresh()
-  } catch (e: any) { toast.add({ title: 'Error', description: e.message, color: 'red' }) }
+  } catch (e: any) { toast.add({ title: 'Error', description: e.message, color: 'error' }) }
   finally { saving.value = false }
 }
 
 const remove = async () => {
+  if (!canDelete.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to delete categories.', color: 'error' })
+    return
+  }
   deleting.value = true
   try {
     const { error } = await supabase.from('categories').delete().eq('id', target.value!.id)
     if (error) throw error
-    toast.add({ title: 'Deleted', color: 'green' }); deleteOpen.value = false; await refresh()
-  } catch (e: any) { toast.add({ title: 'Error', description: e.message, color: 'red' }) }
+    toast.add({ title: 'Deleted', color: 'success' }); deleteOpen.value = false; await refresh()
+  } catch (e: any) { toast.add({ title: 'Error', description: e.message, color: 'error' }) }
   finally { deleting.value = false }
 }
 </script>
@@ -131,7 +158,7 @@ const remove = async () => {
         <button class="btn btn-ghost" @click="refresh()">
           <UIcon name="i-lucide-refresh-cw" />Refresh
         </button>
-        <button class="btn btn-primary" @click="openAdd">
+        <button class="btn btn-primary" @click="openAdd" v-if="canEdit">
           <UIcon name="i-lucide-plus" />Add Category
         </button>
       </div>
@@ -146,15 +173,24 @@ const remove = async () => {
       </div>
     </div>
 
-    <AdminTable :columns="columns" :rows="data || []" :loading="pending" empty-title="No categories yet" empty-text="Create your first content category.">
+    <AdminTable
+      :columns="columns"
+      :rows="data?.rows || []"
+      :loading="pending"
+      :total-rows="data?.total || 0"
+      :page-size="pageSize"
+      v-model:current-page="currentPage"
+      empty-title="No categories yet"
+      empty-text="Create your first content category."
+    >
       <template #cell-name="{ row }"><span class="font-semibold">{{ row.name }}</span></template>
       <template #cell-slug="{ row }"><code class="text-xs" style="color:var(--admin-text-muted)">{{ row.slug }}</code></template>
       <template #cell-category_type="{ row }">
         <span class="badge badge-blue">{{ row.category_type }}</span>
       </template>
       <template #actions="{ row }">
-        <button class="btn btn-ghost btn-icon" @click="openEdit(row)" title="Edit"><UIcon name="i-lucide-edit-3" /></button>
-        <button class="btn btn-danger btn-icon" @click="openDelete(row)" title="Delete"><UIcon name="i-lucide-trash-2" /></button>
+        <button class="btn btn-ghost btn-icon" @click="openEdit(row)" title="Edit" v-if="canEdit"><UIcon name="i-lucide-edit-3" /></button>
+        <button class="btn btn-danger btn-icon" @click="openDelete(row)" title="Delete" v-if="canDelete"><UIcon name="i-lucide-trash-2" /></button>
       </template>
     </AdminTable>
 

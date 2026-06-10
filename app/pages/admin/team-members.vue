@@ -11,15 +11,32 @@ const supabase = useSupabaseClient() as any
 const toast = useToast()
 const search = ref('')
 
+const { data: adminProfile } = useNuxtData<{ role?: string } | null>('sidebar-admin-role')
+const canEdit = computed(() => adminProfile.value?.role !== 'viewer')
+const canDelete = computed(() => adminProfile.value?.role === 'admin' || adminProfile.value?.role === 'super_admin')
+
 interface TeamMemberRow extends TeamMember {}
 
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+watch([search], () => {
+  currentPage.value = 1
+})
+
 const { data, pending, refresh } = useAsyncData('admin-team-members', async () => {
-  let q = supabase.from('team_members').select('*').order('display_order')
+  let q = supabase.from('team_members').select('*', { count: 'exact' }).order('display_order')
   if (search.value.trim()) q = q.ilike('name', `%${search.value.trim()}%`)
-  const { data, error } = await q
+
+  const from = (currentPage.value - 1) * pageSize.value
+  const to = from + pageSize.value - 1
+  q = q.range(from, to)
+
+  const { data: rows, count, error } = await q
   if (error) throw error
+
   // Convert snake_case to camelCase for consistency
-  return (data || []).map((row: any) => ({
+  const list = (rows || []).map((row: any) => ({
     id: row.id,
     name: row.name,
     role: row.role,
@@ -31,7 +48,12 @@ const { data, pending, refresh } = useAsyncData('admin-team-members', async () =
     isPublished: row.is_published,
     createdAt: row.created_at,
   })) as TeamMemberRow[]
-}, { watch: [search] })
+
+  return {
+    rows: list,
+    total: count || 0
+  }
+}, { watch: [currentPage, search] })
 
 const columns = [
   { key: 'avatar', label: '', width: '40px' },
@@ -72,8 +94,9 @@ const previewUrl = computed(() => {
 })
 
 const nextDisplayOrder = computed(() => {
-  if (!data.value || data.value.length === 0) return 0
-  const max = Math.max(...data.value.map(m => m.displayOrder ?? 0))
+  const rows = data.value?.rows ?? []
+  if (!rows.length) return 0
+  const max = Math.max(...rows.map(m => m.displayOrder ?? 0))
   return max + 1
 })
 
@@ -114,6 +137,10 @@ const handleAvatarFileChange = (e: Event) => {
 }
 
 const save = async () => {
+  if (!canEdit.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to edit team members.', color: 'error' })
+    return
+  }
   errors.value = validateTeamMemberForm(form.value)
   if (Object.keys(errors.value).length > 0) return
 
@@ -135,7 +162,7 @@ const save = async () => {
     if (mode.value === 'add') {
       const { error } = await supabase.from('team_members').insert([payload])
       if (error) throw error
-      toast.add({ title: 'Team member added', color: 'green' })
+      toast.add({ title: 'Team member added', color: 'success' })
     } else {
       // On update, delete old avatar if new one was uploaded
       if (avatarFile.value && target.value?.avatarUrl) {
@@ -154,19 +181,23 @@ const save = async () => {
 
       const { error } = await supabase.from('team_members').update(payload).eq('id', target.value!.id)
       if (error) throw error
-      toast.add({ title: 'Team member updated', color: 'green' })
+      toast.add({ title: 'Team member updated', color: 'success' })
     }
 
     modalOpen.value = false
     await refresh()
   } catch (e: any) {
-    toast.add({ title: 'Error', description: e.message, color: 'red' })
+    toast.add({ title: 'Error', description: e.message, color: 'error' })
   } finally {
     saving.value = false
   }
 }
 
 const remove = async () => {
+  if (!canDelete.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to delete team members.', color: 'error' })
+    return
+  }
   if (!target.value) return
 
   deleting.value = true
@@ -186,11 +217,11 @@ const remove = async () => {
 
     const { error } = await supabase.from('team_members').delete().eq('id', target.value.id)
     if (error) throw error
-    toast.add({ title: 'Team member deleted', color: 'green' })
+    toast.add({ title: 'Team member deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
   } catch (e: any) {
-    toast.add({ title: 'Error', description: e.message, color: 'red' })
+    toast.add({ title: 'Error', description: e.message, color: 'error' })
   } finally {
     deleting.value = false
   }
@@ -208,7 +239,7 @@ const remove = async () => {
       </div>
       <div class="ap-header__actions">
         <button class="btn btn-ghost" @click="refresh"><UIcon name="i-lucide-refresh-cw" />Refresh</button>
-        <button class="btn btn-primary" @click="openAdd"><UIcon name="i-lucide-plus" />Add Member</button>
+        <button class="btn btn-primary" @click="openAdd" v-if="canEdit"><UIcon name="i-lucide-plus" />Add Member</button>
       </div>
     </div>
 
@@ -218,20 +249,28 @@ const remove = async () => {
       </div>
     </div>
 
-    <AdminTable :columns="columns" :rows="data || []" :loading="pending" empty-title="No team members">
+    <AdminTable
+      :columns="columns"
+      :rows="data?.rows || []"
+      :loading="pending"
+      :total-rows="data?.total || 0"
+      :page-size="pageSize"
+      v-model:current-page="currentPage"
+      empty-title="No team members"
+    >
       <template #cell-avatar="{ row }">
-        <div style="width: 40px; height: 40px; border-radius: 50%; background: #e2e8f0; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
-          <img v-if="row.avatarUrl" :src="resolveTeamMemberAvatarUrl(row.avatarUrl)" :alt="row.name" style="width: 100%; height: 100%; object-fit: cover;" />
-          <UIcon v-else name="i-lucide-user" style="width: 20px; height: 20px; color: #94a3b8;" />
+        <div class="avatar-container">
+          <img v-if="row.avatarUrl" :src="resolveTeamMemberAvatarUrl(row.avatarUrl)" :alt="row.name" class="avatar-img" />
+          <UIcon v-else name="i-lucide-user" class="avatar-placeholder" />
         </div>
       </template>
       <template #cell-name="{ row }"><span class="font-semibold">{{ row.name }}</span></template>
-      <template #cell-role="{ row }"><span style="color: var(--admin-text-secondary)">{{ row.role }}</span></template>
+      <template #cell-role="{ row }"><span class="text-secondary">{{ row.role }}</span></template>
       <template #cell-status="{ row }"><span class="badge" :class="row.isPublished ? 'badge-green' : 'badge-gray'">{{ row.isPublished ? 'Published' : 'Draft' }}</span></template>
-      <template #cell-displayOrder="{ row }"><span style="color: var(--admin-text-secondary); text-align: center; display: block;">{{ row.displayOrder }}</span></template>
+      <template #cell-displayOrder="{ row }"><span class="display-order-cell">{{ row.displayOrder }}</span></template>
       <template #actions="{ row }">
-        <button class="btn btn-ghost btn-icon" @click="openEdit(row)"><UIcon name="i-lucide-edit-3" /></button>
-        <button class="btn btn-danger btn-icon" @click="openDelete(row)"><UIcon name="i-lucide-trash-2" /></button>
+        <button class="btn btn-ghost btn-icon" @click="openEdit(row)" v-if="canEdit"><UIcon name="i-lucide-edit-3" /></button>
+        <button class="btn btn-danger btn-icon" @click="openDelete(row)" v-if="canDelete"><UIcon name="i-lucide-trash-2" /></button>
       </template>
     </AdminTable>
 
@@ -300,7 +339,47 @@ const remove = async () => {
     </AdminModal>
 
     <AdminModal :open="deleteOpen" title="Delete Team Member" submit-label="Delete" submit-danger :loading="deleting" @close="deleteOpen = false" @submit="remove">
-      <p style="color: var(--admin-text-secondary)">Permanently delete <strong>{{ target?.name }}</strong>? Their avatar will also be removed from storage.</p>
+      <p class="confirm-text">Permanently delete <strong>{{ target?.name }}</strong>? Their avatar will also be removed from storage.</p>
     </AdminModal>
   </section>
 </template>
+
+<style scoped>
+.avatar-container {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--admin-border-strong);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 20px;
+  height: 20px;
+  color: var(--admin-text-placeholder);
+}
+
+.text-secondary {
+  color: var(--admin-text-secondary);
+}
+
+.display-order-cell {
+  color: var(--admin-text-secondary);
+  text-align: center;
+  display: block;
+}
+
+.confirm-text {
+  color: var(--admin-text-secondary);
+}
+</style>

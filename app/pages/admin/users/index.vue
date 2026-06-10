@@ -40,7 +40,7 @@ watch(currentUserProfile, (profile) => {
     toast.add({
       title: 'Access Denied',
       description: 'You do not have permission to access the admin users list.',
-      color: 'red'
+      color: 'error'
     })
     router.push('/admin')
   }
@@ -91,7 +91,7 @@ const openAddModal = () => {
 
 const handleEnrollAdmin = async () => {
   if (!form.value.email.trim()) {
-    toast.add({ title: 'Validation Error', description: 'Email address is required.', color: 'red' })
+    toast.add({ title: 'Validation Error', description: 'Email address is required.', color: 'error' })
     return
   }
 
@@ -107,13 +107,13 @@ const handleEnrollAdmin = async () => {
     })
     
     enrolledPassword.value = response.user.temporary_password
-    toast.add({ title: 'Admin Enrolled Successfully', color: 'green' })
+    toast.add({ title: 'Admin Enrolled Successfully', color: 'success' })
     await refresh()
   } catch (e: any) {
     toast.add({
       title: 'Enrollment Failed',
       description: e.data?.statusMessage || e.message || 'An error occurred.',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     saving.value = false
@@ -122,7 +122,7 @@ const handleEnrollAdmin = async () => {
 
 const handleToggleStatus = async (row: AdminUserRow) => {
   if (row.user_id === currentUserId.value) {
-    toast.add({ title: 'Operation Prevented', description: 'You cannot deactivate your own account.', color: 'yellow' })
+    toast.add({ title: 'Operation Prevented', description: 'You cannot deactivate your own account.', color: 'warning' })
     return
   }
 
@@ -131,20 +131,20 @@ const handleToggleStatus = async (row: AdminUserRow) => {
       method: 'PATCH',
       body: { is_active: !row.is_active }
     })
-    toast.add({ title: `Admin ${row.is_active ? 'Suspended' : 'Activated'}`, color: 'green' })
+    toast.add({ title: `Admin ${row.is_active ? 'Suspended' : 'Activated'}`, color: 'success' })
     await refresh()
   } catch (e: any) {
     toast.add({
       title: 'Status Update Failed',
       description: e.data?.statusMessage || e.message || 'An error occurred.',
-      color: 'red'
+      color: 'error'
     })
   }
 }
 
 const openDeleteModal = (row: AdminUserRow) => {
   if (row.user_id === currentUserId.value) {
-    toast.add({ title: 'Operation Prevented', description: 'You cannot delete your own account.', color: 'yellow' })
+    toast.add({ title: 'Operation Prevented', description: 'You cannot delete your own account.', color: 'warning' })
     return
   }
   targetUser.value = row
@@ -159,7 +159,7 @@ const handleDeleteAdmin = async () => {
     await $fetch(`/api/admin/users/${targetUser.value.user_id}`, {
       method: 'DELETE'
     })
-    toast.add({ title: 'Admin Account Deleted', color: 'green' })
+    toast.add({ title: 'Admin Account Deleted', color: 'success' })
     deleteOpen.value = false
     targetUser.value = null
     await refresh()
@@ -167,7 +167,7 @@ const handleDeleteAdmin = async () => {
     toast.add({
       title: 'Deletion Failed',
       description: e.data?.statusMessage || e.message || 'An error occurred.',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     deleting.value = false
@@ -189,7 +189,7 @@ const handleUpdateRole = async () => {
       method: 'PATCH',
       body: { role: editRoleForm.value.role }
     })
-    toast.add({ title: 'Role Updated Successfully', color: 'green' })
+    toast.add({ title: 'Role Updated Successfully', color: 'success' })
     editRoleOpen.value = false
     editRoleTargetUser.value = null
     await refresh()
@@ -197,7 +197,7 @@ const handleUpdateRole = async () => {
     toast.add({
       title: 'Update Failed',
       description: e.data?.statusMessage || e.message || 'An error occurred.',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     updatingRole.value = false

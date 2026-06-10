@@ -80,7 +80,7 @@ const navigateAdminLink = async (path: string, event: MouseEvent) => {
       </NuxtLink>
     </div>
 
-    <nav class="sidebar__nav" @wheel.prevent>
+    <nav class="sidebar__nav" data-lenis-prevent>
       <ul class="sidebar__list">
         <li v-for="item in nav" :key="item.to">
           <a
@@ -98,15 +98,15 @@ const navigateAdminLink = async (path: string, event: MouseEvent) => {
     </nav>
 
     <div class="sidebar__footer">
-      <NuxtLink v-if="user" :to="selfProfileLink" class="sidebar__profile" style="text-decoration: none; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(148, 163, 184, 0.12)'" onmouseout="this.style.background='rgba(148, 163, 184, 0.06)'">
+      <NuxtLink v-if="user" :to="selfProfileLink" class="sidebar__profile">
         <div class="profile__avatar">
           {{ user?.email?.[0]?.toUpperCase() || 'A' }}
         </div>
-        <div class="profile__details" style="flex: 1; min-width: 0;">
+        <div class="profile__details">
           <span class="profile__email" :title="user?.email">{{ user?.email }}</span>
           <span class="profile__role">{{ adminProfile?.role?.replace('_', ' ') || 'Editor' }}</span>
         </div>
-        <UIcon name="i-lucide-settings" style="width: 14px; height: 14px; color: var(--admin-text-muted);" />
+        <UIcon name="i-lucide-settings" class="profile__settings-icon" />
       </NuxtLink>
       
       <NuxtLink to="/" class="sidebar__footer-link">
@@ -262,6 +262,13 @@ const navigateAdminLink = async (path: string, event: MouseEvent) => {
   background: rgba(148, 163, 184, 0.06);
   border-radius: var(--radius-xl);
   border: 1px solid var(--admin-border);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sidebar__profile:hover {
+  background: rgba(148, 163, 184, 0.12);
 }
 
 .profile__avatar {
@@ -282,6 +289,7 @@ const navigateAdminLink = async (path: string, event: MouseEvent) => {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 }
 
 .profile__email {
@@ -299,6 +307,12 @@ const navigateAdminLink = async (path: string, event: MouseEvent) => {
   text-transform: uppercase;
   color: var(--admin-brand-accent);
   letter-spacing: 0.5px;
+}
+
+.profile__settings-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--admin-text-muted);
 }
 
 .sidebar__footer-link {

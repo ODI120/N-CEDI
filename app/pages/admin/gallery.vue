@@ -25,13 +25,25 @@ import {
 const supabase = useSupabaseClient()
 const toast = useToast()
 const search = ref('')
+
+const { data: adminProfile } = useNuxtData<{ role?: string } | null>('sidebar-admin-role')
+const canEdit = computed(() => adminProfile.value?.role !== 'viewer')
+const canDelete = computed(() => adminProfile.value?.role === 'admin' || adminProfile.value?.role === 'super_admin')
 const statusFilter = ref<'all' | 'published' | 'draft'>('all')
+
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+watch([search, statusFilter], () => {
+  currentPage.value = 1
+})
 
 const { data, pending, refresh } = useAsyncData('admin-gallery', async () => {
   let query = supabase
     .from('gallery_items')
     .select(
       'id, title, media_url, media_type, alt_text, category_id, event_id, program_id, is_published, display_order, created_at',
+      { count: 'exact' }
     )
     .order('display_order', { ascending: true })
 
@@ -41,10 +53,17 @@ const { data, pending, refresh } = useAsyncData('admin-gallery', async () => {
   if (statusFilter.value === 'published') query = query.eq('is_published', true)
   if (statusFilter.value === 'draft') query = query.eq('is_published', false)
 
-  const { data: rows, error } = await query
+  const from = (currentPage.value - 1) * pageSize.value
+  const to = from + pageSize.value - 1
+  query = query.range(from, to)
+
+  const { data: rows, count, error } = await query
   if (error) throw error
-  return (rows || []) as GalleryItemDbRow[]
-}, { watch: [search, statusFilter] })
+  return {
+    rows: (rows || []) as GalleryItemDbRow[],
+    total: count || 0
+  }
+}, { watch: [currentPage, search, statusFilter] })
 
 const { data: galleryCategories } = useAsyncData('admin-gallery-categories', () =>
   fetchGalleryFilterCategories(),
@@ -89,7 +108,7 @@ const previewUrl = computed(() => {
 })
 
 const nextDisplayOrder = computed(() => {
-  const rows = data.value ?? []
+  const rows = data.value?.rows ?? []
   if (!rows.length) return 0
   return Math.max(...rows.map((row) => row.display_order)) + 1
 })
@@ -131,11 +150,15 @@ const openDelete = (row: GalleryItemDbRow) => {
 }
 
 const save = async () => {
+  if (!canEdit.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to edit gallery items.', color: 'error' })
+    return
+  }
   errors.value = validateGalleryForm(form.value, {
     hasImageUpload: Boolean(imageFile.value),
   })
   if (hasGalleryFormErrors(errors.value)) {
-    toast.add({ title: 'Please fix the highlighted fields', color: 'red' })
+    toast.add({ title: 'Please fix the highlighted fields', color: 'error' })
     return
   }
 
@@ -156,7 +179,7 @@ const save = async () => {
     if (mode.value === 'add') {
       const { error } = await supabase.from('gallery_items').insert([payload])
       if (error) throw error
-      toast.add({ title: 'Gallery item created', color: 'green' })
+      toast.add({ title: 'Gallery item created', color: 'success' })
     } else {
       const previousRef =
         target.value && form.value.mediaType === 'image'
@@ -175,7 +198,7 @@ const save = async () => {
         await deleteStorageRefs(supabase, [previousRef])
       }
 
-      toast.add({ title: 'Gallery item updated', color: 'green' })
+      toast.add({ title: 'Gallery item updated', color: 'success' })
     }
 
     imageFile.value = null
@@ -183,13 +206,17 @@ const save = async () => {
     await refresh()
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Save failed'
-    toast.add({ title: 'Error saving gallery item', description: message, color: 'red' })
+    toast.add({ title: 'Error saving gallery item', description: message, color: 'error' })
   } finally {
     saving.value = false
   }
 }
 
 const remove = async () => {
+  if (!canDelete.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to delete gallery items.', color: 'error' })
+    return
+  }
   if (!target.value) return
   deleting.value = true
   try {
@@ -197,12 +224,12 @@ const remove = async () => {
     const { error } = await supabase.from('gallery_items').delete().eq('id', target.value.id)
     if (error) throw error
     if (storageRef) await deleteStorageRefs(supabase, [storageRef])
-    toast.add({ title: 'Gallery item deleted', color: 'green' })
+    toast.add({ title: 'Gallery item deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Delete failed'
-    toast.add({ title: 'Error deleting item', description: message, color: 'red' })
+    toast.add({ title: 'Error deleting item', description: message, color: 'error' })
   } finally {
     deleting.value = false
   }
@@ -224,7 +251,7 @@ const remove = async () => {
         <button class="btn btn-ghost" type="button" @click="refresh()">
           <UIcon name="i-lucide-refresh-cw" />Refresh
         </button>
-        <button class="btn btn-primary" type="button" @click="openAdd">
+        <button class="btn btn-primary" type="button" @click="openAdd" v-if="canEdit">
           <UIcon name="i-lucide-plus" />Add Item
         </button>
       </div>
@@ -246,8 +273,11 @@ const remove = async () => {
 
     <AdminTable
       :columns="columns"
-      :rows="data || []"
+      :rows="data?.rows || []"
       :loading="pending"
+      :total-rows="data?.total || 0"
+      :page-size="pageSize"
+      v-model:current-page="currentPage"
       empty-title="Gallery is empty"
       empty-subtitle="Add images or videos for the public gallery and homepage slider."
     >
@@ -275,10 +305,10 @@ const remove = async () => {
         </span>
       </template>
       <template #actions="{ row }">
-        <button class="btn btn-ghost btn-icon" title="Edit" type="button" @click="openEdit(row)">
+        <button class="btn btn-ghost btn-icon" title="Edit" type="button" @click="openEdit(row)" v-if="canEdit">
           <UIcon name="i-lucide-edit-3" />
         </button>
-        <button class="btn btn-danger btn-icon" title="Delete" type="button" @click="openDelete(row)">
+        <button class="btn btn-danger btn-icon" title="Delete" type="button" @click="openDelete(row)" v-if="canDelete">
           <UIcon name="i-lucide-trash-2" />
         </button>
       </template>

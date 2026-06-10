@@ -20,13 +20,24 @@ const supabase = useSupabaseClient() as any
 const toast = useToast()
 const route = useRoute()
 
+const { data: adminProfile } = useNuxtData<{ role?: string } | null>('sidebar-admin-role')
+const canEdit = computed(() => adminProfile.value?.role !== 'viewer')
+const canDelete = computed(() => adminProfile.value?.role === 'admin' || adminProfile.value?.role === 'super_admin')
+
 const search = ref('')
 const statusFilter = ref<'all' | 'published' | 'draft'>('all')
+
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+watch([search, statusFilter], () => {
+  currentPage.value = 1
+})
 
 const { data, pending, refresh } = useAsyncData('admin-programs', async () => {
   let query = supabase
     .from('programs')
-    .select('id, title, slug, subtitle, cover_image_url, gallery_urls, is_published, is_featured, updated_at')
+    .select('id, title, slug, subtitle, cover_image_url, gallery_urls, is_published, is_featured, updated_at', { count: 'exact' })
     .order('updated_at', { ascending: false })
 
   if (search.value.trim()) {
@@ -36,10 +47,17 @@ const { data, pending, refresh } = useAsyncData('admin-programs', async () => {
   if (statusFilter.value === 'published') query = query.eq('is_published', true)
   if (statusFilter.value === 'draft') query = query.eq('is_published', false)
 
-  const { data, error } = await query
+  const from = (currentPage.value - 1) * pageSize.value
+  const to = from + pageSize.value - 1
+  query = query.range(from, to)
+
+  const { data: rows, count, error } = await query
   if (error) throw error
-  return (data || []) as ProgramRow[]
-}, { watch: [search, statusFilter] })
+  return {
+    rows: (rows || []) as ProgramRow[],
+    total: count || 0
+  }
+}, { watch: [currentPage, search, statusFilter] })
 
 const columns = [
   { key: 'title', label: 'Skill Track' },
@@ -65,6 +83,10 @@ const openDelete = (row: ProgramRow) => {
 }
 
 const remove = async () => {
+  if (!canDelete.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to delete programs.', color: 'error' })
+    return
+  }
   if (!target.value) return
   deleting.value = true
   try {
@@ -80,7 +102,7 @@ const remove = async () => {
       await deleteStorageRefs(supabase, refs)
     }
 
-    toast.add({ title: 'Program deleted', color: 'green' })
+    toast.add({ title: 'Program deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
   } catch (error: any) {
@@ -88,7 +110,7 @@ const remove = async () => {
     const hint = message.includes('policy') || message.includes('permission')
       ? 'Your account may need admin role to delete programs.'
       : message
-    toast.add({ title: 'Error deleting', description: hint, color: 'red' })
+    toast.add({ title: 'Error deleting', description: hint, color: 'error' })
   } finally {
     deleting.value = false
   }
@@ -100,7 +122,7 @@ onMounted(() => {
     toast.add({
       title: 'Program created',
       description: `Preview at /admin/programs/preview/${created}`,
-      color: 'green',
+      color: 'success',
     })
   }
 })
@@ -116,7 +138,7 @@ onMounted(() => {
       </div>
       <div class="ap-header__actions">
         <button class="btn btn-ghost" @click="refresh()"><UIcon name="i-lucide-refresh-cw" />Refresh</button>
-        <NuxtLink to="/admin/programs/new" class="btn btn-primary">
+        <NuxtLink to="/admin/programs/new" class="btn btn-primary" v-if="canEdit">
           <UIcon name="i-lucide-plus" />New Program
         </NuxtLink>
       </div>
@@ -136,7 +158,15 @@ onMounted(() => {
       </div>
     </div>
 
-    <AdminTable :columns="columns" :rows="data || []" :loading="pending" empty-title="No programs yet">
+    <AdminTable
+      :columns="columns"
+      :rows="data?.rows || []"
+      :loading="pending"
+      :total-rows="data?.total || 0"
+      :page-size="pageSize"
+      v-model:current-page="currentPage"
+      empty-title="No programs yet"
+    >
       <template #cell-title="{ row }">
         <div>
           <span class="font-bold">{{ row.title }}</span>
@@ -160,13 +190,14 @@ onMounted(() => {
         <NuxtLink :to="previewHref(row)" target="_blank" class="btn btn-ghost btn-icon" title="Preview">
           <UIcon name="i-lucide-external-link" />
         </NuxtLink>
-        <NuxtLink :to="`/admin/programs/${row.id}`" class="btn btn-ghost btn-icon" title="Edit">
+        <NuxtLink :to="`/admin/programs/${row.id}`" class="btn btn-ghost btn-icon" title="Edit" v-if="canEdit">
           <UIcon name="i-lucide-edit-3" />
         </NuxtLink>
         <button
           class="btn btn-danger btn-icon"
           title="Delete"
           @click="openDelete(row)"
+          v-if="canDelete"
         >
           <UIcon name="i-lucide-trash-2" />
         </button>

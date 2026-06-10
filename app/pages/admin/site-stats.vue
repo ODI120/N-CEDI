@@ -18,12 +18,23 @@ import {
 const supabase = useSupabaseClient() as any
 const toast = useToast()
 const search = ref('')
+
+const { data: adminProfile } = useNuxtData<{ role?: string } | null>('sidebar-admin-role')
+const canEdit = computed(() => adminProfile.value?.role !== 'viewer')
+const canDelete = computed(() => adminProfile.value?.role === 'admin' || adminProfile.value?.role === 'super_admin')
 const statusFilter = ref<'all' | 'published' | 'draft'>('all')
+
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+watch([search, statusFilter], () => {
+  currentPage.value = 1
+})
 
 const { data, pending, refresh } = useAsyncData('admin-site-stats', async () => {
   let query = supabase
     .from('site_stats')
-    .select('id, value, prefix, suffix, label, icon, display_order, is_published, created_at, updated_at')
+    .select('id, value, prefix, suffix, label, icon, display_order, is_published, created_at, updated_at', { count: 'exact' })
     .order('display_order', { ascending: true })
 
   if (search.value.trim()) {
@@ -32,10 +43,17 @@ const { data, pending, refresh } = useAsyncData('admin-site-stats', async () => 
   if (statusFilter.value === 'published') query = query.eq('is_published', true)
   if (statusFilter.value === 'draft') query = query.eq('is_published', false)
 
-  const { data: rows, error } = await query
+  const from = (currentPage.value - 1) * pageSize.value
+  const to = from + pageSize.value - 1
+  query = query.range(from, to)
+
+  const { data: rows, count, error } = await query
   if (error) throw error
-  return (rows || []) as SiteStatDbRow[]
-}, { watch: [search, statusFilter] })
+  return {
+    rows: (rows || []) as SiteStatDbRow[],
+    total: count || 0
+  }
+}, { watch: [currentPage, search, statusFilter] })
 
 const columns = [
   { key: 'display', label: 'Display Value' },
@@ -63,7 +81,7 @@ const previewValue = computed(() =>
 )
 
 const nextDisplayOrder = computed(() => {
-  const rows = data.value ?? []
+  const rows = data.value?.rows ?? []
   if (!rows.length) return 0
   return Math.max(...rows.map((row) => row.display_order)) + 1
 })
@@ -93,9 +111,13 @@ const openDelete = (row: SiteStatDbRow) => {
 }
 
 const save = async () => {
+  if (!canEdit.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to edit site stats.', color: 'error' })
+    return
+  }
   errors.value = validateSiteStatForm(form.value)
   if (hasSiteStatFormErrors(errors.value)) {
-    toast.add({ title: 'Please fix the highlighted fields', color: 'red' })
+    toast.add({ title: 'Please fix the highlighted fields', color: 'error' })
     return
   }
 
@@ -106,36 +128,40 @@ const save = async () => {
     if (mode.value === 'add') {
       const { error } = await supabase.from('site_stats').insert([payload])
       if (error) throw error
-      toast.add({ title: 'Stat created', color: 'green' })
+      toast.add({ title: 'Stat created', color: 'success' })
     } else {
       const { error } = await supabase
         .from('site_stats')
         .update(payload)
         .eq('id', target.value!.id)
       if (error) throw error
-      toast.add({ title: 'Stat updated', color: 'green' })
+      toast.add({ title: 'Stat updated', color: 'success' })
     }
 
     modalOpen.value = false
     await refresh()
   } catch (e: any) {
-    toast.add({ title: 'Error saving stat', description: e.message, color: 'red' })
+    toast.add({ title: 'Error saving stat', description: e.message, color: 'error' })
   } finally {
     saving.value = false
   }
 }
 
 const remove = async () => {
+  if (!canDelete.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to delete site stats.', color: 'error' })
+    return
+  }
   if (!target.value) return
   deleting.value = true
   try {
     const { error } = await supabase.from('site_stats').delete().eq('id', target.value.id)
     if (error) throw error
-    toast.add({ title: 'Stat deleted', color: 'green' })
+    toast.add({ title: 'Stat deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
   } catch (e: any) {
-    toast.add({ title: 'Error deleting stat', description: e.message, color: 'red' })
+    toast.add({ title: 'Error deleting stat', description: e.message, color: 'error' })
   } finally {
     deleting.value = false
   }
@@ -156,7 +182,7 @@ const remove = async () => {
         <button class="btn btn-ghost" @click="refresh()">
           <UIcon name="i-lucide-refresh-cw" />Refresh
         </button>
-        <button class="btn btn-primary" @click="openAdd">
+        <button class="btn btn-primary" @click="openAdd" v-if="canEdit">
           <UIcon name="i-lucide-plus" />Add Stat
         </button>
       </div>
@@ -178,8 +204,11 @@ const remove = async () => {
 
     <AdminTable
       :columns="columns"
-      :rows="data || []"
+      :rows="data?.rows || []"
       :loading="pending"
+      :total-rows="data?.total || 0"
+      :page-size="pageSize"
+      v-model:current-page="currentPage"
       empty-title="No stats defined"
       empty-subtitle="Add KPI stats for the homepage impact section."
     >
@@ -205,10 +234,10 @@ const remove = async () => {
         </span>
       </template>
       <template #actions="{ row }">
-        <button class="btn btn-ghost btn-icon" title="Edit" @click="openEdit(row)">
+        <button class="btn btn-ghost btn-icon" title="Edit" @click="openEdit(row)" v-if="canEdit">
           <UIcon name="i-lucide-edit-3" />
         </button>
-        <button class="btn btn-danger btn-icon" title="Delete" @click="openDelete(row)">
+        <button class="btn btn-danger btn-icon" title="Delete" @click="openDelete(row)" v-if="canDelete">
           <UIcon name="i-lucide-trash-2" />
         </button>
       </template>

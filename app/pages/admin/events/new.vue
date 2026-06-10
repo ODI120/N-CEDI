@@ -3,6 +3,20 @@ definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'New Event | Admin | N-CEDI' })
 
 const router = useRouter()
+const toast = useToast()
+
+const { data: adminProfile } = useNuxtData<{ role?: string } | null>('sidebar-admin-role')
+
+watch(adminProfile, (profile) => {
+  if (profile && profile.role === 'viewer') {
+    toast.add({
+      title: 'Access Denied',
+      description: 'Your role does not have permission to create events.',
+      color: 'error'
+    })
+    router.push('/admin/events')
+  }
+}, { immediate: true })
 
 const onSaved = ({ id, slug }: { id: string; slug: string }) => {
   router.push(`/admin/events/${id}?created=${slug}`)

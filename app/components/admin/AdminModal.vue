@@ -22,7 +22,14 @@ const onKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') emit('close')
 }
 
-onMounted(() => window.addEventListener('keydown', onKeydown))
+watch(() => props.open, (isOpen) => {
+  if (isOpen) {
+    window.addEventListener('keydown', onKeydown)
+  } else {
+    window.removeEventListener('keydown', onKeydown)
+  }
+}, { immediate: true })
+
 onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
@@ -30,7 +37,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   <Teleport to="body">
     <Transition name="am">
       <div v-if="open" class="am-backdrop" @mousedown="onBackdropClick">
-        <div class="am-panel" :class="{ 'am-panel--wide': wide }" role="dialog" aria-modal="true">
+        <div class="am-panel" :class="{ 'am-panel--wide': wide }" role="dialog" aria-modal="true" data-lenis-prevent>
           <div class="am-header">
             <div>
               <h3 class="am-header__title">{{ title }}</h3>

@@ -8,6 +8,10 @@ import { deleteStorageRefs } from '~/utils/storage'
 const supabase = useSupabaseClient() as any
 const toast = useToast()
 const search = ref('')
+
+const { data: adminProfile } = useNuxtData<{ role?: string } | null>('sidebar-admin-role')
+const canEdit = computed(() => adminProfile.value?.role !== 'viewer')
+const canDelete = computed(() => adminProfile.value?.role === 'admin' || adminProfile.value?.role === 'super_admin')
 const statusFilter = ref<'all' | 'published' | 'draft'>('all')
 
 type Row = {
@@ -22,20 +26,34 @@ type Row = {
   updated_at: string
 }
 
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+watch([search, statusFilter], () => {
+  currentPage.value = 1
+})
+
 const { data, pending, refresh } = useAsyncData('admin-events', async () => {
   let q = supabase
     .from('events')
-    .select('id, slug, title, description, cover_image_url, gallery_urls, is_published, created_at, updated_at')
+    .select('id, slug, title, description, cover_image_url, gallery_urls, is_published, created_at, updated_at', { count: 'exact' })
     .order('created_at', { ascending: false })
 
   if (search.value.trim()) q = q.ilike('title', `%${search.value.trim()}%`)
   if (statusFilter.value === 'published') q = q.eq('is_published', true)
   if (statusFilter.value === 'draft') q = q.eq('is_published', false)
 
-  const { data, error } = await q
+  const from = (currentPage.value - 1) * pageSize.value
+  const to = from + pageSize.value - 1
+  q = q.range(from, to)
+
+  const { data, count, error } = await q
   if (error) throw error
-  return (data || []) as Row[]
-}, { watch: [search, statusFilter] })
+  return {
+    rows: (data || []) as Row[],
+    total: count || 0
+  }
+}, { watch: [currentPage, search, statusFilter] })
 
 const columns = [
   { key: 'title', label: 'Event Title' },
@@ -54,6 +72,10 @@ const openDelete = (r: Row) => {
 }
 
 const remove = async () => {
+  if (!canDelete.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to delete events.', color: 'error' })
+    return
+  }
   if (!target.value) return
   deleting.value = true
   try {
@@ -65,11 +87,11 @@ const remove = async () => {
       await deleteStorageRefs(supabase, refs)
     }
 
-    toast.add({ title: 'Event deleted successfully', color: 'green' })
+    toast.add({ title: 'Event deleted successfully', color: 'success' })
     deleteOpen.value = false
     await refresh()
   } catch (e: any) {
-    toast.add({ title: 'Error deleting event', description: e.message, color: 'red' })
+    toast.add({ title: 'Error deleting event', description: e.message, color: 'error' })
   } finally {
     deleting.value = false
   }
@@ -90,7 +112,7 @@ const fmtDate = (d: string | null) =>
       </div>
       <div class="ap-header__actions">
         <button class="btn btn-ghost" @click="refresh()"><UIcon name="i-lucide-refresh-cw" />Refresh</button>
-        <NuxtLink to="/admin/events/new" class="btn btn-primary">
+        <NuxtLink to="/admin/events/new" class="btn btn-primary" v-if="canEdit">
           <UIcon name="i-lucide-plus" />Write Event
         </NuxtLink>
       </div>
@@ -112,7 +134,15 @@ const fmtDate = (d: string | null) =>
     </div>
 
     <!-- Table -->
-    <AdminTable :columns="columns" :rows="data || []" :loading="pending" empty-title="No events found">
+    <AdminTable
+      :columns="columns"
+      :rows="data?.rows || []"
+      :loading="pending"
+      :total-rows="data?.total || 0"
+      :page-size="pageSize"
+      v-model:current-page="currentPage"
+      empty-title="No events found"
+    >
       <template #cell-title="{ row }">
         <span class="font-semibold">{{ row.title }}</span>
       </template>
@@ -129,10 +159,10 @@ const fmtDate = (d: string | null) =>
         <NuxtLink :to="`/events/${row.slug}`" target="_blank" class="btn btn-ghost btn-icon" title="Preview">
           <UIcon name="i-lucide-external-link" />
         </NuxtLink>
-        <NuxtLink :to="`/admin/events/${row.id}`" class="btn btn-ghost btn-icon" title="Edit">
+        <NuxtLink :to="`/admin/events/${row.id}`" class="btn btn-ghost btn-icon" title="Edit" v-if="canEdit">
           <UIcon name="i-lucide-edit-3" />
         </NuxtLink>
-        <button class="btn btn-danger btn-icon" title="Delete" @click="openDelete(row)">
+        <button class="btn btn-danger btn-icon" title="Delete" @click="openDelete(row)" v-if="canDelete">
           <UIcon name="i-lucide-trash-2" />
         </button>
       </template>

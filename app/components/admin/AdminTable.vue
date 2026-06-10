@@ -1,12 +1,70 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+
+const props = defineProps<{
   columns: Array<{ key: string; label: string; align?: 'left' | 'right' | 'center' }>
   rows: any[]
   loading?: boolean
   emptyIcon?: string
   emptyTitle?: string
   emptyText?: string
+  totalRows?: number
+  pageSize?: number
+  currentPage?: number
+  ariaLabel?: string
 }>()
+
+const emit = defineEmits<{
+  (e: 'update:currentPage', page: number): void
+}>()
+
+const totalPages = computed(() => {
+  if (!props.totalRows || !props.pageSize) return 0
+  return Math.ceil(props.totalRows / props.pageSize)
+})
+
+const paginationText = computed(() => {
+  if (!props.totalRows || !props.pageSize || !props.currentPage) return ''
+  const start = (props.currentPage - 1) * props.pageSize + 1
+  const end = Math.min(props.currentPage * props.pageSize, props.totalRows)
+  return `Showing ${start} to ${end} of ${props.totalRows} entries`
+})
+
+const visiblePages = computed(() => {
+  const current = props.currentPage || 1
+  const total = totalPages.value
+  const maxVisible = 5
+  if (total <= maxVisible) {
+    return Array.from({ length: total }, (_, i) => i + 1)
+  }
+  let start = current - Math.floor(maxVisible / 2)
+  let end = current + Math.floor(maxVisible / 2)
+  if (start < 1) {
+    start = 1
+    end = maxVisible
+  } else if (end > total) {
+    end = total
+    start = total - maxVisible + 1
+  }
+  const pages: (number | string)[] = []
+  if (start > 1) {
+    pages.push(1)
+    if (start > 2) pages.push('...')
+  }
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  if (end < total) {
+    if (end < total - 1) pages.push('...')
+    pages.push(total)
+  }
+  return pages
+})
+
+const changePage = (page: number) => {
+  if (page < 1 || page > totalPages.value) return
+  emit('update:currentPage', page)
+}
 </script>
 
 <template>
@@ -30,7 +88,7 @@ defineProps<{
 
     <!-- Table -->
     <div v-else class="at-scroll">
-      <table class="at">
+      <table class="at" :aria-label="ariaLabel || 'Admin data table'">
         <thead>
           <tr>
             <th v-for="col in columns" :key="col.key" :class="{ 'at-right': col.align === 'right', 'at-center': col.align === 'center' }">
@@ -55,6 +113,44 @@ defineProps<{
         </tbody>
       </table>
     </div>
+
+    <!-- Pagination controls -->
+    <div v-if="totalRows !== undefined && totalPages > 1" class="at-pagination">
+      <span class="at-pagination__info">{{ paginationText }}</span>
+      <div class="at-pagination__actions">
+        <button
+          class="at-pagination__btn"
+          :disabled="currentPage === 1"
+          @click="changePage(currentPage - 1)"
+          aria-label="Previous page"
+        >
+          <UIcon name="i-lucide-chevron-left" />
+        </button>
+        
+        <template v-for="(page, idx) in visiblePages" :key="idx">
+          <span v-if="page === '...'" class="at-pagination__dots">...</span>
+          <button
+            v-else
+            class="at-pagination__btn"
+            :class="{ 'is-active': page === currentPage }"
+            @click="changePage(page as number)"
+            :aria-label="`Page ${page}`"
+            :aria-current="page === currentPage ? 'page' : undefined"
+          >
+            {{ page }}
+          </button>
+        </template>
+
+        <button
+          class="at-pagination__btn"
+          :disabled="currentPage === totalPages"
+          @click="changePage(currentPage + 1)"
+          aria-label="Next page"
+        >
+          <UIcon name="i-lucide-chevron-right" />
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -71,4 +167,70 @@ defineProps<{
 @keyframes shimmer { from { opacity: 0.5 } to { opacity: 1 } }
 .at-center { text-align: center; }
 .at-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+
+.at-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-4) var(--sp-6);
+  border-top: 1px solid var(--admin-border);
+  background: var(--admin-surface);
+  border-radius: 0 0 var(--admin-radius-2xl) var(--admin-radius-2xl);
+  font-size: 0.8125rem;
+  color: var(--admin-text-secondary);
+}
+
+.at-pagination__info {
+  font-weight: 600;
+}
+
+.at-pagination__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.at-pagination__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: var(--admin-radius-lg);
+  border: 1px solid var(--admin-border-strong);
+  background: var(--admin-surface-opaque);
+  color: var(--admin-text-primary);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.at-pagination__btn:hover:not(:disabled) {
+  border-color: var(--admin-brand-accent);
+  background: rgba(212, 168, 83, 0.06);
+  color: var(--admin-brand-accent);
+}
+
+.at-pagination__btn.is-active {
+  background: var(--admin-brand-accent);
+  border-color: var(--admin-brand-accent);
+  color: white;
+}
+
+.at-pagination__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.at-pagination__dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  color: var(--admin-text-muted);
+  font-weight: 600;
+}
 </style>

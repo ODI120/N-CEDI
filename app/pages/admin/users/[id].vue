@@ -41,7 +41,7 @@ watch(currentUserProfile, (profile) => {
       toast.add({
         title: 'Access Denied',
         description: 'You do not have permission to view other administrators\' details.',
-        color: 'red'
+        color: 'error'
       })
       router.push('/admin')
     }
@@ -63,7 +63,7 @@ const editRoleForm = ref({ role: 'viewer' as AdminRole })
 
 const openEditRoleModal = () => {
   if (isSelf.value) {
-    toast.add({ title: 'Operation Prevented', description: 'You cannot change your own role.', color: 'yellow' })
+    toast.add({ title: 'Operation Prevented', description: 'You cannot change your own role.', color: 'warning' })
     return
   }
   if (userResponse.value) {
@@ -79,14 +79,14 @@ const handleUpdateRole = async () => {
       method: 'PATCH',
       body: { role: editRoleForm.value.role }
     })
-    toast.add({ title: 'Role Updated Successfully', color: 'green' })
+    toast.add({ title: 'Role Updated Successfully', color: 'success' })
     editRoleOpen.value = false
     await refresh()
   } catch (e: any) {
     toast.add({
       title: 'Update Failed',
       description: e.data?.statusMessage || e.message || 'An error occurred.',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     updatingRole.value = false
@@ -97,7 +97,7 @@ const handleUpdateRole = async () => {
 const togglingStatus = ref(false)
 const handleToggleStatus = async () => {
   if (isSelf.value) {
-    toast.add({ title: 'Operation Prevented', description: 'You cannot deactivate your own account.', color: 'yellow' })
+    toast.add({ title: 'Operation Prevented', description: 'You cannot deactivate your own account.', color: 'warning' })
     return
   }
 
@@ -108,13 +108,13 @@ const handleToggleStatus = async () => {
       method: 'PATCH',
       body: { is_active: nextStatus }
     })
-    toast.add({ title: `Admin ${nextStatus ? 'Activated' : 'Suspended'}`, color: 'green' })
+    toast.add({ title: `Admin ${nextStatus ? 'Activated' : 'Suspended'}`, color: 'success' })
     await refresh()
   } catch (e: any) {
     toast.add({
       title: 'Status Update Failed',
       description: e.data?.statusMessage || e.message || 'An error occurred.',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     togglingStatus.value = false
@@ -127,7 +127,7 @@ const deleting = ref(false)
 
 const openDeleteModal = () => {
   if (isSelf.value) {
-    toast.add({ title: 'Operation Prevented', description: 'You cannot delete your own account.', color: 'yellow' })
+    toast.add({ title: 'Operation Prevented', description: 'You cannot delete your own account.', color: 'warning' })
     return
   }
   deleteOpen.value = true
@@ -139,14 +139,14 @@ const handleDeleteAdmin = async () => {
     await $fetch(`/api/admin/users/${userId}`, {
       method: 'DELETE'
     })
-    toast.add({ title: 'Admin Account Deleted', color: 'green' })
+    toast.add({ title: 'Admin Account Deleted', color: 'success' })
     deleteOpen.value = false
     router.push('/admin/users')
   } catch (e: any) {
     toast.add({
       title: 'Deletion Failed',
       description: e.data?.statusMessage || e.message || 'An error occurred.',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     deleting.value = false
@@ -164,15 +164,15 @@ const openResetPasswordModal = () => {
 
 const handleResetPassword = async () => {
   if (!resetForm.value.password) {
-    toast.add({ title: 'Validation Error', description: 'Password is required.', color: 'red' })
+    toast.add({ title: 'Validation Error', description: 'Password is required.', color: 'error' })
     return
   }
   if (resetForm.value.password.length < 8) {
-    toast.add({ title: 'Validation Error', description: 'Password must be at least 8 characters.', color: 'red' })
+    toast.add({ title: 'Validation Error', description: 'Password must be at least 8 characters.', color: 'error' })
     return
   }
   if (resetForm.value.password !== resetForm.value.confirmPassword) {
-    toast.add({ title: 'Validation Error', description: 'Passwords do not match.', color: 'red' })
+    toast.add({ title: 'Validation Error', description: 'Passwords do not match.', color: 'error' })
     return
   }
 
@@ -180,13 +180,13 @@ const handleResetPassword = async () => {
   try {
     const { error } = await supabase.auth.updateUser({ password: resetForm.value.password })
     if (error) throw error
-    toast.add({ title: 'Password Reset Successfully', color: 'green' })
+    toast.add({ title: 'Password Reset Successfully', color: 'success' })
     resetPasswordOpen.value = false
   } catch (e: any) {
     toast.add({
       title: 'Reset Failed',
       description: e.message || 'An error occurred.',
-      color: 'red'
+      color: 'error'
     })
   } finally {
     resettingPassword.value = false

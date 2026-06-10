@@ -25,13 +25,24 @@ import {
 const supabase = useSupabaseClient()
 const toast = useToast()
 const search = ref('')
+
+const { data: adminProfile } = useNuxtData<{ role?: string } | null>('sidebar-admin-role')
+const canEdit = computed(() => adminProfile.value?.role !== 'viewer')
+const canDelete = computed(() => adminProfile.value?.role === 'admin' || adminProfile.value?.role === 'super_admin')
 const statusFilter = ref<'all' | 'active' | 'inactive'>('all')
 const tierFilter = ref<'all' | PartnerFormState['tier']>('all')
+
+const currentPage = ref(1)
+const pageSize = ref(10)
+
+watch([search, statusFilter, tierFilter], () => {
+  currentPage.value = 1
+})
 
 const { data, pending, refresh } = useAsyncData('admin-partners', async () => {
   let query = supabase
     .from('partners')
-    .select('id, name, website_url, logo_url, tier, is_active, display_order, created_at')
+    .select('id, name, website_url, logo_url, tier, is_active, display_order, created_at', { count: 'exact' })
     .order('display_order', { ascending: true })
 
   if (search.value.trim()) {
@@ -41,10 +52,17 @@ const { data, pending, refresh } = useAsyncData('admin-partners', async () => {
   if (statusFilter.value === 'inactive') query = query.eq('is_active', false)
   if (tierFilter.value !== 'all') query = query.eq('tier', tierFilter.value)
 
-  const { data: rows, error } = await query
+  const from = (currentPage.value - 1) * pageSize.value
+  const to = from + pageSize.value - 1
+  query = query.range(from, to)
+
+  const { data: rows, count, error } = await query
   if (error) throw error
-  return (rows || []) as PartnerDbRow[]
-}, { watch: [search, statusFilter, tierFilter] })
+  return {
+    rows: (rows || []) as PartnerDbRow[],
+    total: count || 0
+  }
+}, { watch: [currentPage, search, statusFilter, tierFilter] })
 
 const columns = [
   { key: 'logo', label: '' },
@@ -71,7 +89,7 @@ const previewLogo = computed(() => {
 })
 
 const nextDisplayOrder = computed(() => {
-  const rows = data.value ?? []
+  const rows = data.value?.rows ?? []
   if (!rows.length) return 0
   return Math.max(...rows.map((row) => row.display_order)) + 1
 })
@@ -110,11 +128,15 @@ const openDelete = (row: PartnerDbRow) => {
 }
 
 const save = async () => {
+  if (!canEdit.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to edit partners.', color: 'error' })
+    return
+  }
   errors.value = validatePartnerForm(form.value, {
     hasLogoUpload: Boolean(logoFile.value),
   })
   if (hasPartnerFormErrors(errors.value)) {
-    toast.add({ title: 'Please fix the highlighted fields', color: 'red' })
+    toast.add({ title: 'Please fix the highlighted fields', color: 'error' })
     return
   }
 
@@ -135,7 +157,7 @@ const save = async () => {
     if (mode.value === 'add') {
       const { error } = await supabase.from('partners').insert([payload])
       if (error) throw error
-      toast.add({ title: 'Partner created', color: 'green' })
+      toast.add({ title: 'Partner created', color: 'success' })
     } else {
       const previousRef = target.value ? partnerLogoStorageRefForRow(target.value) : null
       const { error } = await supabase
@@ -151,7 +173,7 @@ const save = async () => {
         await deleteStorageRefs(supabase, [previousRef])
       }
 
-      toast.add({ title: 'Partner updated', color: 'green' })
+      toast.add({ title: 'Partner updated', color: 'success' })
     }
 
     logoFile.value = null
@@ -159,13 +181,17 @@ const save = async () => {
     await refresh()
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Save failed'
-    toast.add({ title: 'Error saving partner', description: message, color: 'red' })
+    toast.add({ title: 'Error saving partner', description: message, color: 'error' })
   } finally {
     saving.value = false
   }
 }
 
 const remove = async () => {
+  if (!canDelete.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to delete partners.', color: 'error' })
+    return
+  }
   if (!target.value) return
   deleting.value = true
   try {
@@ -173,12 +199,12 @@ const remove = async () => {
     const { error } = await supabase.from('partners').delete().eq('id', target.value.id)
     if (error) throw error
     if (storageRef) await deleteStorageRefs(supabase, [storageRef])
-    toast.add({ title: 'Partner deleted', color: 'green' })
+    toast.add({ title: 'Partner deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Delete failed'
-    toast.add({ title: 'Error deleting partner', description: message, color: 'red' })
+    toast.add({ title: 'Error deleting partner', description: message, color: 'error' })
   } finally {
     deleting.value = false
   }
@@ -200,7 +226,7 @@ const remove = async () => {
         <button type="button" class="btn btn-ghost" @click="refresh()">
           <UIcon name="i-lucide-refresh-cw" />Refresh
         </button>
-        <button type="button" class="btn btn-primary" @click="openAdd">
+        <button type="button" class="btn btn-primary" @click="openAdd" v-if="canEdit">
           <UIcon name="i-lucide-plus" />Add Partner
         </button>
       </div>
@@ -228,8 +254,11 @@ const remove = async () => {
 
     <AdminTable
       :columns="columns"
-      :rows="data || []"
+      :rows="data?.rows || []"
       :loading="pending"
+      :total-rows="data?.total || 0"
+      :page-size="pageSize"
+      v-model:current-page="currentPage"
       empty-title="No partners yet"
       empty-subtitle="Add sponsors and institutional partners for the homepage and partners page."
     >
@@ -260,10 +289,10 @@ const remove = async () => {
         </span>
       </template>
       <template #actions="{ row }">
-        <button type="button" class="btn btn-ghost btn-icon" title="Edit" @click="openEdit(row)">
+        <button type="button" class="btn btn-ghost btn-icon" title="Edit" @click="openEdit(row)" v-if="canEdit">
           <UIcon name="i-lucide-edit-3" />
         </button>
-        <button type="button" class="btn btn-danger btn-icon" title="Delete" @click="openDelete(row)">
+        <button type="button" class="btn btn-danger btn-icon" title="Delete" @click="openDelete(row)" v-if="canDelete">
           <UIcon name="i-lucide-trash-2" />
         </button>
       </template>

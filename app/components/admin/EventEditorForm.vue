@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onBeforeRouteLeave } from 'vue-router'
+import { nextTick } from 'vue'
 import {
   createEmptyEventForm,
   formToDbPayload,
@@ -31,6 +33,10 @@ const emit = defineEmits<{
 const supabase = useSupabaseClient() as any
 const toast = useToast()
 
+const { data: adminProfile } = useNuxtData<{ role?: string } | null>('sidebar-admin-role')
+const canEdit = computed(() => adminProfile.value?.role !== 'viewer')
+const canDelete = computed(() => adminProfile.value?.role === 'admin' || adminProfile.value?.role === 'super_admin')
+
 const isCreate = computed(() => !props.eventId)
 const activeSection = ref('basics')
 const saving = ref(false)
@@ -42,6 +48,44 @@ const coverPreviewUrl = ref('')
 const galleryFiles = ref<File[]>([])
 const form = ref<EventFormState>(createEmptyEventForm())
 const errors = ref<EventFormErrors>({})
+const isDirty = ref(false)
+
+// Watch form deeply to track user modifications
+watch(form, () => {
+  if (props.eventId && eventPending.value) return
+  isDirty.value = true
+}, { deep: true })
+
+// BeforeUnload handler for native browser reloads or tab closures
+const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+  if (isDirty.value) {
+    e.preventDefault()
+    e.returnValue = 'You have unsaved changes. Are you sure you want to leave?'
+    return e.returnValue
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('beforeunload', handleBeforeUnload)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', handleBeforeUnload)
+})
+
+// Vue Router guard for internal transitions
+onBeforeRouteLeave((to, from, next) => {
+  if (isDirty.value) {
+    const confirmLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?')
+    if (confirmLeave) {
+      next()
+    } else {
+      next(false)
+    }
+  } else {
+    next()
+  }
+})
 
 const sections = [
   { id: 'basics', label: 'Basics', icon: 'i-lucide-file-text' },
@@ -74,12 +118,15 @@ watch(row, (newRow) => {
   if (newRow) {
     form.value = rowToEventForm(newRow)
     slugTouched.value = true
+    nextTick(() => {
+      isDirty.value = false
+    })
   }
 }, { immediate: true })
 
 watch(error, (newErr) => {
   if (newErr) {
-    toast.add({ title: 'Error loading event details', description: newErr.message, color: 'red' })
+    toast.add({ title: 'Error loading event details', description: newErr.message, color: 'error' })
   }
 })
 
@@ -204,7 +251,7 @@ const save = async () => {
     toast.add({
       title: errors.value.publish ? 'Cannot publish yet' : 'Please fix the highlighted fields',
       description: errors.value.publish,
-      color: 'red',
+      color: 'error',
     })
     if (errors.value.title || errors.value.slug || errors.value.description) activeSection.value = 'basics'
     else if (errors.value.coverImageUrl) activeSection.value = 'media'
@@ -240,6 +287,7 @@ const save = async () => {
         .single()
 
       if (error) throw error
+      isDirty.value = false
       emit('saved', { id: data.id, slug: data.slug })
     } else {
       const { error } = await supabase
@@ -248,7 +296,8 @@ const save = async () => {
         .eq('id', props.eventId!)
 
       if (error) throw error
-      toast.add({ title: 'Event updated successfully', color: 'green' })
+      toast.add({ title: 'Event updated successfully', color: 'success' })
+      isDirty.value = false
       emit('saved', { id: props.eventId!, slug: form.value.slug })
     }
 
@@ -256,13 +305,17 @@ const save = async () => {
       await deleteStorageRefs(supabase, [previousCoverRef])
     }
   } catch (error: any) {
-    toast.add({ title: 'Could not save event', description: error.message, color: 'red' })
+    toast.add({ title: 'Could not save event', description: error.message, color: 'error' })
   } finally {
     saving.value = false
   }
 }
 
 const removeEvent = async () => {
+  if (!canDelete.value) {
+    toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to delete events.', color: 'error' })
+    return
+  }
   if (!props.eventId) return
   deleting.value = true
   try {
@@ -273,11 +326,12 @@ const removeEvent = async () => {
     if (refs.length > 0) {
       await deleteStorageRefs(supabase, refs)
     }
-    toast.add({ title: 'Event deleted successfully', color: 'green' })
+    toast.add({ title: 'Event deleted successfully', color: 'success' })
     deleteOpen.value = false
+    isDirty.value = false
     emit('deleted')
   } catch (error: any) {
-    toast.add({ title: 'Could not delete event', description: error.message, color: 'red' })
+    toast.add({ title: 'Could not delete event', description: error.message, color: 'error' })
   } finally {
     deleting.value = false
   }
@@ -567,9 +621,9 @@ onBeforeUnmount(() => {
     <!-- Sticky Actions Footer -->
     <footer class="event-editor__footer">
       <div class="event-editor__footer-left">
-        <button type="button" class="btn btn-ghost" @click="emit('cancel')">Cancel</button>
+        <button type="button" class="btn btn-ghost" @click="isDirty = false; emit('cancel')">Cancel</button>
         <button
-          v-if="!isCreate"
+          v-if="!isCreate && canDelete"
           type="button"
           class="btn btn-danger btn-ghost"
           @click="deleteOpen = true"

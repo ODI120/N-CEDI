@@ -81,6 +81,29 @@
   --admin-shadow-lg: 0 16px 48px rgba(0,0,0,0.55);
 }
 
+/* ─── Accessibility ─── */
+.skip-to-content {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--admin-brand-accent);
+  color: var(--admin-brand-primary);
+  padding: 10px 20px;
+  border-radius: 0 0 var(--admin-radius-md) var(--admin-radius-md);
+  font-weight: 600;
+  font-size: 0.875rem;
+  z-index: 9999;
+  transition: top 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  box-shadow: var(--admin-shadow-md);
+}
+
+.skip-to-content:focus {
+  top: 0;
+  outline: 2px solid var(--admin-border-focus);
+}
+
 /* ─── Base Shell ─── */
 .admin-shell,
 .admin-login,
@@ -439,12 +462,6 @@
   align-items: center;
   justify-content: center;
   padding: var(--sp-4);
-  animation: am-in 0.2s ease;
-}
-
-@keyframes am-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
 }
 
 .am-panel {
@@ -457,12 +474,6 @@
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  animation: am-slide 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes am-slide {
-  from { transform: translateY(24px) scale(0.97); opacity: 0; }
-  to   { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .am-panel--wide { max-width: 720px; }
@@ -596,6 +607,14 @@
   width: 16px; height: 16px;
   accent-color: var(--admin-brand-accent);
   cursor: pointer;
+}
+
+.am-note {
+  font-size: 0.75rem;
+  color: var(--admin-text-muted);
+  margin-top: var(--sp-1);
+  line-height: 1.4;
+  display: block;
 }
 
 .am-row-2 {
