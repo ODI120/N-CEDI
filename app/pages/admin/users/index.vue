@@ -52,12 +52,24 @@ const { data: adminUsers, pending, error, refresh } = useAsyncData('admin-users-
   return response.data || []
 })
 
+const currentPage = ref(1)
+const pageSize = ref(6)
+
+watch(search, () => {
+  currentPage.value = 1
+})
+
 // Search filtering logic
 const filteredRows = computed(() => {
   const q = search.value.trim().toLowerCase()
   return (adminUsers.value || []).filter(row => {
     return !q || row.email.toLowerCase().includes(q) || row.user_id.toLowerCase().includes(q)
   })
+})
+
+const paginatedRows = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredRows.value.slice(start, start + pageSize.value)
 })
 
 const columns = [
@@ -261,7 +273,16 @@ const getRoleBadgeClass = (role: AdminRole) => {
     </div>
 
     <!-- Admin Users Table -->
-    <AdminTable :columns="columns" :rows="filteredRows" :loading="pending" empty-title="No administrative users found" empty-text="Try adjusting your search criteria or register a new admin.">
+    <AdminTable
+      :columns="columns"
+      :rows="paginatedRows"
+      :loading="pending"
+      :total-rows="filteredRows.length"
+      :page-size="pageSize"
+      v-model:current-page="currentPage"
+      empty-title="No administrative users found"
+      empty-text="Try adjusting your search criteria or register a new admin."
+    >
       <template #cell-email="{ row }">
         <NuxtLink :to="`/admin/users/${row.user_id}`" class="font-semibold hover:underline" style="color: var(--admin-primary, #6366f1); display: inline-block;">
           {{ row.email }}

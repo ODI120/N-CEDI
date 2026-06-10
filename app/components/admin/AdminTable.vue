@@ -115,7 +115,7 @@ const changePage = (page: number) => {
     </div>
 
     <!-- Pagination controls -->
-    <div v-if="totalRows !== undefined && totalPages > 1" class="at-pagination">
+    <div v-if="totalRows !== undefined && totalRows > 0" class="at-pagination">
       <span class="at-pagination__info">{{ paginationText }}</span>
       <div class="at-pagination__actions">
         <button
