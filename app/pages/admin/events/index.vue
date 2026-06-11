@@ -1,10 +1,11 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
-useSeoMeta({ title: 'Events | Admin | N-CEDI' })
-
 import { ref, computed } from 'vue'
 import { deleteStorageRefs } from '~/utils/storage'
 
+definePageMeta({ layout: 'admin' })
+useSeoMeta({ title: 'Events | Admin | N-CEDI' })
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabase = useSupabaseClient() as any
 const toast = useToast()
 const search = ref('')
@@ -59,7 +60,7 @@ const columns = [
   { key: 'title', label: 'Event Title' },
   { key: 'slug', label: 'Slug' },
   { key: 'status', label: 'Status' },
-  { key: 'updated_at', label: 'Last Updated' },
+  { key: 'updated_at', label: 'Last Updated' }
 ]
 
 const deleteOpen = ref(false)
@@ -90,8 +91,8 @@ const remove = async () => {
     toast.add({ title: 'Event deleted successfully', color: 'success' })
     deleteOpen.value = false
     await refresh()
-  } catch (e: any) {
-    toast.add({ title: 'Error deleting event', description: e.message, color: 'error' })
+  } catch (e) {
+    toast.add({ title: 'Error deleting event', description: (e as Error).message, color: 'error' })
   } finally {
     deleting.value = false
   }
@@ -99,6 +100,9 @@ const remove = async () => {
 
 const fmtDate = (d: string | null) =>
   d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+
+const previewHref = (row: Row) =>
+  row.is_published ? `/events/${row.slug}` : `/admin/events/preview/${row.slug}`
 </script>
 
 <template>
@@ -107,12 +111,25 @@ const fmtDate = (d: string | null) =>
     <div class="ap-header">
       <div class="ap-header__left">
         <span class="ap-eyebrow">Content</span>
-        <h1 class="ap-title">Events</h1>
-        <p class="ap-subtitle">Manage NCAT NBTE student yearly events and student week activities.</p>
+        <h1 class="ap-title">
+          Events
+        </h1>
+        <p class="ap-subtitle">
+          Manage NCAT NBTE student yearly events and student week activities.
+        </p>
       </div>
       <div class="ap-header__actions">
-        <button class="btn btn-ghost" @click="refresh()"><UIcon name="i-lucide-refresh-cw" />Refresh</button>
-        <NuxtLink to="/admin/events/new" class="btn btn-primary" v-if="canEdit">
+        <button
+          class="btn btn-ghost"
+          @click="refresh()"
+        >
+          <UIcon name="i-lucide-refresh-cw" />Refresh
+        </button>
+        <NuxtLink
+          v-if="canEdit"
+          to="/admin/events/new"
+          class="btn btn-primary"
+        >
           <UIcon name="i-lucide-plus" />Write Event
         </NuxtLink>
       </div>
@@ -122,25 +139,42 @@ const fmtDate = (d: string | null) =>
     <div class="ap-toolbar">
       <div class="ap-toolbar__left">
         <div class="ap-search">
-          <UIcon name="i-lucide-search" class="ap-search__icon" />
-          <input v-model="search" class="ap-search__input" placeholder="Search events..." />
+          <UIcon
+            name="i-lucide-search"
+            class="ap-search__icon"
+          />
+          <input
+            v-model="search"
+            class="ap-search__input"
+            placeholder="Search events..."
+          >
         </div>
-        <select v-model="statusFilter" class="am-select" style="max-width: 180px">
-          <option value="all">All statuses</option>
-          <option value="published">Published</option>
-          <option value="draft">Draft</option>
+        <select
+          v-model="statusFilter"
+          class="am-select"
+          style="max-width: 180px"
+        >
+          <option value="all">
+            All statuses
+          </option>
+          <option value="published">
+            Published
+          </option>
+          <option value="draft">
+            Draft
+          </option>
         </select>
       </div>
     </div>
 
     <!-- Table -->
     <AdminTable
+      v-model:current-page="currentPage"
       :columns="columns"
       :rows="data?.rows || []"
       :loading="pending"
       :total-rows="data?.total || 0"
       :page-size="pageSize"
-      v-model:current-page="currentPage"
       empty-title="No events found"
     >
       <template #cell-title="{ row }">
@@ -150,19 +184,39 @@ const fmtDate = (d: string | null) =>
         <code class="slug-chip">/events/{{ row.slug }}</code>
       </template>
       <template #cell-status="{ row }">
-        <span class="badge" :class="row.is_published ? 'badge-green' : 'badge-gray'">
+        <span
+          class="badge"
+          :class="row.is_published ? 'badge-green' : 'badge-gray'"
+        >
           {{ row.is_published ? 'Live' : 'Draft' }}
         </span>
       </template>
-      <template #cell-updated_at="{ row }">{{ fmtDate(row.updated_at) }}</template>
+      <template #cell-updated_at="{ row }">
+        {{ fmtDate(row.updated_at) }}
+      </template>
       <template #actions="{ row }">
-        <NuxtLink :to="`/events/${row.slug}`" target="_blank" class="btn btn-ghost btn-icon" title="Preview">
+        <NuxtLink
+          :to="previewHref(row)"
+          target="_blank"
+          class="btn btn-ghost btn-icon"
+          title="Preview"
+        >
           <UIcon name="i-lucide-external-link" />
         </NuxtLink>
-        <NuxtLink :to="`/admin/events/${row.id}`" class="btn btn-ghost btn-icon" title="Edit" v-if="canEdit">
+        <NuxtLink
+          v-if="canEdit"
+          :to="`/admin/events/${row.id}`"
+          class="btn btn-ghost btn-icon"
+          title="Edit"
+        >
           <UIcon name="i-lucide-edit-3" />
         </NuxtLink>
-        <button class="btn btn-danger btn-icon" title="Delete" @click="openDelete(row)" v-if="canDelete">
+        <button
+          v-if="canDelete"
+          class="btn btn-danger btn-icon"
+          title="Delete"
+          @click="openDelete(row)"
+        >
           <UIcon name="i-lucide-trash-2" />
         </button>
       </template>
@@ -179,7 +233,9 @@ const fmtDate = (d: string | null) =>
       @close="deleteOpen = false"
       @submit="remove"
     >
-      <p style="color:var(--admin-text-secondary);font-weight:700">{{ target?.title }}</p>
+      <p style="color:var(--admin-text-secondary);font-weight:700">
+        {{ target?.title }}
+      </p>
     </AdminModal>
   </section>
 </template>

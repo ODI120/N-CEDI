@@ -1,7 +1,4 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
-useSeoMeta({ title: 'Site Stats | Admin | N-CEDI' })
-
 import {
   STAT_ICON_OPTIONS,
   createEmptySiteStatForm,
@@ -12,8 +9,11 @@ import {
   validateSiteStatForm,
   type SiteStatDbRow,
   type SiteStatFormErrors,
-  type SiteStatFormState,
+  type SiteStatFormState
 } from '~/utils/siteStatAdmin'
+
+definePageMeta({ layout: 'admin' })
+useSeoMeta({ title: 'Site Stats | Admin | N-CEDI' })
 
 const supabase = useSupabaseClient() as any
 const toast = useToast()
@@ -60,7 +60,7 @@ const columns = [
   { key: 'label', label: 'Label' },
   { key: 'icon', label: 'Icon' },
   { key: 'display_order', label: 'Order', align: 'center' as const },
-  { key: 'status', label: 'Status' },
+  { key: 'status', label: 'Status' }
 ]
 
 const modalOpen = ref(false)
@@ -76,14 +76,14 @@ const previewValue = computed(() =>
   formatStatDisplay({
     value: form.value.value,
     prefix: form.value.prefix || undefined,
-    suffix: form.value.suffix || undefined,
-  }),
+    suffix: form.value.suffix || undefined
+  })
 )
 
 const nextDisplayOrder = computed(() => {
   const rows = data.value?.rows ?? []
   if (!rows.length) return 0
-  return Math.max(...rows.map((row) => row.display_order)) + 1
+  return Math.max(...rows.map(row => row.display_order)) + 1
 })
 
 const openAdd = () => {
@@ -91,7 +91,7 @@ const openAdd = () => {
   target.value = null
   form.value = {
     ...createEmptySiteStatForm(),
-    displayOrder: nextDisplayOrder.value,
+    displayOrder: nextDisplayOrder.value
   }
   errors.value = {}
   modalOpen.value = true
@@ -117,7 +117,8 @@ const save = async () => {
   }
   errors.value = validateSiteStatForm(form.value)
   if (hasSiteStatFormErrors(errors.value)) {
-    toast.add({ title: 'Please fix the highlighted fields', color: 'error' })
+    const reasons = Object.values(errors.value).join(' ')
+    toast.add({ title: 'Validation Error', description: reasons, color: 'error' })
     return
   }
 
@@ -173,16 +174,25 @@ const remove = async () => {
     <div class="ap-header">
       <div class="ap-header__left">
         <span class="ap-eyebrow">Content</span>
-        <h1 class="ap-title">Site Stats</h1>
+        <h1 class="ap-title">
+          Site Stats
+        </h1>
         <p class="ap-subtitle">
           Manage homepage impact numbers in the Life at N-CEDI bento section. Up to four published stats appear on the home page (by display order). The image slider uses published gallery items.
         </p>
       </div>
       <div class="ap-header__actions">
-        <button class="btn btn-ghost" @click="refresh()">
+        <button
+          class="btn btn-ghost"
+          @click="refresh()"
+        >
           <UIcon name="i-lucide-refresh-cw" />Refresh
         </button>
-        <button class="btn btn-primary" @click="openAdd" v-if="canEdit">
+        <button
+          v-if="canEdit"
+          class="btn btn-primary"
+          @click="openAdd"
+        >
           <UIcon name="i-lucide-plus" />Add Stat
         </button>
       </div>
@@ -191,24 +201,41 @@ const remove = async () => {
     <div class="ap-toolbar">
       <div class="ap-toolbar__left">
         <div class="ap-search">
-          <UIcon name="i-lucide-search" class="ap-search__icon" />
-          <input v-model="search" class="ap-search__input" placeholder="Search stats..." />
+          <UIcon
+            name="i-lucide-search"
+            class="ap-search__icon"
+          />
+          <input
+            v-model="search"
+            class="ap-search__input"
+            placeholder="Search stats..."
+          >
         </div>
-        <select v-model="statusFilter" class="am-select" style="max-width: 180px">
-          <option value="all">All statuses</option>
-          <option value="published">Published</option>
-          <option value="draft">Draft</option>
+        <select
+          v-model="statusFilter"
+          class="am-select"
+          style="max-width: 180px"
+        >
+          <option value="all">
+            All statuses
+          </option>
+          <option value="published">
+            Published
+          </option>
+          <option value="draft">
+            Draft
+          </option>
         </select>
       </div>
     </div>
 
     <AdminTable
+      v-model:current-page="currentPage"
       :columns="columns"
       :rows="data?.rows || []"
       :loading="pending"
       :total-rows="data?.total || 0"
       :page-size="pageSize"
-      v-model:current-page="currentPage"
       empty-title="No stats defined"
       empty-subtitle="Add KPI stats for the homepage impact section."
     >
@@ -221,23 +248,41 @@ const remove = async () => {
         <span class="font-semibold">{{ row.label }}</span>
       </template>
       <template #cell-icon="{ row }">
-        <span v-if="row.icon" class="icon-preview">
+        <span
+          v-if="row.icon"
+          class="icon-preview"
+        >
           <i :class="['bi', row.icon]" />
           <code>{{ row.icon }}</code>
         </span>
         <span v-else>—</span>
       </template>
-      <template #cell-display_order="{ row }">{{ row.display_order }}</template>
+      <template #cell-display_order="{ row }">
+        {{ row.display_order }}
+      </template>
       <template #cell-status="{ row }">
-        <span class="badge" :class="row.is_published ? 'badge-green' : 'badge-gray'">
+        <span
+          class="badge"
+          :class="row.is_published ? 'badge-green' : 'badge-gray'"
+        >
           {{ row.is_published ? 'Live' : 'Draft' }}
         </span>
       </template>
       <template #actions="{ row }">
-        <button class="btn btn-ghost btn-icon" title="Edit" @click="openEdit(row)" v-if="canEdit">
+        <button
+          v-if="canEdit"
+          class="btn btn-ghost btn-icon"
+          title="Edit"
+          @click="openEdit(row)"
+        >
           <UIcon name="i-lucide-edit-3" />
         </button>
-        <button class="btn btn-danger btn-icon" title="Delete" @click="openDelete(row)" v-if="canDelete">
+        <button
+          v-if="canDelete"
+          class="btn btn-danger btn-icon"
+          title="Delete"
+          @click="openDelete(row)"
+        >
           <UIcon name="i-lucide-trash-2" />
         </button>
       </template>
@@ -251,58 +296,122 @@ const remove = async () => {
       @close="modalOpen = false"
       @submit="save"
     >
-      <div class="am-field" :class="{ 'has-error': errors.label }">
+      <div
+        class="am-field"
+        :class="{ 'has-error': errors.label }"
+      >
         <label class="am-label">Label *</label>
-        <input v-model="form.label" class="am-input" placeholder="e.g. Trained Graduates" />
-        <p v-if="errors.label" class="field-error">{{ errors.label }}</p>
+        <input
+          v-model="form.label"
+          class="am-input"
+          placeholder="e.g. Trained Graduates"
+        >
+        <p
+          v-if="errors.label"
+          class="field-error"
+        >
+          {{ errors.label }}
+        </p>
       </div>
 
       <div class="am-row-2">
-        <div class="am-field" :class="{ 'has-error': errors.value }">
+        <div
+          class="am-field"
+          :class="{ 'has-error': errors.value }"
+        >
           <label class="am-label">Numeric value *</label>
-          <input v-model.number="form.value" type="number" min="0" step="any" class="am-input" />
-          <p v-if="errors.value" class="field-error">{{ errors.value }}</p>
+          <input
+            v-model.number="form.value"
+            type="number"
+            min="0"
+            step="any"
+            class="am-input"
+          >
+          <p
+            v-if="errors.value"
+            class="field-error"
+          >
+            {{ errors.value }}
+          </p>
         </div>
         <div class="am-field">
           <label class="am-label">Live preview</label>
-          <div class="stat-preview-box">{{ previewValue }}</div>
+          <div class="stat-preview-box">
+            {{ previewValue }}
+          </div>
         </div>
       </div>
 
       <div class="am-row-2">
         <div class="am-field">
           <label class="am-label">Prefix</label>
-          <input v-model="form.prefix" class="am-input" placeholder="e.g. $" />
+          <input
+            v-model="form.prefix"
+            class="am-input"
+            placeholder="e.g. $"
+          >
         </div>
         <div class="am-field">
           <label class="am-label">Suffix</label>
-          <input v-model="form.suffix" class="am-input" placeholder="e.g. + or %" />
+          <input
+            v-model="form.suffix"
+            class="am-input"
+            placeholder="e.g. + or %"
+          >
         </div>
       </div>
 
       <div class="am-row-2">
         <div class="am-field">
           <label class="am-label">Icon (Bootstrap Icons)</label>
-          <select v-model="form.icon" class="am-select">
-            <option value="">No icon</option>
-            <option v-for="opt in STAT_ICON_OPTIONS" :key="opt.value" :value="opt.value">
+          <select
+            v-model="form.icon"
+            class="am-select"
+          >
+            <option value="">
+              No icon
+            </option>
+            <option
+              v-for="opt in STAT_ICON_OPTIONS"
+              :key="opt.value"
+              :value="opt.value"
+            >
               {{ opt.label }} ({{ opt.value }})
             </option>
           </select>
         </div>
-        <div class="am-field" :class="{ 'has-error': errors.displayOrder }">
+        <div
+          class="am-field"
+          :class="{ 'has-error': errors.displayOrder }"
+        >
           <label class="am-label">Display order</label>
-          <input v-model.number="form.displayOrder" type="number" min="0" class="am-input" />
-          <p v-if="errors.displayOrder" class="field-error">{{ errors.displayOrder }}</p>
+          <input
+            v-model.number="form.displayOrder"
+            type="number"
+            min="0"
+            class="am-input"
+          >
+          <p
+            v-if="errors.displayOrder"
+            class="field-error"
+          >
+            {{ errors.displayOrder }}
+          </p>
         </div>
       </div>
 
-      <p v-if="mode === 'add' && (data?.length ?? 0) >= 4" class="field-hint field-hint--warn">
+      <p
+        v-if="mode === 'add' && (data?.length ?? 0) >= 4"
+        class="field-hint field-hint--warn"
+      >
         The homepage shows at most four stats. Extra published stats are kept in the database but not shown on the home grid.
       </p>
 
       <label class="am-checkbox-row">
-        <input v-model="form.isPublished" type="checkbox" />
+        <input
+          v-model="form.isPublished"
+          type="checkbox"
+        >
         Published on homepage
       </label>
     </AdminModal>
@@ -317,7 +426,9 @@ const remove = async () => {
       @close="deleteOpen = false"
       @submit="remove"
     >
-      <p style="color:var(--admin-text-secondary);font-weight:700">{{ target?.label }}</p>
+      <p style="color:var(--admin-text-secondary);font-weight:700">
+        {{ target?.label }}
+      </p>
     </AdminModal>
   </section>
 </template>

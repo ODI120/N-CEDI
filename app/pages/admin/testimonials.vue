@@ -9,13 +9,13 @@ import {
   validateTestimonialForm,
   type TestimonialFormErrors,
   type TestimonialFormState,
-  type TestimonialDbRow,
+  type TestimonialDbRow
 } from '~/utils/testimonialAdmin'
 import {
   deleteStorageRefs,
   testimonialAvatarObjectPath,
   STORAGE_BUCKETS,
-  uploadStorageObject,
+  uploadStorageObject
 } from '~/utils/storage'
 
 definePageMeta({ layout: 'admin' })
@@ -39,7 +39,7 @@ watch([search], () => {
 const { data, pending, refresh } = useAsyncData('admin-testimonials', async () => {
   let q = supabase.from('testimonials').select('*', { count: 'exact' }).order('sort_order', { ascending: true })
   if (search.value.trim()) q = q.ilike('name', `%${search.value.trim()}%`)
-  
+
   const from = (currentPage.value - 1) * pageSize.value
   const to = from + pageSize.value - 1
   q = q.range(from, to)
@@ -60,7 +60,7 @@ const columns = [
   { key: 'name', label: 'Name' },
   { key: 'role', label: 'Role/Title' },
   { key: 'status', label: 'Status' },
-  { key: 'sort_order', label: 'Order', align: 'center' as const },
+  { key: 'sort_order', label: 'Order', align: 'center' as const }
 ]
 
 const modalOpen = ref(false)
@@ -86,7 +86,7 @@ const previewUrl = computed(() => {
 const nextSortOrder = computed(() => {
   const rows = data.value?.rows ?? []
   if (!rows.length) return 0
-  return Math.max(...rows.map((row) => row.sort_order ?? 0)) + 1
+  return Math.max(...rows.map(row => row.sort_order ?? 0)) + 1
 })
 
 const handleAvatarFileChange = (event: Event) => {
@@ -100,7 +100,7 @@ const openAdd = () => {
   avatarFile.value = null
   form.value = {
     ...createEmptyTestimonialForm(),
-    sortOrder: nextSortOrder.value,
+    sortOrder: nextSortOrder.value
   }
   errors.value = {}
   modalOpen.value = true
@@ -126,10 +126,11 @@ const save = async () => {
     return
   }
   errors.value = validateTestimonialForm(form.value, {
-    hasAvatarUpload: Boolean(avatarFile.value),
+    hasAvatarUpload: Boolean(avatarFile.value)
   })
   if (hasTestimonialFormErrors(errors.value)) {
-    toast.add({ title: 'Please fix the highlighted fields', color: 'error' })
+    const reasons = Object.values(errors.value).join(' ')
+    toast.add({ title: 'Validation Error', description: reasons, color: 'error' })
     return
   }
 
@@ -141,7 +142,7 @@ const save = async () => {
         supabase,
         STORAGE_BUCKETS.testimonial_avatars,
         path,
-        avatarFile.value,
+        avatarFile.value
       )
     }
 
@@ -152,8 +153,8 @@ const save = async () => {
       if (error) throw error
       toast.add({ title: 'Testimonial created', color: 'success' })
     } else {
-      const previousRef =
-        target.value && avatarFile.value
+      const previousRef
+        = target.value && avatarFile.value
           ? testimonialStorageRefForRow(target.value)
           : null
       const newRef = avatarFile.value ? form.value.avatarUrl : null
@@ -211,88 +212,215 @@ const remove = async () => {
     <div class="ap-header">
       <div class="ap-header__left">
         <span class="ap-eyebrow">Content</span>
-        <h1 class="ap-title">Testimonials</h1>
-        <p class="ap-subtitle">Manage student and partner success stories with avatars and ratings.</p>
+        <h1 class="ap-title">
+          Testimonials
+        </h1>
+        <p class="ap-subtitle">
+          Manage student and partner success stories with avatars and ratings.
+        </p>
       </div>
       <div class="ap-header__actions">
-        <button class="btn btn-ghost" type="button" @click="refresh()"><UIcon name="i-lucide-refresh-cw" />Refresh</button>
-        <button class="btn btn-primary" type="button" @click="openAdd" v-if="canEdit"><UIcon name="i-lucide-plus" />Add Testimonial</button>
+        <button
+          class="btn btn-ghost"
+          type="button"
+          @click="refresh()"
+        >
+          <UIcon name="i-lucide-refresh-cw" />Refresh
+        </button>
+        <button
+          v-if="canEdit"
+          class="btn btn-primary"
+          type="button"
+          @click="openAdd"
+        >
+          <UIcon name="i-lucide-plus" />Add Testimonial
+        </button>
       </div>
     </div>
 
     <div class="ap-toolbar">
       <div class="ap-toolbar__left">
-        <div class="ap-search"><UIcon name="i-lucide-search" class="ap-search__icon" /><input v-model="search" class="ap-search__input" placeholder="Search testimonials..." /></div>
+        <div class="ap-search">
+          <UIcon
+            name="i-lucide-search"
+            class="ap-search__icon"
+          /><input
+            v-model="search"
+            class="ap-search__input"
+            placeholder="Search testimonials..."
+          >
+        </div>
       </div>
     </div>
 
     <AdminTable
+      v-model:current-page="currentPage"
       :columns="columns"
       :rows="data?.rows || []"
       :loading="pending"
       :total-rows="data?.total || 0"
       :page-size="pageSize"
-      v-model:current-page="currentPage"
       empty-title="No testimonials"
       empty-subtitle="Add a testimonial for the homepage section."
     >
       <template #cell-avatar="{ row }">
         <div class="avatar-container">
-          <img v-if="row.avatar_url" :src="resolveTestimonialAvatarUrl(row.avatar_url)" class="avatar-img" :alt="row.name" />
-          <UIcon v-else name="i-lucide-user" class="avatar-placeholder" />
+          <img
+            v-if="row.avatar_url"
+            :src="resolveTestimonialAvatarUrl(row.avatar_url)"
+            class="avatar-img"
+            :alt="row.name"
+          >
+          <UIcon
+            v-else
+            name="i-lucide-user"
+            class="avatar-placeholder"
+          />
         </div>
       </template>
       <template #cell-name="{ row }">
         <span class="font-semibold">{{ row.name }}</span>
       </template>
-      <template #cell-role="{ row }"><span class="text-secondary">{{ row.role || '—' }}</span></template>
-      <template #cell-status="{ row }"><span class="badge" :class="row.is_published ? 'badge-green' : 'badge-gray'">{{ row.is_published ? 'Published' : 'Draft' }}</span></template>
-      <template #cell-sort_order="{ row }">{{ row.sort_order ?? 0 }}</template>
+      <template #cell-role="{ row }">
+        <span class="text-secondary">{{ row.role || '—' }}</span>
+      </template>
+      <template #cell-status="{ row }">
+        <span
+          class="badge"
+          :class="row.is_published ? 'badge-green' : 'badge-gray'"
+        >{{ row.is_published ? 'Published' : 'Draft' }}</span>
+      </template>
+      <template #cell-sort_order="{ row }">
+        {{ row.sort_order ?? 0 }}
+      </template>
       <template #actions="{ row }">
-        <button class="btn btn-ghost btn-icon" title="Edit" type="button" @click="openEdit(row)" v-if="canEdit"><UIcon name="i-lucide-edit-3" /></button>
-        <button class="btn btn-danger btn-icon" title="Delete" type="button" @click="openDelete(row)" v-if="canDelete"><UIcon name="i-lucide-trash-2" /></button>
+        <button
+          v-if="canEdit"
+          class="btn btn-ghost btn-icon"
+          title="Edit"
+          type="button"
+          @click="openEdit(row)"
+        >
+          <UIcon name="i-lucide-edit-3" />
+        </button>
+        <button
+          v-if="canDelete"
+          class="btn btn-danger btn-icon"
+          title="Delete"
+          type="button"
+          @click="openDelete(row)"
+        >
+          <UIcon name="i-lucide-trash-2" />
+        </button>
       </template>
     </AdminTable>
 
-    <AdminModal :open="modalOpen" :title="mode === 'add' ? 'New Testimonial' : 'Edit Testimonial'" :submit-label="mode === 'add' ? 'Create' : 'Save changes'" :loading="saving" @close="modalOpen = false" @submit="save">
-      <div class="am-field" :class="{ 'has-error': errors.name }">
+    <AdminModal
+      :open="modalOpen"
+      :title="mode === 'add' ? 'New Testimonial' : 'Edit Testimonial'"
+      :submit-label="mode === 'add' ? 'Create' : 'Save changes'"
+      :loading="saving"
+      @close="modalOpen = false"
+      @submit="save"
+    >
+      <div
+        class="am-field"
+        :class="{ 'has-error': errors.name }"
+      >
         <label class="am-label">Name *</label>
-        <input v-model="form.name" class="am-input" placeholder="e.g. Amina Ibrahim" />
-        <p v-if="errors.name" class="field-error">{{ errors.name }}</p>
+        <input
+          v-model="form.name"
+          class="am-input"
+          placeholder="e.g. Amina Ibrahim"
+        >
+        <p
+          v-if="errors.name"
+          class="field-error"
+        >
+          {{ errors.name }}
+        </p>
       </div>
 
       <div class="am-row-2">
         <div class="am-field">
           <label class="am-label">Role/Title</label>
-          <input v-model="form.role" class="am-input" placeholder="e.g. Fashion Design Graduate" />
+          <input
+            v-model="form.role"
+            class="am-input"
+            placeholder="e.g. Fashion Design Graduate"
+          >
         </div>
         <div class="am-field">
           <label class="am-label">Organization</label>
-          <input v-model="form.organization" class="am-input" placeholder="e.g. Fashion Hub Lagos" />
+          <input
+            v-model="form.organization"
+            class="am-input"
+            placeholder="e.g. Fashion Hub Lagos"
+          >
         </div>
       </div>
 
-      <div class="am-field" :class="{ 'has-error': errors.quote }">
+      <div
+        class="am-field"
+        :class="{ 'has-error': errors.quote }"
+      >
         <label class="am-label">Quote *</label>
-        <textarea v-model="form.quote" class="am-textarea" rows="3" placeholder="Student or alumni testimonial..." />
-        <p v-if="errors.quote" class="field-error">{{ errors.quote }}</p>
+        <textarea
+          v-model="form.quote"
+          class="am-textarea"
+          rows="3"
+          placeholder="Student or alumni testimonial..."
+        />
+        <p
+          v-if="errors.quote"
+          class="field-error"
+        >
+          {{ errors.quote }}
+        </p>
       </div>
 
       <div class="am-row-2">
-        <div class="am-field" :class="{ 'has-error': errors.rating }">
+        <div
+          class="am-field"
+          :class="{ 'has-error': errors.rating }"
+        >
           <label class="am-label">Rating</label>
-          <select v-model.number="form.rating" class="am-select">
-            <option :value="1">⭐ 1 star</option>
-            <option :value="2">⭐⭐ 2 stars</option>
-            <option :value="3">⭐⭐⭐ 3 stars</option>
-            <option :value="4">⭐⭐⭐⭐ 4 stars</option>
-            <option :value="5">⭐⭐⭐⭐⭐ 5 stars</option>
+          <select
+            v-model.number="form.rating"
+            class="am-select"
+          >
+            <option :value="1">
+              ⭐ 1 star
+            </option>
+            <option :value="2">
+              ⭐⭐ 2 stars
+            </option>
+            <option :value="3">
+              ⭐⭐⭐ 3 stars
+            </option>
+            <option :value="4">
+              ⭐⭐⭐⭐ 4 stars
+            </option>
+            <option :value="5">
+              ⭐⭐⭐⭐⭐ 5 stars
+            </option>
           </select>
-          <p v-if="errors.rating" class="field-error">{{ errors.rating }}</p>
+          <p
+            v-if="errors.rating"
+            class="field-error"
+          >
+            {{ errors.rating }}
+          </p>
         </div>
         <div class="am-field">
-          <label class="am-label" style="display:flex;gap:8px;align-items:center">
-            <input type="checkbox" v-model="form.isFeatured" />
+          <label
+            class="am-label"
+            style="display:flex;gap:8px;align-items:center"
+          >
+            <input
+              v-model="form.isFeatured"
+              type="checkbox"
+            >
             Featured
           </label>
         </div>
@@ -300,31 +428,70 @@ const remove = async () => {
 
       <div class="am-field">
         <label class="am-label">Avatar Upload</label>
-        <input type="file" accept="image/*" class="am-input" @change="handleAvatarFileChange" />
-        <p class="field-hint">PNG, JPG, or WebP. Max 5MB.</p>
+        <input
+          type="file"
+          accept="image/*"
+          class="am-input"
+          @change="handleAvatarFileChange"
+        >
+        <p class="field-hint">
+          PNG, JPG, or WebP. Max 5MB.
+        </p>
       </div>
 
-      <div v-if="previewUrl" class="avatar-preview">
-        <img :src="previewUrl" alt="Avatar preview" class="preview-img" />
+      <div
+        v-if="previewUrl"
+        class="avatar-preview"
+      >
+        <img
+          :src="previewUrl"
+          alt="Avatar preview"
+          class="preview-img"
+        >
       </div>
 
       <div class="am-row-2">
-        <div class="am-field" :class="{ 'has-error': errors.sortOrder }">
+        <div
+          class="am-field"
+          :class="{ 'has-error': errors.sortOrder }"
+        >
           <label class="am-label">Sort Order</label>
-          <input v-model.number="form.sortOrder" type="number" class="am-input" />
-          <p v-if="errors.sortOrder" class="field-error">{{ errors.sortOrder }}</p>
+          <input
+            v-model.number="form.sortOrder"
+            type="number"
+            class="am-input"
+          >
+          <p
+            v-if="errors.sortOrder"
+            class="field-error"
+          >
+            {{ errors.sortOrder }}
+          </p>
         </div>
         <div class="am-field flex-end-field">
           <label class="am-checkbox-row">
-            <input type="checkbox" v-model="form.isPublished" />
+            <input
+              v-model="form.isPublished"
+              type="checkbox"
+            >
             Published
           </label>
         </div>
       </div>
     </AdminModal>
 
-    <AdminModal :open="deleteOpen" title="Delete Testimonial" submit-label="Delete" submit-danger :loading="deleting" @close="deleteOpen = false" @submit="remove">
-      <p class="confirm-text">Permanently delete <strong>{{ target?.name }}</strong>?</p>
+    <AdminModal
+      :open="deleteOpen"
+      title="Delete Testimonial"
+      submit-label="Delete"
+      submit-danger
+      :loading="deleting"
+      @close="deleteOpen = false"
+      @submit="remove"
+    >
+      <p class="confirm-text">
+        Permanently delete <strong>{{ target?.name }}</strong>?
+      </p>
     </AdminModal>
   </section>
 </template>
@@ -378,4 +545,3 @@ const remove = async () => {
   color: var(--admin-text-secondary);
 }
 </style>
-

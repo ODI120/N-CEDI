@@ -73,7 +73,7 @@ const allImages = computed(() => {
     list.push(event.value.coverImageUrl)
   }
   if (event.value?.galleryUrls) {
-    event.value.galleryUrls.forEach(url => {
+    event.value.galleryUrls.forEach((url: string) => {
       if (url && !list.includes(url)) {
         list.push(resolveStorageRef(url))
       }
@@ -93,8 +93,8 @@ const nextSlide = () => {
 
 const prevSlide = () => {
   if (!allImages.value.length) return
-  currentSlide.value =
-    currentSlide.value === 0
+  currentSlide.value
+    = currentSlide.value === 0
       ? allImages.value.length - 1
       : currentSlide.value - 1
 }
@@ -105,11 +105,15 @@ const goToSlide = (index: number) => {
 
 // Swipe Support
 const handleTouchStart = (e: TouchEvent) => {
-  touchStartX.value = e.changedTouches[0].screenX
+  if (e.changedTouches && e.changedTouches[0]) {
+    touchStartX.value = e.changedTouches[0].screenX
+  }
 }
 
 const handleTouchMove = (e: TouchEvent) => {
-  touchEndX.value = e.changedTouches[0].screenX
+  if (e.changedTouches && e.changedTouches[0]) {
+    touchEndX.value = e.changedTouches[0].screenX
+  }
 }
 
 const handleTouchEnd = () => {
@@ -123,7 +127,10 @@ const handleTouchEnd = () => {
 </script>
 
 <template>
-  <div v-if="event" class="event-detail-page">
+  <div
+    v-if="event"
+    class="event-detail-page"
+  >
     <HeroInner
       :title="event.title"
       :subtitle="event.description"
@@ -133,23 +140,25 @@ const handleTouchEnd = () => {
     <div class="event-detail-layout container">
       <!-- Main Content -->
       <div class="event-detail-layout__main">
-        <MotionWrapper variant="fadeUp" :delay="100">
-          
+        <MotionWrapper
+          variant="fadeUp"
+          :delay="100"
+        >
           <!-- Premium Image Slider -->
           <div class="event-gallery-slider">
-            <div 
+            <div
               class="slider-viewport"
               @touchstart="handleTouchStart"
               @touchmove="handleTouchMove"
               @touchend="handleTouchEnd"
             >
-              <div 
+              <div
                 class="slider-track"
                 :style="{ transform: `translateX(-${currentSlide * 100}%)` }"
               >
-                <div 
-                  v-for="(imgUrl, idx) in allImages" 
-                  :key="idx" 
+                <div
+                  v-for="(imgUrl, idx) in allImages"
+                  :key="idx"
                   class="slider-slide"
                 >
                   <NuxtImg
@@ -162,20 +171,20 @@ const handleTouchEnd = () => {
                   />
                 </div>
               </div>
-              
+
               <!-- Navigation Controls -->
-              <button 
-                v-if="allImages.length > 1" 
-                class="slider-arrow slider-arrow--prev" 
-                aria-label="Previous Slide" 
+              <button
+                v-if="allImages.length > 1"
+                class="slider-arrow slider-arrow--prev"
+                aria-label="Previous Slide"
                 @click="prevSlide"
               >
                 <UIcon name="i-lucide-chevron-left" />
               </button>
-              <button 
-                v-if="allImages.length > 1" 
-                class="slider-arrow slider-arrow--next" 
-                aria-label="Next Slide" 
+              <button
+                v-if="allImages.length > 1"
+                class="slider-arrow slider-arrow--next"
+                aria-label="Next Slide"
                 @click="nextSlide"
               >
                 <UIcon name="i-lucide-chevron-right" />
@@ -183,22 +192,25 @@ const handleTouchEnd = () => {
             </div>
 
             <!-- Thumbnail strip below -->
-            <div v-if="allImages.length > 1" class="thumbnail-strip">
-              <button 
-                v-for="(imgUrl, idx) in allImages" 
-                :key="`thumb-${idx}`" 
-                class="thumbnail-btn" 
+            <div
+              v-if="allImages.length > 1"
+              class="thumbnail-strip"
+            >
+              <button
+                v-for="(imgUrl, idx) in allImages"
+                :key="`thumb-${idx}`"
+                class="thumbnail-btn"
                 :class="{ 'is-active': currentSlide === idx }"
                 :aria-label="`Go to slide ${idx + 1}`"
                 @click="goToSlide(idx)"
               >
-                <NuxtImg 
-                  :src="imgUrl" 
-                  alt="Thumbnail" 
-                  class="thumbnail-image" 
-                  width="100" 
-                  height="56" 
-                  format="webp" 
+                <NuxtImg
+                  :src="imgUrl"
+                  alt="Thumbnail"
+                  class="thumbnail-image"
+                  width="100"
+                  height="56"
+                  format="webp"
                 />
               </button>
             </div>
@@ -213,31 +225,48 @@ const handleTouchEnd = () => {
 
       <!-- Sidebar -->
       <aside class="event-detail-layout__sidebar">
-        <MotionWrapper variant="fadeUp" :delay="200">
+        <MotionWrapper
+          variant="fadeUp"
+          :delay="200"
+        >
           <div class="event-sidebar-card">
             <div class="event-sidebar-header">
-              <BaseBadge type="advanced" label="NCAT NBTE Event" />
+              <BaseBadge
+                type="advanced"
+                label="NCAT NBTE Event"
+              />
             </div>
 
             <div class="event-info-panel">
-              <h4 class="event-info-title">Student Admission</h4>
+              <h4 class="event-info-title">
+                Student Admission
+              </h4>
               <p class="event-info-desc">
                 This activity is organized exclusively for enrolled NCAT students under NBTE.
               </p>
-              
-              <hr class="event-info-divider" />
+
+              <hr class="event-info-divider">
 
               <div class="event-bullet-list">
                 <div class="event-bullet-item">
-                  <UIcon name="i-lucide-badge-check" class="bullet-icon" />
+                  <UIcon
+                    name="i-lucide-badge-check"
+                    class="bullet-icon"
+                  />
                   <span>No registration or signup required.</span>
                 </div>
                 <div class="event-bullet-item">
-                  <UIcon name="i-lucide-smile" class="bullet-icon" />
+                  <UIcon
+                    name="i-lucide-smile"
+                    class="bullet-icon"
+                  />
                   <span>Free entry with student ID.</span>
                 </div>
                 <div class="event-bullet-item">
-                  <UIcon name="i-lucide-map" class="bullet-icon" />
+                  <UIcon
+                    name="i-lucide-map"
+                    class="bullet-icon"
+                  />
                   <span>Held at N-CEDI Incubator/Campus halls.</span>
                 </div>
               </div>
