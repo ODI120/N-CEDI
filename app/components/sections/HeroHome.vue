@@ -1,9 +1,64 @@
 <script setup lang="ts">
   import MotionWrapper from '~/components/motion/MotionWrapper.vue'
   import TextReveal from '~/components/motion/TextReveal.vue'
+  import { resolveTestimonialAvatarUrl } from '~/utils/testimonialAdmin'
 
   import avatar1 from '~/assets/image/avatar1.webp'
   import avatar2 from '~/assets/image/avatar2.jpg'
+
+  // Badge color themes that cycle for each floating avatar
+  const badgeThemes = [
+    { class: 'avatar-aisha', cursorColor: '#60A5FA' },
+    { class: 'avatar-tunde', cursorColor: '#10B981' },
+    { class: 'avatar-david', cursorColor: '#A855F7' },
+    { class: 'avatar-chioma', cursorColor: '#EC4899' },
+  ]
+
+  interface FloatingAlumni {
+    name: string
+    avatarUrl: string
+  }
+
+  // Static fallbacks in case no testimonials have avatar images
+  const fallbackAvatars: FloatingAlumni[] = [
+    { name: 'Aisha', avatarUrl: avatar1 },
+    { name: 'Tunde', avatarUrl: avatar2 },
+    { name: 'David', avatarUrl: avatar2 },
+    { name: 'Chioma', avatarUrl: avatar1 },
+  ]
+
+  // Fetch 4 random published testimonials that have avatars
+  const { data: fetchedAvatars } = useAsyncData<FloatingAlumni[]>(
+    'hero-floating-avatars',
+    async () => {
+      const { client } = useSupabase()
+
+      // Fetch more than needed so we can shuffle and pick 4
+      const { data: rows, error } = await client
+        .from('testimonials')
+        .select('name, avatar_url')
+        .eq('is_published', true)
+        .not('avatar_url', 'is', null)
+        .limit(20)
+
+      if (error || !rows?.length) return []
+
+      // Shuffle and pick up to 4
+      const shuffled = [...rows].sort(() => Math.random() - 0.5)
+      return shuffled.slice(0, 4).map((row: any) => ({
+        name: row.name?.split(' ')[0] || row.name, // Use first name only
+        avatarUrl: resolveTestimonialAvatarUrl(row.avatar_url),
+      }))
+    },
+    { default: () => [], lazy: true },
+  )
+
+  // Use fetched alumni when available, otherwise show fallback avatars
+  const floatingAvatars = computed(() =>
+    fetchedAvatars.value && fetchedAvatars.value.length > 0
+      ? fetchedAvatars.value
+      : fallbackAvatars
+  )
 </script>
 
 <template>
@@ -18,41 +73,22 @@
       <!-- Pulse wave (center) -->
       <div class="pulse-wave"></div>
 
-      <!-- Floating avatars with cursor pointers -->
-      <div class="floating-avatar floating-avatar--1">
+      <!-- Floating avatars with cursor pointers — fetched from alumni -->
+      <div
+        v-for="(alumni, index) in floatingAvatars"
+        :key="index"
+        class="floating-avatar"
+        :class="`floating-avatar--${index + 1}`"
+      >
         <i class="bi bi-cursor-fill"></i>
-        <div class="floating-avatar__badge avatar-aisha">
+        <div
+          class="floating-avatar__badge"
+          :class="badgeThemes[index % badgeThemes.length].class"
+        >
           <div class="avatar avatar--1">
-            <img :src="avatar1" alt="Aisha's Avatar" />
+            <img :src="alumni.avatarUrl" :alt="`${alumni.name}'s Avatar`" />
           </div>
-          <span class="floating-avatar__name">Aisha</span>
-        </div>
-      </div>
-      <div class="floating-avatar floating-avatar--2">
-        <i class="bi bi-cursor-fill"></i>
-        <div class="floating-avatar__badge avatar-tunde">
-          <div class="avatar avatar--1">
-            <img :src="avatar2" alt="Tunde's Avatar" />
-          </div>
-          <span class="floating-avatar__name">Tunde</span>
-        </div>
-      </div>
-      <div class="floating-avatar floating-avatar--3">
-        <i class="bi bi-cursor-fill"></i>
-        <div class="floating-avatar__badge avatar-david">
-          <div class="avatar avatar--1">
-            <img :src="avatar2" alt="David's Avatar" />
-          </div>
-          <span class="floating-avatar__name">David</span>
-        </div>
-      </div>
-      <div class="floating-avatar floating-avatar--4">
-        <i class="bi bi-cursor-fill"></i>
-        <div class="floating-avatar__badge avatar-chioma">
-          <div class="avatar avatar--1">
-            <img :src="avatar1" alt="Chioma's Avatar" />
-          </div>
-          <span class="floating-avatar__name float">Chioma</span>
+          <span class="floating-avatar__name" :class="{ float: index === 3 }">{{ alumni.name }}</span>
         </div>
       </div>
     </div>
@@ -131,7 +167,7 @@
                 </div>
               </div>
               <div class="social-proof__text">
-                <span class="social-proof__count">Over 500+ Alumni</span>
+                <span class="social-proof__count">Over 50+ Alumni</span>
               </div>
             </div>
           </MotionWrapper>
