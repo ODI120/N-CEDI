@@ -34,6 +34,10 @@ if (error.value || !row.value) {
 
 const post = computed(() => {
   const p = row.value!
+  const defaultBody = [
+    { type: 'heading', data: { level: 2, text: 'Article Content' } },
+    { type: 'paragraph', data: { text: p.excerpt || '' } }
+  ]
   return {
     title: p.title,
     slug: p.slug,
@@ -43,10 +47,7 @@ const post = computed(() => {
     readTimeMinutes: p.read_time_minutes || 5,
     category: p.category ? { name: p.category.name, slug: p.category.slug } : { name: 'General', slug: 'general' },
     author: p.author ? { name: p.author.name, role: p.author.role, avatarUrl: p.author.avatar_url } : { name: 'N-CEDI Team', role: 'Staff' },
-    body: p.body || [
-      { type: 'heading', data: { level: 2, text: 'Article Content' } },
-      { type: 'paragraph', data: { text: p.excerpt || '' } }
-    ],
+    body: (p.body && p.body.length > 0) ? p.body : defaultBody,
     isPublished: p.is_published
   }
 })

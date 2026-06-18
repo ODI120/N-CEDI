@@ -36,16 +36,17 @@ if (error.value || !row.value) {
 
 const event = computed(() => {
   const e = row.value!
+  const defaultBody = [
+    { type: 'heading', data: { level: 2, text: 'About the Event' } },
+    { type: 'paragraph', data: { text: e.description || '' } }
+  ]
   return {
     title: e.title,
     slug: e.slug,
     description: e.description || '',
     coverImageUrl: e.cover_image_url ? resolveStorageRef(e.cover_image_url) : '',
     galleryUrls: e.gallery_urls || [],
-    body: e.body || [
-      { type: 'heading', data: { level: 2, text: 'About the Event' } },
-      { type: 'paragraph', data: { text: e.description || '' } }
-    ]
+    body: (e.body && e.body.length > 0) ? e.body : defaultBody
   }
 })
 

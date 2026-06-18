@@ -45,10 +45,10 @@ export interface Program {
   isPublished: boolean
   coverImageUrl: string
   galleryUrls?: string[]
-  requirements?: string
+  requirements?: string | Record<string, unknown>[]
   outcomes?: string[]
   overview?: string
-  labExperience?: string
+  labExperience?: string | Record<string, unknown>[]
   metaTitle?: string
   metaDescription?: string
   categoryId?: string

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { onBeforeRouteLeave } from 'vue-router'
 import { nextTick } from 'vue'
 import {
@@ -210,7 +211,6 @@ const heroPreviewUrl = computed(() => {
   if (coverPreviewUrl.value) return coverPreviewUrl.value
   return resolveProgramMediaUrl(form.value.coverImageUrl)
 })
-
 const previewPath = computed(() =>
   form.value.slug ? `/programs/${form.value.slug}` : null
 )
@@ -219,9 +219,51 @@ const completionChecks = computed(() => [
   { label: 'Title & slug', done: Boolean(form.value.title.trim() && form.value.slug.trim()) },
   { label: 'Card description', done: Boolean(form.value.description.trim()) },
   { label: 'Hero image', done: Boolean(form.value.coverImageUrl || coverImageFile.value) },
-  { label: 'Overview copy', done: Boolean(form.value.overview.trim()) },
+  { label: 'Overview copy', done: form.value.body.length > 0 },
   { label: 'Learning outcomes', done: form.value.outcomes.some(item => item.trim()) }
 ])
+
+// ─── Block Editor Helpers ─────────────────────────────────────
+const addParagraphBlock = (target: any[]) => {
+  target.push({ type: 'paragraph', data: { text: '' } })
+}
+
+const addHeadingBlock = (target: any[]) => {
+  target.push({ type: 'heading', data: { text: '', level: 2 } })
+}
+
+const addQuoteBlock = (target: any[]) => {
+  target.push({ type: 'quote', data: { text: '', caption: '' } })
+}
+
+const addListBlock = (target: any[]) => {
+  target.push({ type: 'list', data: { items: [''], style: 'unordered' } })
+}
+
+const removeBlock = (target: any[], index: number) => {
+  target.splice(index, 1)
+}
+
+const moveBlock = (target: any[], index: number, direction: -1 | 1) => {
+  const targetIndex = index + direction
+  if (targetIndex < 0 || targetIndex >= target.length) return
+  const items = [...target]
+  const [item] = items.splice(index, 1)
+  items.splice(targetIndex, 0, item!)
+  target.splice(0, target.length, ...items)
+}
+
+const addListItem = (target: any[], blockIndex: number) => {
+  target[blockIndex].data.items.push('')
+}
+
+const removeListItem = (target: any[], blockIndex: number, itemIndex: number) => {
+  if (target[blockIndex].data.items.length === 1) {
+    target[blockIndex].data.items[0] = ''
+    return
+  }
+  target[blockIndex].data.items.splice(itemIndex, 1)
+}
 
 const save = async () => {
   if (!canEdit.value) {
@@ -559,67 +601,635 @@ onBeforeUnmount(() => {
         >
           <div class="editor-section__header">
             <h2>Page content</h2>
-            <p>Structured copy for the Overview and Lab Experience sections on the public page.</p>
+            <p>Structured copy for the Overview, Lab Experience, and Prerequisites sections on the public page.</p>
           </div>
 
+          <!-- 1. Overview Blocks -->
           <div class="am-field">
-            <label class="am-label">Program overview</label>
-            <textarea
-              v-model="form.overview"
-              class="am-textarea"
-              rows="5"
-              placeholder="Describe the track focus, methodology, and who it is for."
-            />
-            <p class="field-hint">
-              Rendered under the “Program Overview” heading.
-            </p>
-          </div>
-
-          <div class="editor-subsection">
-            <h3>Optional student quote</h3>
-            <p class="field-hint">
-              Adds a testimonial block below the overview, like on the woodwork program page.
-            </p>
-            <div class="am-field">
-              <label class="am-label">Quote text</label>
-              <textarea
-                v-model="form.testimonialQuote"
-                class="am-textarea"
-                rows="3"
-                placeholder="Student or alumni quote"
-              />
-            </div>
-            <div class="am-field">
-              <label class="am-label">Quote attribution</label>
-              <input
-                v-model="form.testimonialCaption"
-                class="am-input"
-                placeholder="Name, role, cohort"
+            <label class="am-label">Program Overview Blocks</label>
+            <div class="blocks-container">
+              <div
+                v-if="form.body.length === 0"
+                class="blocks-empty"
               >
+                <UIcon
+                  name="i-lucide-scroll"
+                  class="blocks-empty__icon"
+                />
+                <p>No overview blocks added. Start building the page body below.</p>
+              </div>
+
+              <div
+                v-for="(block, idx) in form.body"
+                :key="`body-${idx}`"
+                class="block-card"
+              >
+                <div class="block-card__header">
+                  <span class="block-card__title">
+                    <UIcon :name="block.type === 'paragraph' ? 'i-lucide-align-left' : block.type === 'heading' ? 'i-lucide-heading' : block.type === 'quote' ? 'i-lucide-quote' : 'i-lucide-list'" />
+                    {{ block.type.charAt(0).toUpperCase() + block.type.slice(1) }} Block
+                  </span>
+                  <div class="block-card__actions">
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon"
+                      :disabled="idx === 0"
+                      title="Move Up"
+                      @click="moveBlock(form.body, idx, -1)"
+                    >
+                      <UIcon name="i-lucide-arrow-up" />
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon"
+                      :disabled="idx === form.body.length - 1"
+                      title="Move Down"
+                      @click="moveBlock(form.body, idx, 1)"
+                    >
+                      <UIcon name="i-lucide-arrow-down" />
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-icon"
+                      title="Delete Block"
+                      @click="removeBlock(form.body, idx)"
+                    >
+                      <UIcon name="i-lucide-trash-2" />
+                    </button>
+                  </div>
+                </div>
+
+                <div class="block-card__body">
+                  <!-- Paragraph Input -->
+                  <div v-if="block.type === 'paragraph'">
+                    <textarea
+                      v-model="block.data.text"
+                      class="am-textarea"
+                      rows="4"
+                      placeholder="Type paragraph content here (supports basic HTML tags)..."
+                    />
+                  </div>
+
+                  <!-- Heading Input -->
+                  <div
+                    v-else-if="block.type === 'heading'"
+                    class="heading-block-inputs"
+                  >
+                    <select
+                      v-model="block.data.level"
+                      class="am-select select-level"
+                    >
+                      <option :value="2">
+                        Heading 2 (Large)
+                      </option>
+                      <option :value="3">
+                        Heading 3 (Medium)
+                      </option>
+                      <option :value="4">
+                        Heading 4 (Small)
+                      </option>
+                    </select>
+                    <input
+                      v-model="block.data.text"
+                      class="am-input"
+                      placeholder="Type heading text..."
+                    >
+                  </div>
+
+                  <!-- Quote Input -->
+                  <div
+                    v-else-if="block.type === 'quote'"
+                    class="quote-block-inputs"
+                  >
+                    <textarea
+                      v-model="block.data.text"
+                      class="am-textarea"
+                      rows="2"
+                      placeholder="Enter quote text..."
+                    />
+                    <input
+                      v-model="block.data.caption"
+                      class="am-input"
+                      style="margin-top:var(--sp-2)"
+                      placeholder="Attribution (e.g. John Doe, Student Union Leader)..."
+                    >
+                  </div>
+
+                  <!-- List Input -->
+                  <div
+                    v-else-if="block.type === 'list'"
+                    class="list-block-inputs"
+                  >
+                    <div class="list-style-selector">
+                      <label class="radio-label">
+                        <input
+                          v-model="block.data.style"
+                          type="radio"
+                          value="unordered"
+                        > Bulleted List
+                      </label>
+                      <label
+                        class="radio-label"
+                        style="margin-left:var(--sp-4)"
+                      >
+                        <input
+                          v-model="block.data.style"
+                          type="radio"
+                          value="ordered"
+                        > Numbered List
+                      </label>
+                    </div>
+                    <div class="list-items">
+                      <div
+                        v-for="(item, itemIdx) in block.data.items"
+                        :key="itemIdx"
+                        class="list-item-row"
+                      >
+                        <span class="list-item-bullet">{{ block.data.style === 'ordered' ? `${Number(itemIdx) + 1}.` : '•' }}</span>
+                        <input
+                          v-model="block.data.items[itemIdx]"
+                          class="am-input list-item-input"
+                          placeholder="List item text..."
+                        >
+                        <button
+                          type="button"
+                          class="btn btn-danger btn-icon"
+                          title="Remove item"
+                          @click="removeListItem(form.body, idx, Number(itemIdx))"
+                        >
+                          <UIcon name="i-lucide-minus" />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        style="margin-top:var(--sp-2)"
+                        @click="addListItem(form.body, idx)"
+                      >
+                        <UIcon name="i-lucide-plus" /> Add List Item
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add Block Controls -->
+            <div class="add-block-controls">
+              <span class="add-block-label">Insert Block:</span>
+              <div class="add-block-buttons">
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  @click="addParagraphBlock(form.body)"
+                >
+                  <UIcon name="i-lucide-align-left" /> Paragraph
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  @click="addHeadingBlock(form.body)"
+                >
+                  <UIcon name="i-lucide-heading" /> Heading
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  @click="addQuoteBlock(form.body)"
+                >
+                  <UIcon name="i-lucide-quote" /> Quote
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  @click="addListBlock(form.body)"
+                >
+                  <UIcon name="i-lucide-list" /> List
+                </button>
+              </div>
             </div>
           </div>
 
+          <hr
+            class="am-divider"
+            style="margin: var(--sp-6) 0;"
+          >
+
+          <!-- 2. Lab Experience Blocks -->
           <div class="am-field">
-            <label class="am-label">Practical lab experience</label>
-            <textarea
-              v-model="form.labExperience"
-              class="am-textarea"
-              rows="4"
-              placeholder="Describe hands-on workshop time, tools used, and project flow."
-            />
-            <p class="field-hint">
-              Shown in its own section when filled in.
-            </p>
+            <label class="am-label">Practical Lab Experience Blocks</label>
+            <div class="blocks-container">
+              <div
+                v-if="form.labExperienceBlocks.length === 0"
+                class="blocks-empty"
+              >
+                <UIcon
+                  name="i-lucide-scroll"
+                  class="blocks-empty__icon"
+                />
+                <p>No lab experience blocks added. Start building lab content below.</p>
+              </div>
+
+              <div
+                v-for="(block, idx) in form.labExperienceBlocks"
+                :key="`lab-${idx}`"
+                class="block-card"
+              >
+                <div class="block-card__header">
+                  <span class="block-card__title">
+                    <UIcon :name="block.type === 'paragraph' ? 'i-lucide-align-left' : block.type === 'heading' ? 'i-lucide-heading' : block.type === 'quote' ? 'i-lucide-quote' : 'i-lucide-list'" />
+                    {{ block.type.charAt(0).toUpperCase() + block.type.slice(1) }} Block
+                  </span>
+                  <div class="block-card__actions">
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon"
+                      :disabled="idx === 0"
+                      title="Move Up"
+                      @click="moveBlock(form.labExperienceBlocks, idx, -1)"
+                    >
+                      <UIcon name="i-lucide-arrow-up" />
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon"
+                      :disabled="idx === form.labExperienceBlocks.length - 1"
+                      title="Move Down"
+                      @click="moveBlock(form.labExperienceBlocks, idx, 1)"
+                    >
+                      <UIcon name="i-lucide-arrow-down" />
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-icon"
+                      title="Delete Block"
+                      @click="removeBlock(form.labExperienceBlocks, idx)"
+                    >
+                      <UIcon name="i-lucide-trash-2" />
+                    </button>
+                  </div>
+                </div>
+
+                <div class="block-card__body">
+                  <!-- Paragraph Input -->
+                  <div v-if="block.type === 'paragraph'">
+                    <textarea
+                      v-model="block.data.text"
+                      class="am-textarea"
+                      rows="4"
+                      placeholder="Type paragraph content here (supports basic HTML tags)..."
+                    />
+                  </div>
+
+                  <!-- Heading Input -->
+                  <div
+                    v-else-if="block.type === 'heading'"
+                    class="heading-block-inputs"
+                  >
+                    <select
+                      v-model="block.data.level"
+                      class="am-select select-level"
+                    >
+                      <option :value="2">
+                        Heading 2 (Large)
+                      </option>
+                      <option :value="3">
+                        Heading 3 (Medium)
+                      </option>
+                      <option :value="4">
+                        Heading 4 (Small)
+                      </option>
+                    </select>
+                    <input
+                      v-model="block.data.text"
+                      class="am-input"
+                      placeholder="Type heading text..."
+                    >
+                  </div>
+
+                  <!-- Quote Input -->
+                  <div
+                    v-else-if="block.type === 'quote'"
+                    class="quote-block-inputs"
+                  >
+                    <textarea
+                      v-model="block.data.text"
+                      class="am-textarea"
+                      rows="2"
+                      placeholder="Enter quote text..."
+                    />
+                    <input
+                      v-model="block.data.caption"
+                      class="am-input"
+                      style="margin-top:var(--sp-2)"
+                      placeholder="Attribution..."
+                    >
+                  </div>
+
+                  <!-- List Input -->
+                  <div
+                    v-else-if="block.type === 'list'"
+                    class="list-block-inputs"
+                  >
+                    <div class="list-style-selector">
+                      <label class="radio-label">
+                        <input
+                          v-model="block.data.style"
+                          type="radio"
+                          value="unordered"
+                        > Bulleted List
+                      </label>
+                      <label
+                        class="radio-label"
+                        style="margin-left:var(--sp-4)"
+                      >
+                        <input
+                          v-model="block.data.style"
+                          type="radio"
+                          value="ordered"
+                        > Numbered List
+                      </label>
+                    </div>
+                    <div class="list-items">
+                      <div
+                        v-for="(item, itemIdx) in block.data.items"
+                        :key="itemIdx"
+                        class="list-item-row"
+                      >
+                        <span class="list-item-bullet">{{ block.data.style === 'ordered' ? `${Number(itemIdx) + 1}.` : '•' }}</span>
+                        <input
+                          v-model="block.data.items[itemIdx]"
+                          class="am-input list-item-input"
+                          placeholder="List item text..."
+                        >
+                        <button
+                          type="button"
+                          class="btn btn-danger btn-icon"
+                          title="Remove item"
+                          @click="removeListItem(form.labExperienceBlocks, idx, Number(itemIdx))"
+                        >
+                          <UIcon name="i-lucide-minus" />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        style="margin-top:var(--sp-2)"
+                        @click="addListItem(form.labExperienceBlocks, idx)"
+                      >
+                        <UIcon name="i-lucide-plus" /> Add List Item
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add Block Controls -->
+            <div class="add-block-controls">
+              <span class="add-block-label">Insert Lab Block:</span>
+              <div class="add-block-buttons">
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  @click="addParagraphBlock(form.labExperienceBlocks)"
+                >
+                  <UIcon name="i-lucide-align-left" /> Paragraph
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  @click="addHeadingBlock(form.labExperienceBlocks)"
+                >
+                  <UIcon name="i-lucide-heading" /> Heading
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  @click="addQuoteBlock(form.labExperienceBlocks)"
+                >
+                  <UIcon name="i-lucide-quote" /> Quote
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  @click="addListBlock(form.labExperienceBlocks)"
+                >
+                  <UIcon name="i-lucide-list" /> List
+                </button>
+              </div>
+            </div>
           </div>
 
+          <hr
+            class="am-divider"
+            style="margin: var(--sp-6) 0;"
+          >
+
+          <!-- 3. Prerequisites Blocks -->
           <div class="am-field">
-            <label class="am-label">Prerequisites</label>
-            <textarea
-              v-model="form.requirements"
-              class="am-textarea"
-              rows="3"
-              placeholder="Who can participate and any preparation needed."
-            />
+            <label class="am-label">Prerequisites Blocks (Sidebar)</label>
+            <div class="blocks-container">
+              <div
+                v-if="form.requirementsBlocks.length === 0"
+                class="blocks-empty"
+              >
+                <UIcon
+                  name="i-lucide-scroll"
+                  class="blocks-empty__icon"
+                />
+                <p>No prerequisites blocks added. Start building requirements below.</p>
+              </div>
+
+              <div
+                v-for="(block, idx) in form.requirementsBlocks"
+                :key="`req-${idx}`"
+                class="block-card"
+              >
+                <div class="block-card__header">
+                  <span class="block-card__title">
+                    <UIcon :name="block.type === 'paragraph' ? 'i-lucide-align-left' : block.type === 'heading' ? 'i-lucide-heading' : block.type === 'quote' ? 'i-lucide-quote' : 'i-lucide-list'" />
+                    {{ block.type.charAt(0).toUpperCase() + block.type.slice(1) }} Block
+                  </span>
+                  <div class="block-card__actions">
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon"
+                      :disabled="idx === 0"
+                      title="Move Up"
+                      @click="moveBlock(form.requirementsBlocks, idx, -1)"
+                    >
+                      <UIcon name="i-lucide-arrow-up" />
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-ghost btn-icon"
+                      :disabled="idx === form.requirementsBlocks.length - 1"
+                      title="Move Down"
+                      @click="moveBlock(form.requirementsBlocks, idx, 1)"
+                    >
+                      <UIcon name="i-lucide-arrow-down" />
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-danger btn-icon"
+                      title="Delete Block"
+                      @click="removeBlock(form.requirementsBlocks, idx)"
+                    >
+                      <UIcon name="i-lucide-trash-2" />
+                    </button>
+                  </div>
+                </div>
+
+                <div class="block-card__body">
+                  <!-- Paragraph Input -->
+                  <div v-if="block.type === 'paragraph'">
+                    <textarea
+                      v-model="block.data.text"
+                      class="am-textarea"
+                      rows="3"
+                      placeholder="Type prerequisite details..."
+                    />
+                  </div>
+
+                  <!-- Heading Input -->
+                  <div
+                    v-else-if="block.type === 'heading'"
+                    class="heading-block-inputs"
+                  >
+                    <select
+                      v-model="block.data.level"
+                      class="am-select select-level"
+                    >
+                      <option :value="2">
+                        Heading 2 (Large)
+                      </option>
+                      <option :value="3">
+                        Heading 3 (Medium)
+                      </option>
+                      <option :value="4">
+                        Heading 4 (Small)
+                      </option>
+                    </select>
+                    <input
+                      v-model="block.data.text"
+                      class="am-input"
+                      placeholder="Type heading text..."
+                    >
+                  </div>
+
+                  <!-- Quote Input -->
+                  <div
+                    v-else-if="block.type === 'quote'"
+                    class="quote-block-inputs"
+                  >
+                    <textarea
+                      v-model="block.data.text"
+                      class="am-textarea"
+                      rows="2"
+                      placeholder="Enter quote text..."
+                    />
+                    <input
+                      v-model="block.data.caption"
+                      class="am-input"
+                      style="margin-top:var(--sp-2)"
+                      placeholder="Attribution..."
+                    >
+                  </div>
+
+                  <!-- List Input -->
+                  <div
+                    v-else-if="block.type === 'list'"
+                    class="list-block-inputs"
+                  >
+                    <div class="list-style-selector">
+                      <label class="radio-label">
+                        <input
+                          v-model="block.data.style"
+                          type="radio"
+                          value="unordered"
+                        > Bulleted List
+                      </label>
+                      <label
+                        class="radio-label"
+                        style="margin-left:var(--sp-4)"
+                      >
+                        <input
+                          v-model="block.data.style"
+                          type="radio"
+                          value="ordered"
+                        > Numbered List
+                      </label>
+                    </div>
+                    <div class="list-items">
+                      <div
+                        v-for="(item, itemIdx) in block.data.items"
+                        :key="itemIdx"
+                        class="list-item-row"
+                      >
+                        <span class="list-item-bullet">{{ block.data.style === 'ordered' ? `${Number(itemIdx) + 1}.` : '•' }}</span>
+                        <input
+                          v-model="block.data.items[itemIdx]"
+                          class="am-input list-item-input"
+                          placeholder="List item text..."
+                        >
+                        <button
+                          type="button"
+                          class="btn btn-danger btn-icon"
+                          title="Remove item"
+                          @click="removeListItem(form.requirementsBlocks, idx, Number(itemIdx))"
+                        >
+                          <UIcon name="i-lucide-minus" />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        style="margin-top:var(--sp-2)"
+                        @click="addListItem(form.requirementsBlocks, idx)"
+                      >
+                        <UIcon name="i-lucide-plus" /> Add List Item
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Add Block Controls -->
+            <div class="add-block-controls">
+              <span class="add-block-label">Insert Prerequisite Block:</span>
+              <div class="add-block-buttons">
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  @click="addParagraphBlock(form.requirementsBlocks)"
+                >
+                  <UIcon name="i-lucide-align-left" /> Paragraph
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  @click="addHeadingBlock(form.requirementsBlocks)"
+                >
+                  <UIcon name="i-lucide-heading" /> Heading
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  @click="addQuoteBlock(form.requirementsBlocks)"
+                >
+                  <UIcon name="i-lucide-quote" /> Quote
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  @click="addListBlock(form.requirementsBlocks)"
+                >
+                  <UIcon name="i-lucide-list" /> List
+                </button>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -1252,5 +1862,148 @@ onBeforeUnmount(() => {
   .toggle-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Block Editor Styles */
+.blocks-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-6);
+  margin-top: var(--sp-2);
+}
+
+.blocks-empty {
+  padding: var(--sp-12);
+  border: 2px dashed var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  text-align: center;
+  color: var(--admin-text-muted);
+}
+
+.blocks-empty__icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--sp-3);
+}
+
+.blocks-empty p {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.block-card {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  background: var(--admin-bg-deep);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.block-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--admin-surface-opaque);
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.block-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--admin-text-secondary);
+}
+
+.block-card__actions {
+  display: flex;
+  gap: var(--sp-1);
+}
+
+.block-card__body {
+  padding: var(--sp-4);
+  background: var(--admin-bg);
+}
+
+.heading-block-inputs {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+.select-level {
+  width: 180px;
+}
+
+.quote-block-inputs {
+  display: flex;
+  flex-direction: column;
+}
+
+.list-block-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.list-style-selector {
+  display: flex;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--admin-text-secondary);
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  cursor: pointer;
+}
+
+.list-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.list-item-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.list-item-bullet {
+  width: 20px;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  text-align: center;
+}
+
+.list-item-input {
+  flex: 1;
+}
+
+.add-block-controls {
+  padding: var(--sp-4);
+  background: var(--admin-surface-opaque);
+  border: 1px dashed var(--admin-border-strong);
+  border-radius: var(--admin-radius-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  margin-top: var(--sp-3);
+}
+
+.add-block-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--admin-text-secondary);
+}
+
+.add-block-buttons {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
 }
 </style>
