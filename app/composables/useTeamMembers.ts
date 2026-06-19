@@ -15,7 +15,7 @@ export async function fetchTeamMembers(options?: { limit?: number }): Promise<Te
 
   let query = supabase
     .from('team_members')
-    .select('*')
+    .select('id, name, role, bio, avatar_url, email, linkedin_url, display_order, is_published, created_at')
     .eq('is_published', true)
     .order('display_order', { ascending: true })
 

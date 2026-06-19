@@ -160,7 +160,7 @@ const selectTestimonial = (index: number) => {
 .testimonials-title {
   font-family: var(--font-display);
   font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 900;
+  /* font-weight: 900; */
   line-height: var(--leading-tight);
   letter-spacing: -0.03em;
   margin: 0;

@@ -19,6 +19,7 @@ import {
   mediaObjectPath,
   uploadStorageObject
 } from '~/utils/storage'
+import { triggerRevalidation } from '~/utils/revalidate'
 
 const props = defineProps<{
   eventId?: string
@@ -230,15 +231,20 @@ const moveBlock = (index: number, direction: -1 | 1) => {
 }
 
 const addListItem = (blockIndex: number) => {
-  form.value.body[blockIndex].data.items.push('')
+  const block = form.value.body[blockIndex]
+  if (block?.data?.items) {
+    block.data.items.push('')
+  }
 }
 
 const removeListItem = (blockIndex: number, itemIndex: number) => {
-  if (form.value.body[blockIndex].data.items.length === 1) {
-    form.value.body[blockIndex].data.items[0] = ''
+  const block = form.value.body[blockIndex]
+  if (!block?.data?.items) return
+  if (block.data.items.length === 1) {
+    block.data.items[0] = ''
     return
   }
-  form.value.body[blockIndex].data.items.splice(itemIndex, 1)
+  block.data.items.splice(itemIndex, 1)
 }
 
 const save = async () => {
@@ -290,6 +296,7 @@ const save = async () => {
       if (error) throw error
       isDirty.value = false
       emit('saved', { id: data.id, slug: data.slug })
+      triggerRevalidation(['/', '/events', `/events/${data.slug}`])
     } else {
       const { error } = await supabase
         .from('events')
@@ -300,6 +307,7 @@ const save = async () => {
       toast.add({ title: 'Event updated successfully', color: 'success' })
       isDirty.value = false
       emit('saved', { id: props.eventId!, slug: form.value.slug })
+      triggerRevalidation(['/', '/events', `/events/${form.value.slug}`])
     }
 
     if (coverImageFile.value && previousCoverRef) {
@@ -331,6 +339,7 @@ const removeEvent = async () => {
     deleteOpen.value = false
     isDirty.value = false
     emit('deleted')
+    triggerRevalidation(['/', '/events', `/events/${form.value.slug}`])
   } catch (error) {
     toast.add({ title: 'Could not delete event', description: (error as Error).message, color: 'error' })
   } finally {

@@ -30,7 +30,7 @@ const declineCookies = () => {
       <div class="container cookie-banner__container">
         <div class="cookie-banner__content">
           <p class="cookie-banner__text">
-            We use cookies to improve your browsing experience on our institutional site, analyze traffic, and support enrollment workflows. By clicking "Accept All", you agree to our use of cookies.
+            We use cookies to improve your browsing experience on our institutional site, analyze traffic, and support workflows. By clicking "Accept All", you agree to our use of cookies.
           </p>
         </div>
         <div class="cookie-banner__actions">

@@ -82,12 +82,12 @@ const resetInterval = () => {
 
 // Touch event handlers for mobile swiping
 const handleTouchStart = (e: TouchEvent) => {
-  touchStartX.value = e.changedTouches[0].screenX
+  touchStartX.value = e.changedTouches[0]?.screenX || 0
   pauseInterval()
 }
 
 const handleTouchMove = (e: TouchEvent) => {
-  touchEndX.value = e.changedTouches[0].screenX
+  touchEndX.value = e.changedTouches[0]?.screenX || 0
 }
 
 const handleTouchEnd = () => {
@@ -159,7 +159,7 @@ onUnmounted(() => {
             
             <div class="ncat-content__top">
               <div class="ncat-content__badge">Sponsor</div>
-              <img src="/images/ncatlogo.png" alt="NCAT Logo" class="ncat-content__logo" />
+              <img src="/images/ncatlogo.webp" alt="NCAT Logo" class="ncat-content__logo" width="160" height="160" loading="lazy" />
             </div>
 
             <div class="ncat-content__middle">
@@ -169,7 +169,7 @@ onUnmounted(() => {
             </div>
             
             <div class="ncat-content__image-wrapper">
-              <img src="/images/plane-png.png" alt="Airplane" class="ncat-content__plane" />
+              <img src="/images/plane-png.webp" alt="Airplane" class="ncat-content__plane" width="400" height="231" loading="lazy" />
             </div>
 
             <div class="ncat-content__bottom">
@@ -342,7 +342,7 @@ onUnmounted(() => {
 .pro-title {
   font-family: var(--font-display);
   font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 900;
+  /* font-weight: 900; */
   line-height: var(--leading-tight);
   letter-spacing: -0.03em;
   margin: 0;
@@ -367,6 +367,7 @@ onUnmounted(() => {
 .pro-card--slider {
   grid-column: 2 / 4;
   grid-row: 1 / 2;
+  height: 430px;
 }
 
 .stat-1 { grid-column: 4 / 5; grid-row: 1 / 2; }
@@ -546,9 +547,8 @@ onUnmounted(() => {
    SLIDER SPECIFICS
    ═══════════════════════════════════════════════════ */
 .slider-content {
-  position: relative;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   overflow: hidden;
   z-index: 2;
 }
@@ -743,6 +743,7 @@ onUnmounted(() => {
   .pro-card--slider { 
     grid-column: 1 / -1; 
     grid-row: auto;
+    height: auto;
     min-height: 400px;
   }
   

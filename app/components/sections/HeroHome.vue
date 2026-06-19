@@ -3,8 +3,8 @@
   import TextReveal from '~/components/motion/TextReveal.vue'
   import { resolveTestimonialAvatarUrl } from '~/utils/testimonialAdmin'
 
-  import avatar1 from '~/assets/image/avatar1.webp'
-  import avatar2 from '~/assets/image/avatar2.jpg'
+  import avatar1 from '~/assets/image/avatar1_optimized.webp'
+  import avatar2 from '~/assets/image/avatar2_optimized.webp'
 
   // Badge color themes that cycle for each floating avatar
   const badgeThemes = [
@@ -47,7 +47,7 @@
       const shuffled = [...rows].sort(() => Math.random() - 0.5)
       return shuffled.slice(0, 4).map((row: any) => ({
         name: row.name?.split(' ')[0] || row.name, // Use first name only
-        avatarUrl: resolveTestimonialAvatarUrl(row.avatar_url),
+        avatarUrl: resolveTestimonialAvatarUrl(row.avatar_url, { width: 48, height: 48, quality: 85 }),
       }))
     },
     { default: () => [], lazy: true },
@@ -83,7 +83,7 @@
         <i class="bi bi-cursor-fill"></i>
         <div
           class="floating-avatar__badge"
-          :class="badgeThemes[index % badgeThemes.length].class"
+          :class="badgeThemes[index % badgeThemes.length]?.class"
         >
           <div class="avatar avatar--1">
             <img :src="alumni.avatarUrl" :alt="`${alumni.name}'s Avatar`" />
@@ -352,7 +352,7 @@
 .hero-home__title {
   font-family: var(--font-display);
   font-size: clamp(2.5rem, 8vw, 5.5rem);
-  font-weight: 900;
+  /* font-weight: 900; */
   line-height: 1;
   letter-spacing: var(--tracking-tight);
   margin-top: var(--space-2);
@@ -595,7 +595,7 @@
   }
   .hero-home__title{
     font-size: 3.3rem;
-    font-weight: 900!important;
+    /* font-weight: 900!important; */
     line-height: 1.1;
   }
   

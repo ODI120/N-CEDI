@@ -1,6 +1,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'Posts | Admin | N-CEDI' })
+import { triggerRevalidation } from '~/utils/revalidate'
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabase = useSupabaseClient() as any
@@ -106,6 +108,7 @@ const save = async () => {
     }
     modalOpen.value = false
     await refresh()
+    triggerRevalidation(['/', '/blog', `/blog/${form.value.slug}`])
   } catch (e) {
     toast.add({ title: 'Error', description: (e as Error).message, color: 'error' })
   } finally {
@@ -125,6 +128,7 @@ const remove = async () => {
     toast.add({ title: 'Deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
+    triggerRevalidation(['/', '/blog', `/blog/${target.value!.slug}`])
   } catch (e) {
     toast.add({ title: 'Error', description: (e as Error).message, color: 'error' })
   } finally {

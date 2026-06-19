@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { STORAGE_BUCKETS, uploadStorageObject, teamMemberAvatarObjectPath } from '~/utils/storage'
-import type { TeamMemberFormState, TeamMemberFormErrors } from '~/utils/teamAdmin'
 import { validateTeamMemberForm, rowToTeamMemberForm, formToTeamMemberPayload, resolveTeamMemberAvatarUrl, parseTeamMemberAvatarLocation, teamMemberStorageRefForRow } from '~/utils/teamAdmin'
 import type { TeamMember } from '~/types'
+import { triggerRevalidation } from '~/utils/revalidate'
+
 
 definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'Team Members | Admin | N-CEDI' })
@@ -190,6 +191,7 @@ const save = async () => {
 
     modalOpen.value = false
     await refresh()
+    triggerRevalidation(['/about'])
   } catch (e: any) {
     toast.add({ title: 'Error', description: e.message, color: 'error' })
   } finally {
@@ -224,6 +226,7 @@ const remove = async () => {
     toast.add({ title: 'Team member deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
+    triggerRevalidation(['/about'])
   } catch (e: any) {
     toast.add({ title: 'Error', description: e.message, color: 'error' })
   } finally {
@@ -247,7 +250,7 @@ const remove = async () => {
       <div class="ap-header__actions">
         <button
           class="btn btn-ghost"
-          @click="refresh"
+          @click="() => refresh()"
         >
           <UIcon name="i-lucide-refresh-cw" />Refresh
         </button>

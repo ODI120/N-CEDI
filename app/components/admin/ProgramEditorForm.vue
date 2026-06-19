@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { onBeforeRouteLeave } from 'vue-router'
-import { nextTick } from 'vue'
+import { nextTick, ref, computed, onMounted, onUnmounted, watch, onBeforeUnmount } from 'vue'
 import {
   createEmptyProgramForm,
   formToDbPayload,
@@ -21,6 +21,7 @@ import {
   programMediaObjectPath,
   uploadStorageObject
 } from '~/utils/storage'
+import { triggerRevalidation } from '~/utils/revalidate'
 
 const props = defineProps<{
   programId?: string
@@ -319,6 +320,7 @@ const save = async () => {
 
       isDirty.value = false
       emit('saved', { id: data.id, slug: data.slug })
+      triggerRevalidation(['/', '/programs', `/programs/${data.slug}`])
     } else {
       const { data, error } = await supabase
         .from('programs')
@@ -333,6 +335,7 @@ const save = async () => {
       toast.add({ title: 'Skill track updated', color: 'success' })
       isDirty.value = false
       emit('saved', { id: data.id, slug: data.slug })
+      triggerRevalidation(['/', '/programs', `/programs/${data.slug}`])
     }
 
     if (coverImageFile.value && previousCoverRef) {
@@ -364,6 +367,7 @@ const removeProgram = async () => {
     deleteOpen.value = false
     isDirty.value = false
     emit('deleted')
+    triggerRevalidation(['/', '/programs', `/programs/${form.value.slug}`])
   } catch (error: any) {
     const message = error?.message || 'Unknown error'
     toast.add({ title: 'Could not delete program', description: message, color: 'error' })

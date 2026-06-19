@@ -5,6 +5,8 @@ import {
   getStoragePublicUrl,
   resolveStorageRef,
   type StorageBucketId,
+  type ImageTransformOptions,
+  appendTransformParams,
 } from '~/utils/storage'
 
 export interface TestimonialDbRow {
@@ -65,11 +67,10 @@ export function parseTestimonialAvatarLocation(
   return null
 }
 
-/**
- * Resolve testimonial avatar for display. Uses the Supabase client when available,
- * then manual public URL construction.
- */
-export function resolveTestimonialAvatarUrl(ref?: string | null): string {
+export function resolveTestimonialAvatarUrl(
+  ref?: string | null,
+  options?: ImageTransformOptions,
+): string {
   if (!ref?.trim()) return ''
 
   const trimmed = ref.trim()
@@ -88,16 +89,16 @@ export function resolveTestimonialAvatarUrl(ref?: string | null): string {
     try {
       const client = useSupabaseClient()
       const { data } = client.storage.from(location.bucket).getPublicUrl(location.path)
-      if (data.publicUrl) return data.publicUrl
+      if (data.publicUrl) return appendTransformParams(data.publicUrl, options)
     } catch {
       // Outside Nuxt setup — build URL from runtime config
     }
 
-    const built = getStoragePublicUrl(location.bucket, location.path)
+    const built = getStoragePublicUrl(location.bucket, location.path, options)
     if (built) return built
   }
 
-  return resolveStorageRef(trimmed) || trimmed
+  return resolveStorageRef(trimmed, options) || trimmed
 }
 
 export function mapTestimonialRow(row: TestimonialDbRow): Testimonial {

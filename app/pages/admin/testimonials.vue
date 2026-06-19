@@ -17,6 +17,7 @@ import {
   STORAGE_BUCKETS,
   uploadStorageObject
 } from '~/utils/storage'
+import { triggerRevalidation } from '~/utils/revalidate'
 
 definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'Testimonials | Admin | N-CEDI' })
@@ -175,6 +176,7 @@ const save = async () => {
     avatarFile.value = null
     modalOpen.value = false
     await refresh()
+    triggerRevalidation(['/'])
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Save failed'
     toast.add({ title: 'Error saving testimonial', description: message, color: 'error' })
@@ -198,6 +200,7 @@ const remove = async () => {
     toast.add({ title: 'Testimonial deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
+    triggerRevalidation(['/'])
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Delete failed'
     toast.add({ title: 'Error deleting testimonial', description: message, color: 'error' })

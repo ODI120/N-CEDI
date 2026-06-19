@@ -184,7 +184,7 @@ const handleMouseMove = (e: MouseEvent) => {
 .section-timeline__title {
   font-family: var(--font-display);
   font-size: var(--text-3xl);
-  font-weight: 800;
+  /* font-weight: 800; */
   color: var(--color-brand-primary);
   margin-top: var(--space-3);
   line-height: var(--leading-tight);
@@ -323,7 +323,7 @@ const handleMouseMove = (e: MouseEvent) => {
 .timeline__item-title {
   font-family: var(--font-display);
   font-size: var(--text-lg);
-  font-weight: 800;
+  /* font-weight: 800; */
   color: var(--color-brand-primary);
   margin-bottom: var(--space-2);
   line-height: var(--leading-tight);

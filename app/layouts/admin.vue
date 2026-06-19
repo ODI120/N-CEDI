@@ -41,6 +41,11 @@ watch(() => route.fullPath, () => {
   </div>
 </template>
 
+<style>
+/* Admin-specific styles — only loaded on /admin/** routes */
+@import "~/assets/css/admin.css";
+</style>
+
 <style scoped>
 .admin-shell {
   min-height: 100vh;

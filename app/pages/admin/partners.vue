@@ -18,6 +18,7 @@ import {
   STORAGE_BUCKETS,
   uploadStorageObject
 } from '~/utils/storage'
+import { triggerRevalidation } from '~/utils/revalidate'
 
 definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'Partners | Admin | N-CEDI' })
@@ -156,13 +157,13 @@ const save = async () => {
     const payload = formToPartnerPayload(form.value)
 
     if (mode.value === 'add') {
-      const { error } = await supabase.from('partners').insert([payload])
+      const { error } = await (supabase.from('partners') as any).insert([payload])
       if (error) throw error
       toast.add({ title: 'Partner created', color: 'success' })
     } else {
       const previousRef = target.value ? partnerLogoStorageRefForRow(target.value) : null
-      const { error } = await supabase
-        .from('partners')
+      const { error } = await (supabase
+        .from('partners') as any)
         .update(payload)
         .eq('id', target.value!.id)
       if (error) throw error
@@ -180,6 +181,7 @@ const save = async () => {
     logoFile.value = null
     modalOpen.value = false
     await refresh()
+    triggerRevalidation(['/', '/partners'])
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Save failed'
     toast.add({ title: 'Error saving partner', description: message, color: 'error' })
@@ -203,6 +205,7 @@ const remove = async () => {
     toast.add({ title: 'Partner deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
+    triggerRevalidation(['/', '/partners'])
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Delete failed'
     toast.add({ title: 'Error deleting partner', description: message, color: 'error' })

@@ -18,6 +18,7 @@ import {
   STORAGE_BUCKETS,
   uploadStorageObject
 } from '~/utils/storage'
+import { triggerRevalidation } from '~/utils/revalidate'
 
 definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'Gallery | Admin | N-CEDI' })
@@ -70,7 +71,7 @@ const { data: galleryCategories } = useAsyncData('admin-gallery-categories', () 
 { default: () => [] }
 )
 
-const { data: programOptions } = useAsyncData('admin-gallery-programs', async () => {
+const { data: programOptions } = useAsyncData<any[]>('admin-gallery-programs', async () => {
   const { data: rows, error } = await supabase
     .from('programs')
     .select('id, title')
@@ -178,7 +179,7 @@ const save = async () => {
     const payload = formToGalleryPayload(form.value)
 
     if (mode.value === 'add') {
-      const { error } = await supabase.from('gallery_items').insert([payload])
+      const { error } = await (supabase.from('gallery_items') as any).insert([payload])
       if (error) throw error
       toast.add({ title: 'Gallery item created', color: 'success' })
     } else {
@@ -189,8 +190,8 @@ const save = async () => {
       const newRef
         = form.value.mediaType === 'image' ? galleryStorageRefForRow({ media_url: form.value.mediaUrl, media_type: 'image' }) : null
 
-      const { error } = await supabase
-        .from('gallery_items')
+      const { error } = await (supabase
+        .from('gallery_items') as any)
         .update(payload)
         .eq('id', target.value!.id)
       if (error) throw error
@@ -205,6 +206,7 @@ const save = async () => {
     imageFile.value = null
     modalOpen.value = false
     await refresh()
+    triggerRevalidation(['/', '/gallery'])
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Save failed'
     toast.add({ title: 'Error saving gallery item', description: message, color: 'error' })
@@ -228,6 +230,7 @@ const remove = async () => {
     toast.add({ title: 'Gallery item deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
+    triggerRevalidation(['/', '/gallery'])
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Delete failed'
     toast.add({ title: 'Error deleting item', description: message, color: 'error' })
