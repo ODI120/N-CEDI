@@ -196,7 +196,7 @@ const previewHref = (row: Row) =>
       empty-title="No posts found"
     >
       <template #cell-title="{ row }">
-        <span class="font-semibold">{{ row.title }}</span>
+        <span>{{ row.title }}</span>
       </template>
       <template #cell-category="{ row }">
         {{ row.categories?.name || 'Uncategorized' }}

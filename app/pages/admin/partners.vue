@@ -315,7 +315,7 @@ const remove = async () => {
         </div>
       </template>
       <template #cell-name="{ row }">
-        <span class="font-semibold">{{ row.name }}</span>
+        <span>{{ row.name }}</span>
         <a
           v-if="row.website_url"
           :href="row.website_url"

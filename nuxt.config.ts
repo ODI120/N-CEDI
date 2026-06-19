@@ -36,10 +36,16 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'en' },
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
+      meta: [
+        { name: 'theme-color', content: '#0256ff' }
+      ],
       link: [
-        { rel: 'icon', type: 'image/png', href: '/logo.png' },
-        { rel: 'apple-touch-icon', href: '/logo.png' },
-        // Preload critical LCP assets
+        // Favicons — generated from logo.webp at correct sizes
+        { rel: 'icon', type: 'image/png', href: '/favicon-32x32.png', sizes: '32x32' },
+        { rel: 'icon', type: 'image/png', href: '/favicon-16x16.png', sizes: '16x16' },
+        { rel: 'shortcut icon', href: '/favicon-32x32.png' },
+        { rel: 'apple-touch-icon', type: 'image/png', href: '/apple-touch-icon.png', sizes: '180x180' },
+        // Preload critical LCP assets (site navbar logo)
         { rel: 'preload', as: 'image', href: '/logo.webp', type: 'image/webp' },
         // Async Bootstrap Icons — prevents render-blocking
         { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css', media: 'print', onload: "this.media='all'" },

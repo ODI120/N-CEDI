@@ -282,7 +282,7 @@ const remove = async () => {
         </div>
       </template>
       <template #cell-name="{ row }">
-        <span class="font-semibold">{{ row.name }}</span>
+        <span>{{ row.name }}</span>
       </template>
       <template #cell-role="{ row }">
         <span class="text-secondary">{{ row.role || '—' }}</span>

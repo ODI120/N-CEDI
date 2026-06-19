@@ -55,7 +55,7 @@ h6,
 .text-h6 {
   font-family: var(--font-display);
   font-size: var(--text-lg);
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: var(--tracking-wide);
   line-height: var(--leading-snug);
 }

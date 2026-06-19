@@ -95,11 +95,8 @@ export function useTestimonials(options: FetchTestimonialsOptions = {}) {
 export function useHomepageTestimonials(limit = 6) {
   const { data, pending, error, refresh } = useAsyncData<Testimonial[]>(
     `testimonials-home-${limit}`,
-    async () => {
-      const testimonials = await fetchPublishedTestimonials({ limit })
-      return testimonials
-    },
-    { default: () => [], lazy: true },
+    () => fetchPublishedTestimonials({ limit }),
+    { default: () => [] },
   )
 
   return { testimonials: data, pending, error, refresh }

@@ -3,8 +3,7 @@
   import TextReveal from '~/components/motion/TextReveal.vue'
   import { resolveTestimonialAvatarUrl } from '~/utils/testimonialAdmin'
 
-  import avatar1 from '~/assets/image/avatar1_optimized.webp'
-  import avatar2 from '~/assets/image/avatar2_optimized.webp'
+
 
   // Badge color themes that cycle for each floating avatar
   const badgeThemes = [
@@ -19,13 +18,7 @@
     avatarUrl: string
   }
 
-  // Static fallbacks in case no testimonials have avatar images
-  const fallbackAvatars: FloatingAlumni[] = [
-    { name: 'Aisha', avatarUrl: avatar1 },
-    { name: 'Tunde', avatarUrl: avatar2 },
-    { name: 'David', avatarUrl: avatar2 },
-    { name: 'Chioma', avatarUrl: avatar1 },
-  ]
+
 
   // Fetch 4 random published testimonials that have avatars
   const { data: fetchedAvatars } = useAsyncData<FloatingAlumni[]>(
@@ -43,8 +36,11 @@
 
       if (error || !rows?.length) return []
 
+      // Filter out rows with empty or whitespace avatar_url
+      const validRows = rows.filter((row: any) => row.avatar_url?.trim())
+
       // Shuffle and pick up to 4
-      const shuffled = [...rows].sort(() => Math.random() - 0.5)
+      const shuffled = [...validRows].sort(() => Math.random() - 0.5)
       return shuffled.slice(0, 4).map((row: any) => ({
         name: row.name?.split(' ')[0] || row.name, // Use first name only
         avatarUrl: resolveTestimonialAvatarUrl(row.avatar_url, { width: 48, height: 48, quality: 85 }),
@@ -53,12 +49,8 @@
     { default: () => [], lazy: true },
   )
 
-  // Use fetched alumni when available, otherwise show fallback avatars
-  const floatingAvatars = computed(() =>
-    fetchedAvatars.value && fetchedAvatars.value.length > 0
-      ? fetchedAvatars.value
-      : fallbackAvatars
-  )
+  // Use fetched alumni
+  const floatingAvatars = computed(() => fetchedAvatars.value || [])
 </script>
 
 <template>

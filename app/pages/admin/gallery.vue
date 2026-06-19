@@ -328,7 +328,7 @@ const remove = async () => {
         </div>
       </template>
       <template #cell-title="{ row }">
-        <span class="font-semibold">{{ row.title || 'Untitled' }}</span>
+        <span >{{ row.title || 'Untitled' }}</span>
       </template>
       <template #cell-media_type="{ row }">
         <span class="badge badge-blue">{{ row.media_type }}</span>

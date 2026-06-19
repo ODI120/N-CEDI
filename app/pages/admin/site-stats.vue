@@ -245,7 +245,7 @@ const remove = async () => {
         </span>
       </template>
       <template #cell-label="{ row }">
-        <span class="font-semibold">{{ row.label }}</span>
+        <span >{{ row.label }}</span>
       </template>
       <template #cell-icon="{ row }">
         <span
