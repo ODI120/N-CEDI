@@ -15,7 +15,7 @@
       id: '1',
       name: 'Federal Ministry of Innovation, Science and Technology',
       acronym: 'FMIST',
-      logoUrl: '/partners/fmict.png',
+      logoUrl: '',
       description: 'Federal agency driving Nigeria\'s science, technology and innovation policy framework.',
       icon: 'bi-bank2',
       tier: 'platinum'
@@ -24,7 +24,7 @@
       id: '2',
       name: 'Nigerian College of Aviation Technology',
       acronym: 'NCAT',
-      logoUrl: '/partners/ncat.png',
+      logoUrl: '/images/ncatlogo.webp',
       description: 'Pioneering AI research and innovation to advance Nigeria\'s digital transformation.',
       icon: 'bi-rocket-takeoff',
       tier: 'platinum'
@@ -33,7 +33,7 @@
       id: '3',
       name: 'National Board for Technical Education',
       acronym: 'NBTE',
-      logoUrl: '/partners/nbte.png',
+      logoUrl: '',
       description: 'Regulating and setting standards for technical and vocational education in Nigeria.',
       icon: 'bi-mortarboard',
       tier: 'platinum'
@@ -120,7 +120,7 @@
           <div class="partner-card__body">
             <!-- Logo area -->
             <div class="partner-card__logo-wrapper">
-              <img v-if="partner.logoUrl" :src="partner.logoUrl" :alt="partner.name" class="partner-card__logo" />
+              <img v-if="partner.logoUrl" :src="partner.logoUrl" :alt="partner.name" class="partner-card__logo" width="96" height="96" loading="lazy" />
               <i v-else :class="['bi', partner.icon || 'bi-bank2']" aria-hidden="true" class="partner-card__fallback-icon"></i>
             </div>
 
@@ -220,7 +220,7 @@
 .partners-headline {
   font-family: var(--font-display);
   font-size: var(--text-3xl);
-  font-weight: 900;
+  /* font-weight: 900; */
   color: var(--color-brand-primary);
   line-height: var(--leading-tight);
   margin: 0 0 var(--space-5) 0;

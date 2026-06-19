@@ -8,6 +8,8 @@
  * Example: program_media:woodwork-furniture/cover-abc.jpg
  */
 
+import { processImageBeforeUpload } from './imageProcessing'
+
 export interface ImageTransformOptions {
   width?: number
   height?: number
@@ -95,8 +97,11 @@ export function getSupabaseProjectUrl(): string {
   return ''
 }
 
-function appendTransformParams(url: string, options?: ImageTransformOptions): string {
+export function appendTransformParams(url: string, options?: ImageTransformOptions): string {
   if (!options) return url
+
+  const isImage = /\.(jpg|jpeg|png|webp|avif|gif|svg|tiff|bmp)($|\?)/i.test(url)
+  if (!isImage) return url
 
   const params = new URLSearchParams()
   if (options.width) params.set('width', String(options.width))
@@ -106,7 +111,12 @@ function appendTransformParams(url: string, options?: ImageTransformOptions): st
   const qs = params.toString()
   if (!qs) return url
 
-  return `${url}${url.includes('?') ? '&' : '?'}${qs}`
+  let transformedUrl = url
+  if (url.includes('/storage/v1/object/public/')) {
+    transformedUrl = url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/')
+  }
+
+  return `${transformedUrl}${transformedUrl.includes('?') ? '&' : '?'}${qs}`
 }
 
 /** Public object URL for a bucket + path (uses Supabase client when available). */
@@ -190,9 +200,26 @@ export async function uploadStorageObject(
   file: File,
   options: { upsert?: boolean } = {},
 ): Promise<string> {
-  const objectPath = path.replace(/^\/+/, '')
-  const { error } = await client.storage.from(bucket).upload(objectPath, file, {
-    cacheControl: '3600',
+  let processedFile = file
+  let objectPath = path.replace(/^\/+/, '')
+
+  try {
+    processedFile = await processImageBeforeUpload(file, bucket)
+    // If the file extension changed to webp, update the objectPath extension
+    if (processedFile.type === 'image/webp' && !objectPath.endsWith('.webp')) {
+      const lastDot = objectPath.lastIndexOf('.')
+      if (lastDot !== -1) {
+        objectPath = objectPath.slice(0, lastDot) + '.webp'
+      } else {
+        objectPath = objectPath + '.webp'
+      }
+    }
+  } catch (e) {
+    console.warn('[storage] Client-side image processing failed, falling back to original:', e)
+  }
+
+  const { error } = await client.storage.from(bucket).upload(objectPath, processedFile, {
+    cacheControl: '2592000', // 30 days cache for optimized uploads
     upsert: options.upsert ?? false,
   })
 

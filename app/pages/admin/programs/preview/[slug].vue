@@ -1,10 +1,11 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' })
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { mapProgramDetail } from '~/composables/usePrograms'
 import { rowToProgramForm, type ProgramDbRow } from '~/utils/programAdmin'
 import HeroProgram from '~/components/sections/HeroProgram.vue'
 import RichTextRenderer from '~/components/cms/RichTextRenderer.vue'
+
+definePageMeta({ layout: 'admin' })
 
 const route = useRoute()
 const slug = route.params.slug as string
@@ -24,7 +25,7 @@ const { data: row, error } = await useAsyncData(`admin-program-preview-${slug}`,
 if (error.value || !row.value) {
   throw createError({
     statusCode: error.value ? 503 : 404,
-    statusMessage: error.value ? 'Unable to load preview' : `Program "${slug}" not found`,
+    statusMessage: error.value ? 'Unable to load preview' : `Program "${slug}" not found`
   })
 }
 
@@ -41,14 +42,20 @@ useSeoMeta({ title: `Preview: ${program.value.title} | Admin | N-CEDI` })
         <span class="ap-eyebrow">Draft preview</span>
         <h1>{{ program.title }}</h1>
         <p class="admin-preview__meta">
-          <span class="badge" :class="formSnapshot.isPublished ? 'badge-green' : 'badge-gray'">
+          <span
+            class="badge"
+            :class="formSnapshot.isPublished ? 'badge-green' : 'badge-gray'"
+          >
             {{ formSnapshot.isPublished ? 'Published' : 'Draft' }}
           </span>
           <code>/programs/{{ program.slug }}</code>
         </p>
       </div>
       <div class="admin-preview__actions">
-        <NuxtLink :to="`/admin/programs/${row?.id}`" class="btn btn-ghost">
+        <NuxtLink
+          :to="`/admin/programs/${row?.id}`"
+          class="btn btn-ghost"
+        >
           <UIcon name="i-lucide-edit-3" />Edit
         </NuxtLink>
         <NuxtLink
@@ -66,18 +73,38 @@ useSeoMeta({ title: `Preview: ${program.value.title} | Admin | N-CEDI` })
       <HeroProgram :program="program" />
 
       <div class="admin-preview__content container">
-        <RichTextRenderer v-if="program.body?.length" :body="program.body" />
+        <RichTextRenderer
+          v-if="program.body?.length"
+          :body="program.body"
+        />
 
-        <section v-if="program.outcomes?.length" class="admin-preview__section">
+        <section
+          v-if="program.outcomes?.length"
+          class="admin-preview__section"
+        >
           <h2>Key learning outcomes</h2>
           <ul>
-            <li v-for="(outcome, index) in program.outcomes" :key="index">{{ outcome }}</li>
+            <li
+              v-for="(outcome, index) in program.outcomes"
+              :key="index"
+            >
+              {{ outcome }}
+            </li>
           </ul>
         </section>
 
-        <section v-if="program.labExperience" class="admin-preview__section">
+        <section
+          v-if="program.labExperience"
+          class="admin-preview__section"
+        >
           <h2>Practical lab experience</h2>
-          <p>{{ program.labExperience }}</p>
+          <RichTextRenderer
+            v-if="Array.isArray(program.labExperience)"
+            :body="program.labExperience"
+          />
+          <p v-else>
+            {{ program.labExperience }}
+          </p>
         </section>
       </div>
     </div>

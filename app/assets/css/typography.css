@@ -8,7 +8,7 @@
 .text-hero {
   font-family: var(--font-display);
   font-size: var(--text-hero);
-  font-weight: 800;
+  /* font-weight: 800; */
   letter-spacing: var(--tracking-tight);
   line-height: var(--leading-tight);
 }
@@ -17,7 +17,7 @@ h1,
 .text-h1 {
   font-family: var(--font-display);
   font-size: var(--text-4xl);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: var(--tracking-tight);
   line-height: var(--leading-tight);
 }
@@ -35,7 +35,7 @@ h3,
 .text-h3 {
   font-family: var(--font-display);
   font-size: var(--text-2xl);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: var(--tracking-normal);
   line-height: var(--leading-snug);
 }
@@ -55,7 +55,7 @@ h6,
 .text-h6 {
   font-family: var(--font-display);
   font-size: var(--text-lg);
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: var(--tracking-wide);
   line-height: var(--leading-snug);
 }

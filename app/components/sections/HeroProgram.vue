@@ -277,7 +277,7 @@ const coverSrc = useProgramCoverSrc(() => props.program.coverImageUrl)
 .hero-program__title {
   font-family: var(--font-display);
   font-size: clamp(2rem, 5vw, 3.2rem);
-  font-weight: 900;
+  /* font-weight: 900; */
   color: #ffffff;
   margin-top: 0;
   margin-bottom: var(--space-4);

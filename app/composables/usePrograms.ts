@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * N-CEDI — usePrograms
  *
@@ -16,10 +17,10 @@ export interface ProgramCard {
 
 export interface ProgramDetail extends ProgramCard {
   body?: Record<string, unknown>[]
-  requirements?: string
+  requirements?: string | Record<string, unknown>[]
   outcomes?: string[]
   overview?: string
-  labExperience?: string
+  labExperience?: string | Record<string, unknown>[]
   galleryUrls?: string[]
   metaTitle?: string
   metaDescription?: string
@@ -61,8 +62,22 @@ export function mapProgramCard(row: ProgramRow): ProgramCard {
     subtitle: row.subtitle ?? undefined,
     description: row.description ?? '',
     coverImageUrl: row.cover_image_url?.trim() ?? '',
-    isFeatured: row.is_featured ?? false,
+    isFeatured: row.is_featured ?? false
   }
+}
+
+function parseBlockField(value?: string | null): Record<string, any>[] | string | undefined {
+  if (!value) return undefined
+  const trimmed = value.trim()
+  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+    try {
+      const parsed = JSON.parse(trimmed)
+      if (Array.isArray(parsed)) return parsed
+    } catch {
+      // Fallback to raw string
+    }
+  }
+  return value
 }
 
 export function mapProgramDetail(row: ProgramRow): ProgramDetail {
@@ -71,26 +86,26 @@ export function mapProgramDetail(row: ProgramRow): ProgramDetail {
     : row.overview
       ? [
           { type: 'heading', data: { level: 2, text: 'Program Overview' } },
-          { type: 'paragraph', data: { text: row.overview } },
+          { type: 'paragraph', data: { text: row.overview } }
         ]
       : row.description
         ? [
             { type: 'heading', data: { level: 2, text: 'Program Overview' } },
-            { type: 'paragraph', data: { text: row.description } },
+            { type: 'paragraph', data: { text: row.description } }
           ]
         : []
 
   return {
     ...mapProgramCard(row),
     body,
-    requirements: row.requirements ?? undefined,
+    requirements: parseBlockField(row.requirements),
     outcomes: row.outcomes?.length ? row.outcomes : undefined,
     overview: row.overview ?? undefined,
-    labExperience: row.lab_experience ?? undefined,
+    labExperience: parseBlockField(row.lab_experience),
     galleryUrls: row.gallery_urls?.length ? [...row.gallery_urls] : undefined,
     metaTitle: row.meta_title ?? undefined,
     metaDescription: row.meta_description ?? undefined,
-    updatedAt: row.updated_at ?? undefined,
+    updatedAt: row.updated_at ?? undefined
   }
 }
 
@@ -131,18 +146,18 @@ export async function fetchHomepagePrograms(limit = 6): Promise<ProgramCard[]> {
     fetchPublishedPrograms({
       featuredOnly: true,
       limit,
-      orderBy: 'updated_at',
+      orderBy: 'updated_at'
     }),
     fetchPublishedPrograms({
       limit: limit * 2,
-      orderBy: 'updated_at',
-    }),
+      orderBy: 'updated_at'
+    })
   ])
 
   if (featured.length >= limit) return featured
 
-  const seen = new Set(featured.map((p) => p.slug))
-  const filler = recent.filter((p) => !seen.has(p.slug))
+  const seen = new Set(featured.map(p => p.slug))
+  const filler = recent.filter(p => !seen.has(p.slug))
 
   return [...featured, ...filler].slice(0, limit)
 }
@@ -151,7 +166,7 @@ export function usePrograms(options: UseProgramsOptions = {}) {
   const { data, pending, error, refresh } = useAsyncData<ProgramCard[]>(
     buildCacheKey(options),
     () => fetchPublishedPrograms(options),
-    { default: () => [] },
+    { default: () => [] }
   )
 
   return { programs: data, pending, error, refresh }
@@ -161,7 +176,7 @@ export function useHomepagePrograms(limit = 6) {
   const { data, pending, error, refresh } = useAsyncData<ProgramCard[]>(
     `programs-home-${limit}`,
     () => fetchHomepagePrograms(limit),
-    { default: () => [] },
+    { default: () => [] }
   )
 
   return { programs: data, pending, error, refresh }
@@ -184,7 +199,7 @@ export function useProgram(slug: string) {
         throw createError({
           statusCode: 503,
           statusMessage: 'Unable to load program',
-          message: sbError.message,
+          message: sbError.message
         })
       }
 
@@ -192,7 +207,7 @@ export function useProgram(slug: string) {
 
       return mapProgramDetail(row as ProgramRow)
     },
-    { default: () => null },
+    { default: () => null }
   )
 
   return { program: data, pending, error, refresh }
@@ -206,11 +221,11 @@ export function useRelatedPrograms(currentSlug: string, limit = 2) {
       const related = await fetchPublishedPrograms({
         excludeSlug: currentSlug,
         limit,
-        orderBy: 'updated_at',
+        orderBy: 'updated_at'
       })
       return related
     },
-    { default: () => [] },
+    { default: () => [] }
   )
 
   return { programs: data, pending, error, refresh }

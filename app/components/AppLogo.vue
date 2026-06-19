@@ -1,9 +1,11 @@
 <template>
   <span class="app-logo" aria-hidden="true">
     <img
-      src="/logo.png"
+      src="/logo.webp"
       alt=""
       class="app-logo__image"
+      width="42"
+      height="42"
       loading="eager"
       decoding="async"
     >

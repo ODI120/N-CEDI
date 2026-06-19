@@ -335,10 +335,15 @@
 .ncat-btn{
   background-color: #6B59FF18;
   border-radius: 100px;
-  padding: 10px 14px;
+  padding: 6px 14px;
   border: 1px solid #6B59FF18;
   color: #6B59FF;
   transition: all 0.2s ease;
+  font-weight: 600;
+  font-size: 14px;
+}
+.ncat-btn i{
+  margin-left: 5px;
 }
 .ncat-btn:hover{
   background-color: #6B59FF;

@@ -36,14 +36,17 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'en' },
       charset: 'utf-8',
       viewport: 'width=device-width, initial-scale=1',
+      meta: [
+        { name: 'theme-color', content: '#0256ff' }
+      ],
       link: [
-        { rel: 'icon', type: 'image/png', href: '/logo.png' },
-        { rel: 'apple-touch-icon', href: '/logo.png' },
-        // Preconnect to font origins for faster resolution
-        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-        // Async font loading — prevents render-blocking
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100;0,400;0,700;1,100;1,400;1,700&family=DM+Sans:wght@400;700&family=Sora:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap', media: 'print', onload: "this.media='all'" },
+        // Favicons — generated from logo.webp at correct sizes
+        { rel: 'icon', type: 'image/png', href: '/favicon-32x32.png', sizes: '32x32' },
+        { rel: 'icon', type: 'image/png', href: '/favicon-16x16.png', sizes: '16x16' },
+        { rel: 'shortcut icon', href: '/favicon-32x32.png' },
+        { rel: 'apple-touch-icon', type: 'image/png', href: '/apple-touch-icon.png', sizes: '180x180' },
+        // Preload critical LCP assets (site navbar logo)
+        { rel: 'preload', as: 'image', href: '/logo.webp', type: 'image/webp' },
         // Async Bootstrap Icons — prevents render-blocking
         { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css', media: 'print', onload: "this.media='all'" },
         // DNS prefetch for Supabase API
@@ -71,7 +74,7 @@ export default defineNuxtConfig({
     '/about': { prerender: true },
     '/programs/**': { isr: 900 },
     '/events/**': { isr: 1800 },
-    '/blog/**': { isr: 3600 },
+    '/blog/**': { isr: 1800 },
     '/gallery': { isr: 600 },
     '/partners': { isr: 600 },
     '/admin/**': { ssr: false }
@@ -91,10 +94,10 @@ export default defineNuxtConfig({
 
   fonts: {
     families: [
-      { name: 'Inter', provider: 'google' },
-      { name: 'Sora', provider: 'google' },
-      { name: 'DM Sans', provider: 'google' },
-      { name: 'Space Grotesk', provider: 'google' }
+      { name: 'Lato', provider: 'local' },
+      { name: 'JetBrains Mono', provider: 'local' },
+      // { name: 'Inter', provider: 'local' },
+      // { name: 'Space Grotesk', provider: 'local' }
     ]
   },
 

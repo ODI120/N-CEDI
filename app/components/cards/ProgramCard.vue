@@ -225,7 +225,7 @@ onUnmounted(() => {
 .program-card-pro__title {
   font-family: var(--font-display);
   font-size: var(--text-xl);
-  font-weight: 800;
+  /* font-weight: 800; */
   color: var(--color-brand-primary);
   margin-top: 0;
   margin-bottom: var(--space-2);

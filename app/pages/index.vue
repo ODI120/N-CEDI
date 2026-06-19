@@ -15,7 +15,8 @@ const { programs } = await useHomepagePrograms(6)
 const { partners: homepagePartners } = useHomepagePartners(6)
 const displayPartners = useResolvedSectionPartners(homepagePartners)
 
-const { testimonials, pending: testimonialsPending } = useHomepageTestimonials(6)
+// Testimonials: await SSR so they render instantly — no client-side loading delay
+const { testimonials } = await useHomepageTestimonials(6)
 
 </script>
 
@@ -36,7 +37,7 @@ const { testimonials, pending: testimonialsPending } = useHomepageTestimonials(6
     </MotionWrapper>
 
     <MotionWrapper variant="fadeUp" :delay="0.1">
-      <SectionTestimonials :testimonials="testimonials ?? []" :loading="testimonialsPending" />
+      <SectionTestimonials :testimonials="testimonials ?? []" />
     </MotionWrapper>
 
     <MotionWrapper variant="fadeUp" :delay="0.1">

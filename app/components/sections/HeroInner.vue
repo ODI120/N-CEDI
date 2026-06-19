@@ -166,7 +166,7 @@
 .hero-inner__title {
   font-family: var(--font-display);
   font-size: var(--text-3xl);
-  font-weight: 900;
+  /* font-weight: 600; */
   color: var(--color-text-light);
   margin-top: 0;
   margin-bottom: var(--space-4);

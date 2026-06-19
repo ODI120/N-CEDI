@@ -1,179 +1,194 @@
 <script setup lang="ts">
-  import { computed, ref, onMounted, onUnmounted } from 'vue'
-  import { useRoute, createError } from '#app'
-  import HeroProgram from '~/components/sections/HeroProgram.vue'
-  import RichTextRenderer from '~/components/cms/RichTextRenderer.vue'
-  import MotionWrapper from '~/components/motion/MotionWrapper.vue'
-  import ProgramCard from '~/components/cards/ProgramCard.vue'
-  import { useProgramPageSeo } from '~/composables/useSeo'
-  import { mapProgramDetail, fetchPublishedPrograms } from '~/composables/usePrograms'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { useRoute, createError } from '#app'
+import HeroProgram from '~/components/sections/HeroProgram.vue'
+import RichTextRenderer from '~/components/cms/RichTextRenderer.vue'
+import MotionWrapper from '~/components/motion/MotionWrapper.vue'
+import ProgramCard from '~/components/cards/ProgramCard.vue'
+import { useProgramPageSeo } from '~/composables/useSeo'
+import { mapProgramDetail, fetchPublishedPrograms } from '~/composables/usePrograms'
 
-  const route = useRoute()
-  const slug = route.params.slug as string
+const route = useRoute()
+const slug = route.params.slug as string
 
-  const { data: program, pending, error } = await useAsyncData(`program-${slug}`, async () => {
-    const { client } = useSupabase()
-    const { data: row, error: sbError } = await client
-      .from('programs')
-      .select('*')
-      .eq('slug', slug)
-      .eq('is_published', true)
-      .maybeSingle()
+const { data: program, pending, error } = await useAsyncData(`program-${slug}`, async () => {
+  const { client } = useSupabase()
+  const { data: row, error: sbError } = await client
+    .from('programs')
+    .select('*')
+    .eq('slug', slug)
+    .eq('is_published', true)
+    .maybeSingle()
 
-    if (sbError) throw sbError
-    if (!row) return null
-    return mapProgramDetail(row as any)
+  if (sbError) throw sbError
+  if (!row) return null
+  return mapProgramDetail(row as any)
+})
+
+const { data: relatedPrograms } = await useAsyncData(`programs-related-${slug}`, () => {
+  return fetchPublishedPrograms({
+    excludeSlug: slug,
+    limit: 2,
+    orderBy: 'updated_at'
   })
+}, { default: () => [] })
 
-  const { data: relatedPrograms } = await useAsyncData(`programs-related-${slug}`, () => {
-    return fetchPublishedPrograms({
-      excludeSlug: slug,
-      limit: 2,
-      orderBy: 'updated_at',
-    })
-  }, { default: () => [] })
+if (error.value) {
+  throw error.value
+}
 
-  if (error.value) {
-    throw error.value
-  }
-
-  if (!program.value) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: `Program "${slug}" not found`,
-      fatal: true,
-    })
-  }
-
-  useProgramPageSeo(program.value)
-
-  const galleryImageSrcs = useProgramGallerySrcs(() => program.value?.galleryUrls)
-
-  const activeSection = ref('overview')
-  const isNavSticky = ref(false)
-  const activePhotoIndex = ref<number | null>(null)
-
-  const sections = computed(() => {
-    const list = [{ id: 'overview', label: 'Overview' }]
-    if (program.value?.outcomes?.length) {
-      list.push({ id: 'outcomes', label: 'Outcomes' })
-    }
-    if (program.value?.labExperience) {
-      list.push({ id: 'lab-experience', label: 'Lab Experience' })
-    }
-    if (galleryImageSrcs.value.length) {
-      list.push({ id: 'gallery', label: 'Facilities & Work' })
-    }
-    list.push({ id: 'specifications', label: 'Academic Integration' })
-    return list
+if (!program.value) {
+  throw createError({
+    statusCode: 404,
+    statusMessage: `Program "${slug}" not found`,
+    fatal: true
   })
+}
 
-  const scrollToSection = (id: string) => {
-    const el = document.getElementById(id)
-    if (el) {
-      const offset = 145
-      const bodyRect = document.body.getBoundingClientRect().top
-      const elementRect = el.getBoundingClientRect().top
-      const elementPosition = elementRect - bodyRect
-      const offsetPosition = elementPosition - offset
+useProgramPageSeo(program.value)
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth',
-      })
-      activeSection.value = id
+const galleryImageSrcs = useProgramGallerySrcs(() => program.value?.galleryUrls)
+
+const activeSection = ref('overview')
+const isNavSticky = ref(false)
+const activePhotoIndex = ref<number | null>(null)
+
+const sections = computed(() => {
+  const list = [{ id: 'overview', label: 'Overview' }]
+  if (program.value?.outcomes?.length) {
+    list.push({ id: 'outcomes', label: 'Outcomes' })
+  }
+  if (program.value?.labExperience) {
+    list.push({ id: 'lab-experience', label: 'Lab Experience' })
+  }
+  if (galleryImageSrcs.value.length) {
+    list.push({ id: 'gallery', label: 'Facilities & Work' })
+  }
+  list.push({ id: 'specifications', label: 'Academic Integration' })
+  return list
+})
+
+const scrollToSection = (id: string) => {
+  const el = document.getElementById(id)
+  if (el) {
+    const offset = 145
+    const bodyRect = document.body.getBoundingClientRect().top
+    const elementRect = el.getBoundingClientRect().top
+    const elementPosition = elementRect - bodyRect
+    const offsetPosition = elementPosition - offset
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: 'smooth'
+    })
+    activeSection.value = id
+  }
+}
+
+const openLightbox = (index: number) => {
+  activePhotoIndex.value = index
+  document.body.style.overflow = 'hidden'
+  window.addEventListener('keydown', handleLightboxKeydown)
+}
+
+const closeLightbox = () => {
+  activePhotoIndex.value = null
+  document.body.style.overflow = ''
+  window.removeEventListener('keydown', handleLightboxKeydown)
+}
+
+const prevPhoto = () => {
+  if (activePhotoIndex.value === null || !galleryImageSrcs.value.length) return
+  activePhotoIndex.value
+    = (activePhotoIndex.value - 1 + galleryImageSrcs.value.length) % galleryImageSrcs.value.length
+}
+
+const nextPhoto = () => {
+  if (activePhotoIndex.value === null || !galleryImageSrcs.value.length) return
+  activePhotoIndex.value = (activePhotoIndex.value + 1) % galleryImageSrcs.value.length
+}
+
+const handleLightboxKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') closeLightbox()
+  if (e.key === 'ArrowLeft') prevPhoto()
+  if (e.key === 'ArrowRight') nextPhoto()
+}
+
+const getOutcomeIcon = (index: number) => {
+  const icons = [
+    'bi-journal-check',
+    'bi-cpu',
+    'bi-patch-check',
+    'bi-rocket-takeoff',
+    'bi-tools',
+    'bi-briefcase'
+  ]
+  return icons[index % icons.length]
+}
+
+let observer: IntersectionObserver | null = null
+let scrollHandler: (() => void) | null = null
+
+onMounted(() => {
+  scrollHandler = () => {
+    const trigger = document.querySelector('.program-detail-layout')
+    if (trigger) {
+      isNavSticky.value = window.scrollY > trigger.getBoundingClientRect().top + window.scrollY - 160
     }
   }
+  window.addEventListener('scroll', scrollHandler)
 
-  const openLightbox = (index: number) => {
-    activePhotoIndex.value = index
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', handleLightboxKeydown)
-  }
-
-  const closeLightbox = () => {
-    activePhotoIndex.value = null
-    document.body.style.overflow = ''
-    window.removeEventListener('keydown', handleLightboxKeydown)
-  }
-
-  const prevPhoto = () => {
-    if (activePhotoIndex.value === null || !galleryImageSrcs.value.length) return
-    activePhotoIndex.value =
-      (activePhotoIndex.value - 1 + galleryImageSrcs.value.length) % galleryImageSrcs.value.length
-  }
-
-  const nextPhoto = () => {
-    if (activePhotoIndex.value === null || !galleryImageSrcs.value.length) return
-    activePhotoIndex.value = (activePhotoIndex.value + 1) % galleryImageSrcs.value.length
-  }
-
-  const handleLightboxKeydown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') closeLightbox()
-    if (e.key === 'ArrowLeft') prevPhoto()
-    if (e.key === 'ArrowRight') nextPhoto()
-  }
-
-  const getOutcomeIcon = (index: number) => {
-    const icons = [
-      'bi-journal-check',
-      'bi-cpu',
-      'bi-patch-check',
-      'bi-rocket-takeoff',
-      'bi-tools',
-      'bi-briefcase',
-    ]
-    return icons[index % icons.length]
-  }
-
-  let observer: IntersectionObserver | null = null
-  let scrollHandler: (() => void) | null = null
-
-  onMounted(() => {
-    scrollHandler = () => {
-      const trigger = document.querySelector('.program-detail-layout')
-      if (trigger) {
-        isNavSticky.value = window.scrollY > trigger.getBoundingClientRect().top + window.scrollY - 160
+  observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        activeSection.value = entry.target.id
       }
-    }
-    window.addEventListener('scroll', scrollHandler)
-
-    observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          activeSection.value = entry.target.id
-        }
-      })
-    }, {
-      root: null,
-      rootMargin: '-160px 0px -50% 0px',
-      threshold: 0,
     })
-
-    sections.value.forEach((sec) => {
-      const el = document.getElementById(sec.id)
-      if (el) observer?.observe(el)
-    })
+  }, {
+    root: null,
+    rootMargin: '-160px 0px -50% 0px',
+    threshold: 0
   })
 
-  onUnmounted(() => {
-    if (scrollHandler) window.removeEventListener('scroll', scrollHandler)
-    observer?.disconnect()
+  sections.value.forEach((sec) => {
+    const el = document.getElementById(sec.id)
+    if (el) observer?.observe(el)
   })
+})
+
+onUnmounted(() => {
+  if (scrollHandler) window.removeEventListener('scroll', scrollHandler)
+  observer?.disconnect()
+})
 </script>
 
 <template>
-  <div v-if="pending" class="program-detail-page program-detail-page--loading container">
-    <p class="programs-empty">Loading program…</p>
+  <div
+    v-if="pending"
+    class="program-detail-page program-detail-page--loading container"
+  >
+    <p class="programs-empty">
+      Loading program…
+    </p>
   </div>
 
-  <div v-else-if="program" class="program-detail-page">
+  <div
+    v-else-if="program"
+    class="program-detail-page"
+  >
     <HeroProgram :program="program" />
 
     <!-- Sticky Navigation Tab Bar -->
-    <div class="program-sticky-nav-wrapper" :class="{ 'is-sticky': isNavSticky }">
+    <div
+      class="program-sticky-nav-wrapper"
+      :class="{ 'is-sticky': isNavSticky }"
+    >
       <div class="container">
-        <nav class="program-sticky-nav" aria-label="Local section navigation">
+        <nav
+          class="program-sticky-nav"
+          aria-label="Local section navigation"
+        >
           <button
             v-for="sec in sections"
             :key="sec.id"
@@ -191,11 +206,25 @@
       <!-- Main Content -->
       <div class="program-detail-layout__main">
         <!-- Overview Section -->
-        <section id="overview" class="program-section-block">
-          <MotionWrapper variant="fadeUp" :delay="100">
+        <section
+          id="overview"
+          class="program-section-block"
+        >
+          <MotionWrapper
+            variant="fadeUp"
+            :delay="100"
+          >
             <div class="program-body-section">
-              <RichTextRenderer v-if="program.body?.length" :body="program.body" />
-              <p v-else class="program-body-fallback">{{ program.description }}</p>
+              <RichTextRenderer
+                v-if="program.body?.length"
+                :body="program.body"
+              />
+              <p
+                v-else
+                class="program-body-fallback"
+              >
+                {{ program.description }}
+              </p>
             </div>
           </MotionWrapper>
         </section>
@@ -206,10 +235,16 @@
           id="outcomes"
           class="program-section-block"
         >
-          <MotionWrapper variant="fadeUp" :delay="200" class="outcomes-wrapper">
+          <MotionWrapper
+            variant="fadeUp"
+            :delay="200"
+            class="outcomes-wrapper"
+          >
             <div class="outcomes-header">
               <span class="outcomes-eyebrow">Skills Acquired</span>
-              <h2 class="outcomes-title">Key Learning Outcomes</h2>
+              <h2 class="outcomes-title">
+                Key Learning Outcomes
+              </h2>
             </div>
             <div class="outcomes-grid">
               <div
@@ -218,10 +253,12 @@
                 class="outcome-card-pro"
               >
                 <div class="outcome-card-pro__icon-wrapper">
-                  <i :class="['bi', getOutcomeIcon(Number(oIdx))]"></i>
+                  <i :class="['bi', getOutcomeIcon(Number(oIdx))]" />
                 </div>
                 <div class="outcome-card-pro__content">
-                  <p class="outcome-card-pro__text">{{ outcome }}</p>
+                  <p class="outcome-card-pro__text">
+                    {{ outcome }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -234,9 +271,20 @@
           id="lab-experience"
           class="program-section-block"
         >
-          <MotionWrapper variant="fadeUp" :delay="250">
+          <MotionWrapper
+            variant="fadeUp"
+            :delay="250"
+          >
             <div class="program-body-section">
               <RichTextRenderer
+                v-if="Array.isArray(program.labExperience)"
+                :body="[
+                  { type: 'heading', data: { level: 2, text: 'Practical Lab Experience' } },
+                  ...program.labExperience
+                ]"
+              />
+              <RichTextRenderer
+                v-else
                 :body="[
                   { type: 'heading', data: { level: 2, text: 'Practical Lab Experience' } },
                   { type: 'paragraph', data: { text: program.labExperience } }
@@ -254,7 +302,9 @@
         >
           <div class="gallery-header">
             <span class="gallery-eyebrow">Visual Tour</span>
-            <h2 class="program-gallery__title">Facilities & Student Work</h2>
+            <h2 class="program-gallery__title">
+              Facilities & Student Work
+            </h2>
           </div>
           <div class="program-gallery__grid">
             <div
@@ -270,7 +320,7 @@
                 loading="lazy"
               >
               <div class="program-gallery__item-overlay">
-                <i class="bi bi-zoom-in zoom-icon"></i>
+                <i class="bi bi-zoom-in zoom-icon" />
                 <span>View Fullscreen</span>
               </div>
             </div>
@@ -279,15 +329,23 @@
       </div>
 
       <!-- Sidebar details -->
-      <aside id="specifications" class="program-detail-layout__sidebar">
-        <MotionWrapper variant="fadeUp" :delay="300">
+      <aside
+        id="specifications"
+        class="program-detail-layout__sidebar"
+      >
+        <MotionWrapper
+          variant="fadeUp"
+          :delay="300"
+        >
           <div class="program-sidebar-card">
             <div class="sidebar-badge-top">
-              <span class="pulse-indicator"></span>
+              <span class="pulse-indicator" />
               Automatic NCAT Integration
             </div>
-            <h3 class="sidebar-title">Academic Integration</h3>
-            
+            <h3 class="sidebar-title">
+              Academic Integration
+            </h3>
+
             <div class="spec-list">
               <div class="spec-item">
                 <span class="spec-label">Academic Path</span>
@@ -307,14 +365,28 @@
               </div>
             </div>
 
-            <div v-if="program.requirements" class="spec-requirements">
-              <h4 class="spec-req-title">Prerequisites</h4>
-              <p class="spec-req-desc">{{ program.requirements }}</p>
+            <div
+              v-if="program.requirements"
+              class="spec-requirements"
+            >
+              <h4 class="spec-req-title">
+                Prerequisites
+              </h4>
+              <RichTextRenderer
+                v-if="Array.isArray(program.requirements)"
+                :body="program.requirements"
+              />
+              <p
+                v-else
+                class="spec-req-desc"
+              >
+                {{ program.requirements }}
+              </p>
             </div>
 
             <!-- Automatic participation alert -->
             <div class="sidebar-cohort-alert info-alert">
-              <i class="bi bi-info-circle-fill alert-icon"></i>
+              <i class="bi bi-info-circle-fill alert-icon" />
               <div class="alert-text">
                 <span class="alert-title">No Public Applications</span>
                 <span class="alert-desc">All NCAT NBTE students are automatically registered in the N-CEDI ecosystem. Simply choose this track at the center.</span>
@@ -322,10 +394,18 @@
             </div>
 
             <div class="sidebar-cta-wrapper">
-              <BaseButton variant="accent" block size="md" to="/about" class="btn-sidebar-apply">
+              <BaseButton
+                variant="accent"
+                block
+                size="md"
+                to="/about"
+                class="btn-sidebar-apply"
+              >
                 Track Selection Guide
               </BaseButton>
-              <p class="sidebar-cta-note">No public application required. Integrated into your academic progression.</p>
+              <p class="sidebar-cta-note">
+                No public application required. Integrated into your academic progression.
+              </p>
             </div>
           </div>
         </MotionWrapper>
@@ -333,11 +413,16 @@
     </div>
 
     <!-- Related Programs Recommendations Section -->
-    <section v-if="relatedPrograms?.length" class="related-programs-section">
+    <section
+      v-if="relatedPrograms?.length"
+      class="related-programs-section"
+    >
       <div class="container">
         <div class="related-header">
           <span class="related-eyebrow">Explore More</span>
-          <h2 class="related-title">Other Programs You Might Like</h2>
+          <h2 class="related-title">
+            Other Programs You Might Like
+          </h2>
         </div>
         <div class="related-grid">
           <div
@@ -358,12 +443,20 @@
         class="lightbox-overlay"
         @click.self="closeLightbox"
       >
-        <button class="lightbox-close-btn" @click="closeLightbox" aria-label="Close Lightbox">
-          <i class="bi bi-x-lg"></i>
+        <button
+          class="lightbox-close-btn"
+          aria-label="Close Lightbox"
+          @click="closeLightbox"
+        >
+          <i class="bi bi-x-lg" />
         </button>
 
-        <button class="lightbox-nav-btn prev" @click="prevPhoto" aria-label="Previous Image">
-          <i class="bi bi-chevron-left"></i>
+        <button
+          class="lightbox-nav-btn prev"
+          aria-label="Previous Image"
+          @click="prevPhoto"
+        >
+          <i class="bi bi-chevron-left" />
         </button>
 
         <div class="lightbox-content-wrapper">
@@ -377,8 +470,12 @@
           </div>
         </div>
 
-        <button class="lightbox-nav-btn next" @click="nextPhoto" aria-label="Next Image">
-          <i class="bi bi-chevron-right"></i>
+        <button
+          class="lightbox-nav-btn next"
+          aria-label="Next Image"
+          @click="nextPhoto"
+        >
+          <i class="bi bi-chevron-right" />
         </button>
       </div>
     </Transition>

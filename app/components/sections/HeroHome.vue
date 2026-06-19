@@ -1,9 +1,56 @@
 <script setup lang="ts">
   import MotionWrapper from '~/components/motion/MotionWrapper.vue'
   import TextReveal from '~/components/motion/TextReveal.vue'
+  import { resolveTestimonialAvatarUrl } from '~/utils/testimonialAdmin'
 
-  import avatar1 from '~/assets/image/avatar1.webp'
-  import avatar2 from '~/assets/image/avatar2.jpg'
+
+
+  // Badge color themes that cycle for each floating avatar
+  const badgeThemes = [
+    { class: 'avatar-aisha', cursorColor: '#60A5FA' },
+    { class: 'avatar-tunde', cursorColor: '#10B981' },
+    { class: 'avatar-david', cursorColor: '#A855F7' },
+    { class: 'avatar-chioma', cursorColor: '#EC4899' },
+  ]
+
+  interface FloatingAlumni {
+    name: string
+    avatarUrl: string
+  }
+
+
+
+  // Fetch 4 random published testimonials that have avatars
+  const { data: fetchedAvatars } = useAsyncData<FloatingAlumni[]>(
+    'hero-floating-avatars',
+    async () => {
+      const { client } = useSupabase()
+
+      // Fetch more than needed so we can shuffle and pick 4
+      const { data: rows, error } = await client
+        .from('testimonials')
+        .select('name, avatar_url')
+        .eq('is_published', true)
+        .not('avatar_url', 'is', null)
+        .limit(20)
+
+      if (error || !rows?.length) return []
+
+      // Filter out rows with empty or whitespace avatar_url
+      const validRows = rows.filter((row: any) => row.avatar_url?.trim())
+
+      // Shuffle and pick up to 4
+      const shuffled = [...validRows].sort(() => Math.random() - 0.5)
+      return shuffled.slice(0, 4).map((row: any) => ({
+        name: row.name?.split(' ')[0] || row.name, // Use first name only
+        avatarUrl: resolveTestimonialAvatarUrl(row.avatar_url, { width: 48, height: 48, quality: 85 }),
+      }))
+    },
+    { default: () => [], lazy: true },
+  )
+
+  // Use fetched alumni
+  const floatingAvatars = computed(() => fetchedAvatars.value || [])
 </script>
 
 <template>
@@ -18,41 +65,22 @@
       <!-- Pulse wave (center) -->
       <div class="pulse-wave"></div>
 
-      <!-- Floating avatars with cursor pointers -->
-      <div class="floating-avatar floating-avatar--1">
+      <!-- Floating avatars with cursor pointers — fetched from alumni -->
+      <div
+        v-for="(alumni, index) in floatingAvatars"
+        :key="index"
+        class="floating-avatar"
+        :class="`floating-avatar--${index + 1}`"
+      >
         <i class="bi bi-cursor-fill"></i>
-        <div class="floating-avatar__badge avatar-aisha">
+        <div
+          class="floating-avatar__badge"
+          :class="badgeThemes[index % badgeThemes.length]?.class"
+        >
           <div class="avatar avatar--1">
-            <img :src="avatar1" alt="Aisha's Avatar" />
+            <img :src="alumni.avatarUrl" :alt="`${alumni.name}'s Avatar`" />
           </div>
-          <span class="floating-avatar__name">Aisha</span>
-        </div>
-      </div>
-      <div class="floating-avatar floating-avatar--2">
-        <i class="bi bi-cursor-fill"></i>
-        <div class="floating-avatar__badge avatar-tunde">
-          <div class="avatar avatar--1">
-            <img :src="avatar2" alt="Tunde's Avatar" />
-          </div>
-          <span class="floating-avatar__name">Tunde</span>
-        </div>
-      </div>
-      <div class="floating-avatar floating-avatar--3">
-        <i class="bi bi-cursor-fill"></i>
-        <div class="floating-avatar__badge avatar-david">
-          <div class="avatar avatar--1">
-            <img :src="avatar2" alt="David's Avatar" />
-          </div>
-          <span class="floating-avatar__name">David</span>
-        </div>
-      </div>
-      <div class="floating-avatar floating-avatar--4">
-        <i class="bi bi-cursor-fill"></i>
-        <div class="floating-avatar__badge avatar-chioma">
-          <div class="avatar avatar--1">
-            <img :src="avatar1" alt="Chioma's Avatar" />
-          </div>
-          <span class="floating-avatar__name float">Chioma</span>
+          <span class="floating-avatar__name" :class="{ float: index === 3 }">{{ alumni.name }}</span>
         </div>
       </div>
     </div>
@@ -131,7 +159,7 @@
                 </div>
               </div>
               <div class="social-proof__text">
-                <span class="social-proof__count">Over 500+ Alumni</span>
+                <span class="social-proof__count">Over 50+ Alumni</span>
               </div>
             </div>
           </MotionWrapper>
@@ -316,7 +344,7 @@
 .hero-home__title {
   font-family: var(--font-display);
   font-size: clamp(2.5rem, 8vw, 5.5rem);
-  font-weight: 900;
+  /* font-weight: 900; */
   line-height: 1;
   letter-spacing: var(--tracking-tight);
   margin-top: var(--space-2);
@@ -559,7 +587,7 @@
   }
   .hero-home__title{
     font-size: 3.3rem;
-    font-weight: 900!important;
+    /* font-weight: 900!important; */
     line-height: 1.1;
   }
   

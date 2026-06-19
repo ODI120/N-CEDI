@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { STORAGE_BUCKETS, uploadStorageObject, teamMemberAvatarObjectPath } from '~/utils/storage'
-import type { TeamMemberFormState } from '~/utils/teamAdmin'
 import { validateTeamMemberForm, rowToTeamMemberForm, formToTeamMemberPayload, resolveTeamMemberAvatarUrl, parseTeamMemberAvatarLocation, teamMemberStorageRefForRow } from '~/utils/teamAdmin'
 import type { TeamMember } from '~/types'
+import { triggerRevalidation } from '~/utils/revalidate'
+
 
 definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'Team Members | Admin | N-CEDI' })
@@ -46,7 +47,7 @@ const { data, pending, refresh } = useAsyncData('admin-team-members', async () =
     linkedinUrl: row.linkedin_url,
     displayOrder: row.display_order,
     isPublished: row.is_published,
-    createdAt: row.created_at,
+    createdAt: row.created_at
   })) as TeamMemberRow[]
 
   return {
@@ -60,7 +61,7 @@ const columns = [
   { key: 'name', label: 'Name' },
   { key: 'role', label: 'Role' },
   { key: 'status', label: 'Status' },
-  { key: 'displayOrder', label: 'Order', align: 'center' as const },
+  { key: 'displayOrder', label: 'Order', align: 'center' as const }
 ]
 
 const modalOpen = ref(false)
@@ -80,10 +81,10 @@ const form = ref<FormState>({
   linkedinUrl: '',
   avatarUrl: '',
   displayOrder: 0,
-  isPublished: true,
+  isPublished: true
 })
 
-const errors = ref<Record<string, string>>({})
+const errors = ref<TeamMemberFormErrors>({})
 const target = ref<TeamMemberRow | null>(null)
 
 const previewUrl = computed(() => {
@@ -110,7 +111,7 @@ const openAdd = () => {
     linkedinUrl: '',
     avatarUrl: '',
     displayOrder: nextDisplayOrder.value,
-    isPublished: true,
+    isPublished: true
   }
   avatarFile.value = null
   errors.value = {}
@@ -142,7 +143,11 @@ const save = async () => {
     return
   }
   errors.value = validateTeamMemberForm(form.value)
-  if (Object.keys(errors.value).length > 0) return
+  if (Object.keys(errors.value).length > 0) {
+    const reasons = Object.values(errors.value).join(' ')
+    toast.add({ title: 'Validation Error', description: reasons, color: 'error' })
+    return
+  }
 
   saving.value = true
   try {
@@ -153,7 +158,7 @@ const save = async () => {
         supabase,
         STORAGE_BUCKETS.teams_avatars,
         path,
-        avatarFile.value,
+        avatarFile.value
       )
     }
 
@@ -186,6 +191,7 @@ const save = async () => {
 
     modalOpen.value = false
     await refresh()
+    triggerRevalidation(['/about'])
   } catch (e: any) {
     toast.add({ title: 'Error', description: e.message, color: 'error' })
   } finally {
@@ -220,6 +226,7 @@ const remove = async () => {
     toast.add({ title: 'Team member deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
+    triggerRevalidation(['/about'])
   } catch (e: any) {
     toast.add({ title: 'Error', description: e.message, color: 'error' })
   } finally {
@@ -228,64 +235,141 @@ const remove = async () => {
 }
 </script>
 
-
 <template>
   <section class="admin-page">
     <div class="ap-header">
       <div class="ap-header__left">
         <span class="ap-eyebrow">Organization</span>
-        <h1 class="ap-title">Team Members</h1>
-        <p class="ap-subtitle">Manage staff, leadership, and contributor profiles with avatar uploads.</p>
+        <h1 class="ap-title">
+          Team Members
+        </h1>
+        <p class="ap-subtitle">
+          Manage staff, leadership, and contributor profiles with avatar uploads.
+        </p>
       </div>
       <div class="ap-header__actions">
-        <button class="btn btn-ghost" @click="refresh"><UIcon name="i-lucide-refresh-cw" />Refresh</button>
-        <button class="btn btn-primary" @click="openAdd" v-if="canEdit"><UIcon name="i-lucide-plus" />Add Member</button>
+        <button
+          class="btn btn-ghost"
+          @click="() => refresh()"
+        >
+          <UIcon name="i-lucide-refresh-cw" />Refresh
+        </button>
+        <button
+          v-if="canEdit"
+          class="btn btn-primary"
+          @click="openAdd"
+        >
+          <UIcon name="i-lucide-plus" />Add Member
+        </button>
       </div>
     </div>
 
     <div class="ap-toolbar">
       <div class="ap-toolbar__left">
-        <div class="ap-search"><UIcon name="i-lucide-search" class="ap-search__icon" /><input v-model="search" class="ap-search__input" placeholder="Search team..." /></div>
+        <div class="ap-search">
+          <UIcon
+            name="i-lucide-search"
+            class="ap-search__icon"
+          /><input
+            v-model="search"
+            class="ap-search__input"
+            placeholder="Search team..."
+          >
+        </div>
       </div>
     </div>
 
     <AdminTable
+      v-model:current-page="currentPage"
       :columns="columns"
       :rows="data?.rows || []"
       :loading="pending"
       :total-rows="data?.total || 0"
       :page-size="pageSize"
-      v-model:current-page="currentPage"
       empty-title="No team members"
     >
       <template #cell-avatar="{ row }">
         <div class="avatar-container">
-          <img v-if="row.avatarUrl" :src="resolveTeamMemberAvatarUrl(row.avatarUrl)" :alt="row.name" class="avatar-img" />
-          <UIcon v-else name="i-lucide-user" class="avatar-placeholder" />
+          <img
+            v-if="row.avatarUrl"
+            :src="resolveTeamMemberAvatarUrl(row.avatarUrl)"
+            :alt="row.name"
+            class="avatar-img"
+          >
+          <UIcon
+            v-else
+            name="i-lucide-user"
+            class="avatar-placeholder"
+          />
         </div>
       </template>
-      <template #cell-name="{ row }"><span class="font-semibold">{{ row.name }}</span></template>
-      <template #cell-role="{ row }"><span class="text-secondary">{{ row.role }}</span></template>
-      <template #cell-status="{ row }"><span class="badge" :class="row.isPublished ? 'badge-green' : 'badge-gray'">{{ row.isPublished ? 'Published' : 'Draft' }}</span></template>
-      <template #cell-displayOrder="{ row }"><span class="display-order-cell">{{ row.displayOrder }}</span></template>
+      <template #cell-name="{ row }">
+        <span >{{ row.name }}</span>
+      </template>
+      <template #cell-role="{ row }">
+        <span class="text-secondary">{{ row.role }}</span>
+      </template>
+      <template #cell-status="{ row }">
+        <span
+          class="badge"
+          :class="row.isPublished ? 'badge-green' : 'badge-gray'"
+        >{{ row.isPublished ? 'Published' : 'Draft' }}</span>
+      </template>
+      <template #cell-displayOrder="{ row }">
+        <span class="display-order-cell">{{ row.displayOrder }}</span>
+      </template>
       <template #actions="{ row }">
-        <button class="btn btn-ghost btn-icon" @click="openEdit(row)" v-if="canEdit"><UIcon name="i-lucide-edit-3" /></button>
-        <button class="btn btn-danger btn-icon" @click="openDelete(row)" v-if="canDelete"><UIcon name="i-lucide-trash-2" /></button>
+        <button
+          v-if="canEdit"
+          class="btn btn-ghost btn-icon"
+          @click="openEdit(row)"
+        >
+          <UIcon name="i-lucide-edit-3" />
+        </button>
+        <button
+          v-if="canDelete"
+          class="btn btn-danger btn-icon"
+          @click="openDelete(row)"
+        >
+          <UIcon name="i-lucide-trash-2" />
+        </button>
       </template>
     </AdminTable>
 
-    <AdminModal :open="modalOpen" :title="mode === 'add' ? 'New Team Member' : 'Edit Team Member'" :submit-label="mode === 'add' ? 'Create' : 'Save'" :loading="saving" @close="modalOpen = false" @submit="save">
+    <AdminModal
+      :open="modalOpen"
+      :title="mode === 'add' ? 'New Team Member' : 'Edit Team Member'"
+      :submit-label="mode === 'add' ? 'Create' : 'Save'"
+      :loading="saving"
+      @close="modalOpen = false"
+      @submit="save"
+    >
       <!-- Avatar Upload -->
       <div class="am-field">
         <label class="am-label">Avatar Photo</label>
         <div style="position: relative; margin-bottom: 12px;">
-          <div v-if="previewUrl" style="width: 80px; height: 80px; border-radius: 50%; background: #e2e8f0; overflow: hidden; margin-bottom: 12px; display: flex; align-items: center; justify-content: center;">
-            <img :src="previewUrl" :alt="form.name" style="width: 100%; height: 100%; object-fit: cover;" />
+          <div
+            v-if="previewUrl"
+            style="width: 80px; height: 80px; border-radius: 50%; background: #e2e8f0; overflow: hidden; margin-bottom: 12px; display: flex; align-items: center; justify-content: center;"
+          >
+            <img
+              :src="previewUrl"
+              :alt="form.name"
+              style="width: 100%; height: 100%; object-fit: cover;"
+            >
           </div>
           <label style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; cursor: pointer; background: rgba(255,255,255,0.05); font-size: 14px;">
-            <UIcon name="i-lucide-upload" style="width: 16px; height: 16px;" />
+            <UIcon
+              name="i-lucide-upload"
+              style="width: 16px; height: 16px;"
+            />
             Choose Image
-            <input type="file" accept="image/*" style="display: none;" @change="handleAvatarFileChange" />
+            <input
+              type="file"
+              accept="image/*"
+              style="display: none;"
+              @change="handleAvatarFileChange"
+            >
           </label>
         </div>
       </div>
@@ -294,31 +378,61 @@ const remove = async () => {
       <div class="am-row-2">
         <div class="am-field">
           <label class="am-label">Name <span style="color: var(--admin-error)">*</span></label>
-          <input v-model="form.name" class="am-input" :class="{ 'am-input-error': errors.name }" placeholder="Full name" />
-          <span v-if="errors.name" style="color: var(--admin-error); font-size: 12px; margin-top: 4px;">{{ errors.name }}</span>
+          <input
+            v-model="form.name"
+            class="am-input"
+            :class="{ 'am-input-error': errors.name }"
+            placeholder="Full name"
+          >
+          <span
+            v-if="errors.name"
+            style="color: var(--admin-error); font-size: 12px; margin-top: 4px;"
+          >{{ errors.name }}</span>
         </div>
         <div class="am-field">
           <label class="am-label">Role <span style="color: var(--admin-error)">*</span></label>
-          <input v-model="form.role" class="am-input" :class="{ 'am-input-error': errors.role }" placeholder="Job title or position" />
-          <span v-if="errors.role" style="color: var(--admin-error); font-size: 12px; margin-top: 4px;">{{ errors.role }}</span>
+          <input
+            v-model="form.role"
+            class="am-input"
+            :class="{ 'am-input-error': errors.role }"
+            placeholder="Job title or position"
+          >
+          <span
+            v-if="errors.role"
+            style="color: var(--admin-error); font-size: 12px; margin-top: 4px;"
+          >{{ errors.role }}</span>
         </div>
       </div>
 
       <!-- Bio -->
       <div class="am-field">
         <label class="am-label">Bio</label>
-        <textarea v-model="form.bio" class="am-textarea" placeholder="Brief biography or description" rows="3" />
+        <textarea
+          v-model="form.bio"
+          class="am-textarea"
+          placeholder="Brief biography or description"
+          rows="3"
+        />
       </div>
 
       <!-- Email & LinkedIn Row -->
       <div class="am-row-2">
         <div class="am-field">
           <label class="am-label">Email</label>
-          <input v-model="form.email" class="am-input" type="email" placeholder="member@ncedi.org" />
+          <input
+            v-model="form.email"
+            class="am-input"
+            type="email"
+            placeholder="member@ncedi.org"
+          >
         </div>
         <div class="am-field">
           <label class="am-label">LinkedIn URL</label>
-          <input v-model="form.linkedinUrl" class="am-input" placeholder="https://linkedin.com/in/..." />
+          <input
+            v-model="form.linkedinUrl"
+            class="am-input"
+            placeholder="https://linkedin.com/in/..."
+          >
         </div>
       </div>
 
@@ -326,20 +440,45 @@ const remove = async () => {
       <div class="am-row-2">
         <div class="am-field">
           <label class="am-label">Display Order</label>
-          <input v-model.number="form.displayOrder" type="number" class="am-input" :class="{ 'am-input-error': errors.displayOrder }" min="0" />
-          <span v-if="errors.displayOrder" style="color: var(--admin-error); font-size: 12px; margin-top: 4px;">{{ errors.displayOrder }}</span>
+          <input
+            v-model.number="form.displayOrder"
+            type="number"
+            class="am-input"
+            :class="{ 'am-input-error': errors.displayOrder }"
+            min="0"
+          >
+          <span
+            v-if="errors.displayOrder"
+            style="color: var(--admin-error); font-size: 12px; margin-top: 4px;"
+          >{{ errors.displayOrder }}</span>
         </div>
-        <div class="am-field" style="justify-content: flex-end;">
+        <div
+          class="am-field"
+          style="justify-content: flex-end;"
+        >
           <label class="am-checkbox-row">
-            <input type="checkbox" v-model="form.isPublished" />
+            <input
+              v-model="form.isPublished"
+              type="checkbox"
+            >
             Published
           </label>
         </div>
       </div>
     </AdminModal>
 
-    <AdminModal :open="deleteOpen" title="Delete Team Member" submit-label="Delete" submit-danger :loading="deleting" @close="deleteOpen = false" @submit="remove">
-      <p class="confirm-text">Permanently delete <strong>{{ target?.name }}</strong>? Their avatar will also be removed from storage.</p>
+    <AdminModal
+      :open="deleteOpen"
+      title="Delete Team Member"
+      submit-label="Delete"
+      submit-danger
+      :loading="deleting"
+      @close="deleteOpen = false"
+      @submit="remove"
+    >
+      <p class="confirm-text">
+        Permanently delete <strong>{{ target?.name }}</strong>? Their avatar will also be removed from storage.
+      </p>
     </AdminModal>
   </section>
 </template>

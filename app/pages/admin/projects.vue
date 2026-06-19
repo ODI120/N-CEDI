@@ -120,7 +120,7 @@ const remove = async () => {
       v-model:current-page="currentPage"
       empty-title="No projects"
     >
-      <template #cell-title="{ row }"><span class="font-semibold">{{ row.title }}</span></template>
+      <template #cell-title="{ row }"><span>{{ row.title }}</span></template>
       <template #cell-status_field="{ row }"><span class="badge badge-blue">{{ row.status || 'ongoing' }}</span></template>
       <template #cell-client="{ row }">{{ row.client || '—' }}</template>
       <template #cell-status="{ row }"><span class="badge" :class="row.is_published ? 'badge-green' : 'badge-gray'">{{ row.is_published ? 'Published' : 'Draft' }}</span></template>
