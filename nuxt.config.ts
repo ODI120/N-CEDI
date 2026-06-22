@@ -19,7 +19,7 @@ export default defineNuxtConfig({
   ],
 
   devtools: {
-    enabled: true
+    enabled: process.env.NODE_ENV !== 'production'
   },
 
   css: ['~/assets/css/main.css'],
@@ -115,7 +115,7 @@ export default defineNuxtConfig({
     // Server-only variables (never exposed to client)
     adminInitSecret: process.env.ADMIN_INIT_SECRET || process.env.NUXT_ADMIN_INIT_SECRET || '',
     supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NUXT_SUPABASE_SERVICE_ROLE_KEY || '',
-    
+
     public: {
       // Public variables (safe to expose to client)
       supabaseUrl: process.env.SUPABASE_URL || process.env.NUXT_PUBLIC_SUPABASE_URL || '',

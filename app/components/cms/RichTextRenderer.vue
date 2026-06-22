@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import DOMPurify from 'isomorphic-dompurify'
 
 interface Block {
   type: 'paragraph' | 'heading' | 'image' | 'video' | 'quote' | 'list' | 'embed'
@@ -35,6 +36,25 @@ const blocks = computed<Block[]>(() => {
   }
   return Array.isArray(props.body) ? props.body : []
 })
+
+/** Sanitize HTML to prevent XSS from CMS-stored content. */
+function sanitize(html: string | undefined): string {
+  if (!html) return ''
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'ol', 'li', 'span', 'sub', 'sup', 'mark', 'code'],
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'class']
+  })
+}
+
+/** Sanitize embed code — allows iframes for known video providers only. */
+function sanitizeEmbed(html: string | undefined): string {
+  if (!html) return ''
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['iframe'],
+    ALLOWED_ATTR: ['src', 'width', 'height', 'frameborder', 'allowfullscreen', 'allow', 'title'],
+    ALLOW_DATA_ATTR: false
+  })
+}
 </script>
 
 <template>
@@ -44,7 +64,7 @@ const blocks = computed<Block[]>(() => {
       <p
         v-if="block.type === 'paragraph' && block.data?.text"
         class="rich-text-content__paragraph"
-        v-html="block.data.text"
+        v-html="sanitize(block.data.text)"
       ></p>
 
       <!-- Heading Block -->
@@ -53,7 +73,7 @@ const blocks = computed<Block[]>(() => {
         v-else-if="block.type === 'heading' && block.data?.text"
         class="rich-text-content__heading"
         :class="`rich-text-content__heading--h${block.data?.level || 2}`"
-        v-html="block.data.text"
+        v-html="sanitize(block.data.text)"
       ></component>
 
       <!-- Quote Block -->
@@ -61,7 +81,7 @@ const blocks = computed<Block[]>(() => {
         v-else-if="block.type === 'quote' && block.data?.text"
         class="rich-text-content__quote"
       >
-        <p class="rich-text-content__quote-text" v-html="block.data.text"></p>
+        <p class="rich-text-content__quote-text" v-html="sanitize(block.data.text)"></p>
         <cite v-if="block.data.caption" class="rich-text-content__quote-caption">
           {{ block.data.caption }}
         </cite>
@@ -82,7 +102,7 @@ const blocks = computed<Block[]>(() => {
           v-for="(item, itemIndex) in block.data.items"
           :key="itemIndex"
           class="rich-text-content__list-item"
-          v-html="item"
+          v-html="sanitize(item)"
         ></li>
       </component>
 
@@ -125,7 +145,7 @@ const blocks = computed<Block[]>(() => {
         v-else-if="block.type === 'embed' && (block.data?.embedCode || block.data?.url)"
         class="rich-text-content__embed-wrapper"
       >
-        <div v-if="block.data.embedCode" v-html="block.data.embedCode"></div>
+        <div v-if="block.data.embedCode" v-html="sanitizeEmbed(block.data.embedCode)"></div>
         <iframe
           v-else-if="block.data.url"
           :src="block.data.url"
