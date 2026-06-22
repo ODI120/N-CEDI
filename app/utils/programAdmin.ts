@@ -109,8 +109,8 @@ export function deserializeBlockField(value?: string | null): Record<string, any
     try {
       const parsed = JSON.parse(trimmed)
       if (Array.isArray(parsed)) return parsed
-    } catch {
-      // Fallback
+    } catch (e: unknown) {
+      console.warn('[programAdmin] Failed to parse block field as JSON, using fallback:', e)
     }
   }
   return [{ type: 'paragraph', data: { text: trimmed } }]

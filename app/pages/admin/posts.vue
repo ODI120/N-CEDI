@@ -39,7 +39,11 @@ const { data, pending, refresh } = useAsyncData('admin-posts', async () => {
 }, { watch: [currentPage, search] })
 
 const { data: categories } = useAsyncData('posts-cats', async () => {
-  const { data } = await supabase.from('categories').select('id, name')
+  const { data, error } = await supabase.from('categories').select('id, name')
+  if (error) {
+    console.error('[admin/posts] Failed to fetch categories:', error.message)
+    throw error
+  }
   return data || []
 })
 

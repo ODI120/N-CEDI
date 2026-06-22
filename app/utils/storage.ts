@@ -133,8 +133,9 @@ export function getStoragePublicUrl(
     if (data.publicUrl) {
       return appendTransformParams(data.publicUrl, options)
     }
-  } catch {
+  } catch (e: unknown) {
     // Outside Nuxt/Vue setup — fall through to manual URL
+    if (import.meta.dev) console.debug('[storage] Supabase client unavailable, building URL manually:', e)
   }
 
   const projectUrl = getSupabaseProjectUrl()

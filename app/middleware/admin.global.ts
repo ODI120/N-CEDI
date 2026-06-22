@@ -25,7 +25,12 @@ export default defineNuxtRouteMiddleware(async (to) => {
     .eq('user_id', userId)
     .maybeSingle()
 
-  if (error || !data || data.is_active !== true) {
+  if (error) {
+    console.error('[admin.global] Admin lookup failed:', error.message)
+    return navigateTo('/admin/login?reason=error')
+  }
+
+  if (!data || data.is_active !== true) {
     return navigateTo('/admin/login?reason=not_admin')
   }
 })

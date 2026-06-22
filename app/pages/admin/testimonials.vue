@@ -47,7 +47,10 @@ const { data, pending, refresh } = useAsyncData('admin-testimonials', async () =
 
   const { data, count, error } = await q
   if (error) {
-    if (error.code === '42P01') return { rows: [], total: 0 }
+    if (error.code === '42P01') {
+      console.warn('[admin/testimonials] Table "testimonials" does not exist — returning empty list')
+      return { rows: [], total: 0 }
+    }
     throw error
   }
   return {

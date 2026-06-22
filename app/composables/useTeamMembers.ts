@@ -26,8 +26,7 @@ export async function fetchTeamMembers(options?: { limit?: number }): Promise<Te
   const { data, error } = await query
 
   if (error) {
-    console.error('Failed to fetch team members:', error.message)
-    return []
+    throw new Error(`[useTeamMembers] ${error.message}`)
   }
 
   if (!data || data.length === 0) {

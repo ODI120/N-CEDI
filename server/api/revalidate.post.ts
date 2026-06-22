@@ -36,8 +36,9 @@ export default defineEventHandler(async (event) => {
           isAuthorized = true
         }
       }
-    } catch (err) {
-      console.warn('[revalidate] Supabase session check warning:', err)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.warn('[revalidate] Supabase session check failed — falling back to secret-only auth:', message)
     }
   }
 
