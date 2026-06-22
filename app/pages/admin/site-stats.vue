@@ -11,6 +11,7 @@ import {
   type SiteStatFormErrors,
   type SiteStatFormState
 } from '~/utils/siteStatAdmin'
+import { triggerRevalidation } from '~/utils/revalidate'
 
 definePageMeta({ layout: 'admin' })
 useSeoMeta({ title: 'Site Stats | Admin | N-CEDI' })
@@ -141,6 +142,7 @@ const save = async () => {
 
     modalOpen.value = false
     await refresh()
+    triggerRevalidation(['/', '/about'])
   } catch (e: any) {
     toast.add({ title: 'Error saving stat', description: e.message, color: 'error' })
   } finally {
@@ -161,6 +163,7 @@ const remove = async () => {
     toast.add({ title: 'Stat deleted', color: 'success' })
     deleteOpen.value = false
     await refresh()
+    triggerRevalidation(['/', '/about'])
   } catch (e: any) {
     toast.add({ title: 'Error deleting stat', description: e.message, color: 'error' })
   } finally {
@@ -401,7 +404,7 @@ const remove = async () => {
       </div>
 
       <p
-        v-if="mode === 'add' && (data?.length ?? 0) >= 4"
+        v-if="mode === 'add' && (data?.total ?? 0) >= 4"
         class="field-hint field-hint--warn"
       >
         The homepage shows at most four stats. Extra published stats are kept in the database but not shown on the home grid.
