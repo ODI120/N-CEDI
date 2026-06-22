@@ -1,6 +1,6 @@
 /**
  * Admin Users Collection API
- * 
+ *
  * Endpoints:
  * - GET  /api/admin/users - List all admin users (editor+ only)
  * - POST /api/admin/users - Enroll a new admin user (super_admin only)
@@ -49,11 +49,7 @@ export default defineEventHandler(async (event): Promise<any> => {
     .maybeSingle()
 
   if (adminCheckError || !adminRecord || !adminRecord.is_active) {
-    console.error('[ADMIN_API_DEBUG] --- AUTH CHECK FAILED ---')
-    console.error('[ADMIN_API_DEBUG] Authenticated User ID:', user.id)
-    console.error('[ADMIN_API_DEBUG] Authenticated User Email:', user.email)
-    console.error('[ADMIN_API_DEBUG] adminCheckError:', adminCheckError)
-    console.error('[ADMIN_API_DEBUG] adminRecord:', adminRecord)
+    console.warn('[ADMIN_API] Auth check failed for user:', user.id)
     throw createError({
       statusCode: 403,
       statusMessage: 'Insufficient permissions.'

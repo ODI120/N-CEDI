@@ -14,9 +14,8 @@ export default defineEventHandler(async (event) => {
 
   let isAuthorized = false
 
-  // Check 1: Shared secret token
-  const config = useRuntimeConfig()
-  const expectedSecret = process.env.REVALIDATE_SECRET || config.adminInitSecret
+  // Check 1: Shared secret token (dedicated revalidation secret only)
+  const expectedSecret = process.env.REVALIDATE_SECRET
   if (secret && expectedSecret && secret === expectedSecret) {
     isAuthorized = true
   }

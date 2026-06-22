@@ -9,7 +9,33 @@ interface ContactRequestBody {
   type?: 'general' | 'partnership' | 'enrollment' | 'media'
 }
 
+// Simple in-memory rate limiter: max 5 submissions per IP per 15 minutes
+const rateLimitMap = new Map<string, { count: number, resetAt: number }>()
+const RATE_LIMIT_MAX = 5
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000 // 15 minutes
+
 export default defineEventHandler(async (event) => {
+  // Rate limiting
+  const clientIp = getHeader(event, 'x-forwarded-for')
+    || getHeader(event, 'x-real-ip')
+    || event.node.req.socket.remoteAddress
+    || 'unknown'
+
+  const now = Date.now()
+  const record = rateLimitMap.get(clientIp)
+
+  if (record && record.resetAt > now) {
+    if (record.count >= RATE_LIMIT_MAX) {
+      throw createError({
+        statusCode: 429,
+        statusMessage: 'Too many requests. Please try again later.'
+      })
+    }
+    record.count++
+  } else {
+    rateLimitMap.set(clientIp, { count: 1, resetAt: now + RATE_LIMIT_WINDOW })
+  }
+
   const body = await readBody<ContactRequestBody>(event)
 
   // 1. Validation
@@ -17,6 +43,26 @@ export default defineEventHandler(async (event) => {
     throw createError({
       statusCode: 400,
       statusMessage: 'Name, email, and message are required fields.'
+    })
+  }
+
+  // Input length validation to prevent payload abuse
+  if (body.name.length > 200 || body.email.length > 254 || body.message.length > 5000) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Input exceeds maximum allowed length.'
+    })
+  }
+  if (body.phone && body.phone.length > 30) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Phone number exceeds maximum allowed length.'
+    })
+  }
+  if (body.subject && body.subject.length > 300) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Subject exceeds maximum allowed length.'
     })
   }
 
