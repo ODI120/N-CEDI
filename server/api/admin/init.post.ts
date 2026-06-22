@@ -254,7 +254,8 @@ function readLocalEnvValue(key: string): string | undefined {
       .slice(line.indexOf('=') + 1)
       .trim()
       .replace(/^['"]|['"]$/g, '')
-  } catch {
+  } catch (_e: unknown) {
+    // .env file not found or unreadable — expected in some environments
     return undefined
   }
 }

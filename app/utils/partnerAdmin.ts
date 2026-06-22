@@ -121,8 +121,9 @@ export function resolvePartnerLogoUrl(ref?: string | null): string {
       const client = useSupabaseClient()
       const { data } = client.storage.from(location.bucket).getPublicUrl(location.path)
       if (data.publicUrl) return data.publicUrl
-    } catch {
-      // fall through
+    } catch (e: unknown) {
+      // Outside Nuxt setup — fall through to manual URL construction
+      if (import.meta.dev) console.debug('[partnerAdmin] Supabase client unavailable, building URL manually:', e)
     }
 
     const built = getStoragePublicUrl(location.bucket, location.path)
