@@ -56,7 +56,10 @@ export async function fetchPublishedTestimonials(
   const { data: rows, error } = await query
 
   if (error) {
-    if (error.code === '42P01') return []
+    if (error.code === '42P01') {
+      console.warn('[useTestimonials] Table "testimonials" does not exist — returning empty list')
+      return []
+    }
     if (error.code === '42703') {
       const fallbackQuery = client
         .from('testimonials')

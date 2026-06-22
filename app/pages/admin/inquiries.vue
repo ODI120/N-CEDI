@@ -28,7 +28,10 @@ const { data, pending, refresh } = useAsyncData('admin-inquiries', async () => {
 
   const { data, count, error } = await q
   if (error) {
-    if (error.code === '42P01') return { rows: [], total: 0 }
+    if (error.code === '42P01') {
+      console.warn('[admin/inquiries] Table "inquiries" does not exist — returning empty list')
+      return { rows: [], total: 0 }
+    }
     throw error
   }
   return {
@@ -53,7 +56,10 @@ const target = ref<Row | null>(null)
 const openView = async (r: Row) => {
   target.value = r; modalOpen.value = true
   if (!r.is_read) {
-    await supabase.from('inquiries').update({ is_read: true }).eq('id', r.id)
+    const { error: markReadError } = await supabase.from('inquiries').update({ is_read: true }).eq('id', r.id)
+    if (markReadError) {
+      console.error('[admin/inquiries] Failed to mark inquiry as read:', markReadError.message)
+    }
     await refresh()
   }
 }

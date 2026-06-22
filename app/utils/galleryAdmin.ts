@@ -103,8 +103,9 @@ export function resolveGalleryMediaUrl(
       const client = useSupabaseClient()
       const { data } = client.storage.from(location.bucket).getPublicUrl(location.path)
       if (data.publicUrl) return appendTransformParams(data.publicUrl, options)
-    } catch {
-      // Outside Nuxt setup — build URL from runtime config
+    } catch (e: unknown) {
+      // Outside Nuxt setup — fall through to manual URL construction
+      if (import.meta.dev) console.debug('[galleryAdmin] Supabase client unavailable, building URL manually:', e)
     }
 
     const built = getStoragePublicUrl(location.bucket, location.path, options)

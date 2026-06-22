@@ -80,13 +80,11 @@ export default defineEventHandler(async (event): Promise<any> => {
 
     // Fetch user email from auth
     let email = 'unknown'
-    try {
-      const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(targetUserId)
-      if (authUser?.user) {
-        email = authUser.user.email || 'unknown'
-      }
-    } catch (e) {
-      console.error(`[ADMIN_API] Error fetching email from auth for ${targetUserId}:`, e)
+    const { data: authUser, error: authError } = await supabase.auth.admin.getUserById(targetUserId)
+    if (authError) {
+      console.error(`[ADMIN_API] Error fetching email from auth for ${targetUserId}:`, authError.message)
+    } else if (authUser?.user) {
+      email = authUser.user.email || 'unknown'
     }
 
     return {

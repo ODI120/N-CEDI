@@ -73,8 +73,8 @@ function parseBlockField(value?: string | null): Record<string, any>[] | string 
     try {
       const parsed = JSON.parse(trimmed)
       if (Array.isArray(parsed)) return parsed
-    } catch {
-      // Fallback to raw string
+    } catch (e: unknown) {
+      console.warn('[usePrograms] Failed to parse block field as JSON, using raw string:', e)
     }
   }
   return value
