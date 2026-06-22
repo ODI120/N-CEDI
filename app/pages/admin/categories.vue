@@ -118,17 +118,52 @@ const save = async () => {
     }
 
     if (mode.value === 'add') {
-      const { error } = await supabase.from('categories').insert([payload])
-      if (error) throw error
+      const { data: inserted, error } = await supabase
+        .from('categories')
+        .insert([payload])
+        .select()
+      if (error) {
+        // User-friendly message for duplicate slug
+        if (error.code === '23505') {
+          toast.add({ title: 'Duplicate slug', description: `A category with slug "${sanitizedSlug}" already exists. Please use a different name.`, color: 'error' })
+          return
+        }
+        throw error
+      }
+      if (!inserted?.length) {
+        toast.add({ title: 'Save failed', description: 'The category could not be created. Please check your permissions and try again.', color: 'error' })
+        console.error('[Categories] Insert returned no data — likely an RLS policy issue.')
+        return
+      }
       toast.add({ title: 'Category created', color: 'success' })
     } else {
-      const { error } = await supabase.from('categories').update(payload).eq('id', target.value!.id)
-      if (error) throw error
+      const { data: updated, error } = await supabase
+        .from('categories')
+        .update(payload)
+        .eq('id', target.value!.id)
+        .select()
+      if (error) {
+        if (error.code === '23505') {
+          toast.add({ title: 'Duplicate slug', description: `A category with slug "${sanitizedSlug}" already exists.`, color: 'error' })
+          return
+        }
+        throw error
+      }
+      if (!updated?.length) {
+        toast.add({ title: 'Update failed', description: 'The category could not be updated. Please check your permissions.', color: 'error' })
+        console.error('[Categories] Update returned no data — likely an RLS policy issue.')
+        return
+      }
       toast.add({ title: 'Category updated', color: 'success' })
     }
-    modalOpen.value = false; await refresh()
-  } catch (e: any) { toast.add({ title: 'Error', description: e.message, color: 'error' }) }
-  finally { saving.value = false }
+    modalOpen.value = false
+    await refresh()
+  } catch (e: any) {
+    console.error('[Categories] Save error:', e)
+    toast.add({ title: 'Error saving category', description: e.message || 'An unexpected error occurred.', color: 'error' })
+  } finally {
+    saving.value = false
+  }
 }
 
 const remove = async () => {
@@ -136,13 +171,20 @@ const remove = async () => {
     toast.add({ title: 'Unauthorized', description: 'Your role does not have permission to delete categories.', color: 'error' })
     return
   }
+  if (!target.value) return
   deleting.value = true
   try {
-    const { error } = await supabase.from('categories').delete().eq('id', target.value!.id)
+    const { error } = await supabase.from('categories').delete().eq('id', target.value.id)
     if (error) throw error
-    toast.add({ title: 'Deleted', color: 'success' }); deleteOpen.value = false; await refresh()
-  } catch (e: any) { toast.add({ title: 'Error', description: e.message, color: 'error' }) }
-  finally { deleting.value = false }
+    toast.add({ title: 'Category deleted', color: 'success' })
+    deleteOpen.value = false
+    await refresh()
+  } catch (e: any) {
+    console.error('[Categories] Delete error:', e)
+    toast.add({ title: 'Error deleting category', description: e.message || 'An unexpected error occurred.', color: 'error' })
+  } finally {
+    deleting.value = false
+  }
 }
 </script>
 
