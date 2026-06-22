@@ -21,7 +21,7 @@
 
 
   // Fetch 4 random published testimonials that have avatars
-  const { data: fetchedAvatars } = useAsyncData<FloatingAlumni[]>(
+  const { data: fetchedAvatars } = await useAsyncData<FloatingAlumni[]>(
     'hero-floating-avatars',
     async () => {
       const { client } = useSupabase()
@@ -46,7 +46,7 @@
         avatarUrl: resolveTestimonialAvatarUrl(row.avatar_url, { width: 48, height: 48, quality: 85 }),
       }))
     },
-    { default: () => [], lazy: true },
+    { default: () => [] }
   )
 
   // Use fetched alumni

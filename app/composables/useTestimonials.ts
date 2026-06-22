@@ -80,10 +80,10 @@ export async function fetchPublishedTestimonials(
   return rows.map((row: any) => mapTestimonialRow(row as TestimonialDbRow))
 }
 
-export function useTestimonials(options: FetchTestimonialsOptions = {}) {
+export async function useTestimonials(options: FetchTestimonialsOptions = {}) {
   const cacheKey = `testimonials-${options.featuredOnly ? 'featured' : 'all'}-${options.limit ?? 'all'}`
 
-  const { data, pending, error, refresh } = useAsyncData<Testimonial[]>(
+  const { data, pending, error, refresh } = await useAsyncData<Testimonial[]>(
     cacheKey,
     () => fetchPublishedTestimonials(options),
     { default: () => [] },
@@ -92,8 +92,8 @@ export function useTestimonials(options: FetchTestimonialsOptions = {}) {
   return { testimonials: data, pending, error, refresh }
 }
 
-export function useHomepageTestimonials(limit = 6) {
-  const { data, pending, error, refresh } = useAsyncData<Testimonial[]>(
+export async function useHomepageTestimonials(limit = 6) {
+  const { data, pending, error, refresh } = await useAsyncData<Testimonial[]>(
     `testimonials-home-${limit}`,
     () => fetchPublishedTestimonials({ limit }),
     { default: () => [] },
