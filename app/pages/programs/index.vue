@@ -5,7 +5,7 @@
   import { usePageSeo } from '~/composables/useSeo'
 
   usePageSeo({
-    title: 'Entrepreneurship & Innovation Programs',
+    title: 'Programs | N-CEDI - Vocational Training & Entrepreneurship',
     description: 'Explore N-CEDI\'s professional vocational and technology tracks, designed to equip you with real-world entrepreneurial skills.'
   })
 

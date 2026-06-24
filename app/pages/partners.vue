@@ -8,7 +8,7 @@ import { usePartnersForDisplay } from '~/composables/usePartnerLogoUrl'
 import type { PartnerTier } from '~/utils/partnerAdmin'
 
 usePageSeo({
-  title: 'Strategic Partners',
+  title: 'Partners | N-CEDI - Strategic Collaborations',
   description:
     'Learn about the government agencies, corporate institutions, and foundations sponsoring vocational excellence at N-CEDI.',
 })

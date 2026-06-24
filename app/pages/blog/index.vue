@@ -7,7 +7,7 @@ import { usePageSeo } from '~/composables/useSeo'
 import { useSupabase } from '~/composables/useSupabase'
 
 usePageSeo({
-  title: 'Insights & Innovation Blog',
+  title: 'Blog | N-CEDI - Entrepreneurship Insights',
   description: 'Read the latest updates, thought leadership articles, and success stories from the N-CEDI entrepreneurship community.'
 })
 

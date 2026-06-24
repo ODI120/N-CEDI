@@ -4,7 +4,7 @@ definePageMeta({
 })
 
 usePageSeo({
-  title: 'Home',
+  title: 'N-CEDI - Vocational Training & Entrepreneurship Centre | NCAT Zaria',
   description: 'N-CEDI — NCAT Centre for Entrepreneurship Development and Innovation. Empowering Africa\'s next generation of innovators through world-class vocational and tech training in Nigeria.'
 })
 

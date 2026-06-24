@@ -9,9 +9,30 @@ definePageMeta({
 })
 
 usePageSeo({
-  title: 'About',
+  title: 'About N-CEDI - Entrepreneurship Development & Innovation Centre',
   description: 'Learn about N-CEDI — the NCAT Centre for Entrepreneurship Development and Innovation. Our mission, vision, history, and the team driving innovation in Nigeria.'
 })
+
+// Add Organization schema for About page
+useSchemaOrg([
+  defineOrganization({
+    name: 'N-CEDI',
+    alternateName: 'NCAT Centre for Entrepreneurship Development and Innovation',
+    url: 'https://n-cedi.vercel.app',
+    logo: 'https://n-cedi.vercel.app/logo.webp',
+    description: 'A premier centre of excellence within the Nigerian College of Aviation Technology (NCAT), dedicated to vocational training and entrepreneurship development in Nigeria.',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Zaria',
+      addressRegion: 'Kaduna State',
+      addressCountry: 'NG'
+    },
+    foundingDate: '2018',
+    sameAs: [
+      'https://twitter.com/ncedi_ng'
+    ]
+  })
+])
 
 const milestones = [
   { year: '2018', title: 'Foundation', badge: 'Initiative', description: 'N-CEDI was established as a centre of excellence within NCAT to bridge the gap between academic knowledge and practical skills.' },
@@ -164,12 +185,7 @@ const { teamMembers, loading } = useTeamMembers()
             <div class="mv-card mv-card--dark">
               <div class="mv-card__badge">01</div>
               <span class="label-tag label-tag--on-dark">Our Mission</span>
-              <h2 class="mv-card__title mv-card__title--light">Building Africa's Innovation Ecosystem</h2>
-              <p class="mv-card__text mv-card__text--light">
-                N-CEDI exists to bridge the gap between education and employment by providing
-                hands-on, industry-relevant training that equips young Nigerians with the skills,
-                knowledge, and entrepreneurial mindset needed to thrive in a rapidly changing world.
-              </p>
+              
               <div class="mv-card__icon-wrap">
                 <svg width="42" height="42" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-dasharray="4 2" />
@@ -177,6 +193,14 @@ const { teamMembers, loading } = useTeamMembers()
                   <path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" stroke-linecap="round" />
                 </svg>
               </div>
+
+              <h2 class="mv-card__title mv-card__title--light">Building Africa's Innovation Ecosystem</h2>
+              <p class="mv-card__text mv-card__text--light">
+                N-CEDI exists to bridge the gap between education and employment by providing
+                hands-on, industry-relevant training that equips young Nigerians with the skills,
+                knowledge, and entrepreneurial mindset needed to thrive in a rapidly changing world.
+              </p>
+              
             </div>
           </MotionWrapper>
 
@@ -184,12 +208,7 @@ const { teamMembers, loading } = useTeamMembers()
             <div class="mv-card mv-card--light">
               <div class="mv-card__badge">02</div>
               <span class="label-tag">Our Vision</span>
-              <h2 class="mv-card__title">A Centre of Global Excellence</h2>
-              <p class="mv-card__text">
-                To become Africa's premier centre for entrepreneurship development and innovation,
-                producing world-class graduates who drive economic growth, create jobs, and solve
-                real-world problems through skilled craftsmanship and technology.
-              </p>
+
               <div class="mv-card__icon-wrap mv-card__icon-wrap--accent">
                 <svg width="42" height="42" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" stroke="var(--color-brand-accent)" stroke-width="1.5" />
@@ -197,6 +216,14 @@ const { teamMembers, loading } = useTeamMembers()
                   <path d="M12 5V3M12 21v-2" stroke="var(--color-brand-accent)" stroke-width="1.5" stroke-linecap="round" />
                 </svg>
               </div>
+
+              <h2 class="mv-card__title">A Centre of Global Excellence</h2>
+              <p class="mv-card__text">
+                To become Africa's premier centre for entrepreneurship development and innovation,
+                producing world-class graduates who drive economic growth, create jobs, and solve
+                real-world problems through skilled craftsmanship and technology.
+              </p>
+              
             </div>
           </MotionWrapper>
         </div>
@@ -483,6 +510,12 @@ const { teamMembers, loading } = useTeamMembers()
   }
 }
 
+@media (max-width: 480px) {
+  .intro-split {
+    gap: var(--space-6);
+  }
+}
+
 .intro-text-col {
   position: relative;
 }
@@ -548,6 +581,12 @@ const { teamMembers, loading } = useTeamMembers()
   text-align: center;
 }
 
+@media (max-width: 480px) {
+  .feature-card__inner {
+    padding: var(--space-8) var(--space-5);
+  }
+}
+
 .feature-stat-row {
   display: flex;
   flex-direction: column;
@@ -591,6 +630,7 @@ const { teamMembers, loading } = useTeamMembers()
   gap: var(--space-5);
   padding-top: var(--space-6);
   border-top: 1px solid rgba(107, 89, 255, 0.1);
+  flex-wrap: wrap;
 }
 
 .mini-stat {
@@ -598,6 +638,7 @@ const { teamMembers, loading } = useTeamMembers()
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  min-width: 0;
 }
 
 .mini-val {
@@ -605,6 +646,7 @@ const { teamMembers, loading } = useTeamMembers()
   font-size: var(--text-xl);
   font-weight: 800;
   color: var(--color-brand-primary);
+  white-space: nowrap;
 }
 
 .mini-lbl {
@@ -614,12 +656,32 @@ const { teamMembers, loading } = useTeamMembers()
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 .mini-divider {
   width: 1px;
   height: 32px;
   background: rgba(107, 89, 255, 0.12);
+}
+
+@media (max-width: 400px) {
+  .feature-mini-stats {
+    gap: var(--space-3);
+  }
+
+  .mini-val {
+    font-size: var(--text-lg);
+  }
+
+  .mini-lbl {
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+  }
+
+  .mini-divider {
+    height: 24px;
+  }
 }
 
 
@@ -669,6 +731,10 @@ const { teamMembers, loading } = useTeamMembers()
   .mission-layout {
     grid-template-columns: 1fr;
     gap: var(--space-6);
+  }
+
+  .mv-card {
+    min-height: auto;
   }
 }
 
@@ -917,6 +983,46 @@ const { teamMembers, loading } = useTeamMembers()
   }
 }
 
+@media (max-width: 420px) {
+  .prog-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-3);
+  }
+
+  .prog-item__number {
+    grid-row: 1 / 3;
+    display: flex;
+    align-items: center;
+    min-width: 36px;
+    font-size: 1.5rem;
+  }
+
+  .prog-item__icon-circle {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+
+  .prog-item__body {
+    grid-column: 2;
+  }
+
+  .prog-item__body h3 {
+    font-size: var(--text-base);
+  }
+
+  .prog-item__body p {
+    font-size: var(--text-xs);
+  }
+
+  .prog-item__arrow {
+    display: none;
+  }
+}
+
 
 /* ═══════════════════════════════════════════════
    4. VALUES — Bento Grid
@@ -929,33 +1035,19 @@ const { teamMembers, loading } = useTeamMembers()
 
 .values-bento {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--space-6);
 }
 
-/* First card spans 2 columns */
-.values-bento > :first-child {
-  grid-column: 1 / 1;
-
-}
-
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .values-bento {
     grid-template-columns: repeat(2, 1fr);
-  }
-
-  .values-bento > :first-child {
-    grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 560px) {
   .values-bento {
     grid-template-columns: 1fr;
-  }
-
-  .values-bento > :first-child {
-    grid-column: 1;
   }
 }
 
@@ -1107,6 +1199,14 @@ const { teamMembers, loading } = useTeamMembers()
 @media (max-width: 800px) {
   .impact-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 420px) {
+  .impact-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
   }
 }
 
@@ -1152,6 +1252,20 @@ const { teamMembers, loading } = useTeamMembers()
 
 @media (max-width: 800px) {
   .impact-stat:nth-child(3)::after {
+    display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .impact-stat + .impact-stat::after {
+    display: none;
+  }
+
+  .impact-stat {
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .impact-stat::before {
     display: none;
   }
 }
@@ -1202,8 +1316,14 @@ const { teamMembers, loading } = useTeamMembers()
 
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: var(--space-8);
+}
+
+@media (max-width: 640px) {
+  .team-grid {
+    gap: var(--space-6);
+  }
 }
 
 

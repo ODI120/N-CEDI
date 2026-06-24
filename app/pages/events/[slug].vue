@@ -62,6 +62,31 @@ usePageSeo({
   image: event.value.coverImageUrl
 })
 
+// Add Event schema
+useSchemaOrg([
+  defineEvent({
+    name: event.value.title,
+    description: event.value.description,
+    image: event.value.coverImageUrl,
+    url: `https://n-cedi.vercel.app/events/${event.value.slug}`,
+    organizer: {
+      '@type': 'Organization',
+      name: 'N-CEDI',
+      url: 'https://n-cedi.vercel.app'
+    },
+    location: {
+      '@type': 'Place',
+      name: 'N-CEDI Campus, NCAT Zaria',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'Zaria',
+        addressRegion: 'Kaduna State',
+        addressCountry: 'NG'
+      }
+    }
+  })
+])
+
 const breadcrumbs = computed(() => [
   { label: 'Events', to: '/events' },
   { label: event.value.title, to: `/events/${event.value.slug}` }
