@@ -62,7 +62,7 @@ export default defineNuxtConfig({
   },
 
   site: {
-    url: 'https://ncedi.edu.ng',
+    url: process.env.NUXT_PUBLIC_SITE_URL || 'https://n-cedi.vercel.app',
     name: 'N-CEDI — NCAT Centre for Entrepreneurship Development and Innovation',
     description: 'Empowering the next generation of African innovators through hands-on vocational and tech training.',
     defaultLocale: 'en'

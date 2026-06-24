@@ -6,9 +6,32 @@
   import { usePageSeo } from '~/composables/useSeo'
 
   usePageSeo({
-    title: 'Contact & Inquiries',
+    title: 'Contact N-CEDI | Vocational Training Centre Zaria',
     description: 'Reach out to the N-CEDI campus administration in Kaduna. Submit general inquiries, enrollment questions, or partnership proposals.'
   })
+
+  // Add Organization schema with contact details
+  useSchemaOrg([
+    defineOrganization({
+      name: 'N-CEDI',
+      url: 'https://n-cedi.vercel.app',
+      logo: 'https://n-cedi.vercel.app/logo.webp',
+      description: 'NCAT Centre for Entrepreneurship Development and Innovation',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'Zaria',
+        addressRegion: 'Kaduna State',
+        addressCountry: 'NG'
+      },
+      contactPoint: {
+        '@type': 'ContactPoint',
+        telephone: '+234 803 123 4567',
+        email: 'info@ncedi.edu.ng',
+        contactType: 'general',
+        areaServed: 'NG'
+      }
+    })
+  ])
 
   const breadcrumbs = [
     { label: 'Contact', to: '/contact' }

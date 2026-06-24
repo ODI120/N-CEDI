@@ -8,7 +8,7 @@ import { useSupabase } from '~/composables/useSupabase'
 import { resolveStorageRef } from '~/utils/storage'
 
 usePageSeo({
-  title: 'NCAT Student Events',
+  title: 'Events | N-CEDI - Student Activities & Programs',
   description: 'Participate in N-CEDI\'s yearly student activities, Entrepreneurship Days, and Student Weeks under NBTE at NCAT.'
 })
 

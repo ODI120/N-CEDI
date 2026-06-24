@@ -15,7 +15,7 @@ interface PageSeoOptions {
 
 const SITE_NAME = 'N-CEDI'
 const TWITTER_HANDLE = '@ncedi_ng'
-const DEFAULT_OG_IMAGE = '/og/default.jpg'
+const DEFAULT_OG_IMAGE = '/og/default.png'
 
 export function resolveAbsoluteMediaUrl(url?: string | null): string {
   if (!url) {
@@ -27,7 +27,7 @@ export function resolveAbsoluteMediaUrl(url?: string | null): string {
   }
 
   if (url.startsWith('/')) {
-    const siteUrl = useSiteConfig().url || 'https://ncedi.edu.ng'
+    const siteUrl = useSiteConfig().url || 'https://n-cedi.vercel.app'
     return `${siteUrl.replace(/\/$/, '')}${url}`
   }
 
@@ -46,6 +46,9 @@ export function usePageSeo(options: PageSeoOptions) {
 
   const absoluteImage = resolveAbsoluteMediaUrl(image)
   const fullTitle = `${title} | ${SITE_NAME}`
+  const route = useRoute()
+  const siteUrl = useSiteConfig().url || 'https://n-cedi.vercel.app'
+  const canonicalUrl = `${siteUrl.replace(/\/$/, '')}${route.path}`
 
   useSeoMeta({
     title: fullTitle,
@@ -62,6 +65,16 @@ export function usePageSeo(options: PageSeoOptions) {
     twitterImage: absoluteImage,
   })
 
+  // Add canonical URL via head
+  useHead({
+    link: [
+      {
+        rel: 'canonical',
+        href: canonicalUrl
+      }
+    ]
+  })
+
   if (type === 'article' && publishedAt) {
     useSchemaOrg([
       defineArticle({
@@ -69,6 +82,7 @@ export function usePageSeo(options: PageSeoOptions) {
         description,
         image: absoluteImage,
         datePublished: publishedAt,
+        url: canonicalUrl,
         publisher: {
           name: SITE_NAME,
           logo: resolveAbsoluteMediaUrl(DEFAULT_OG_IMAGE),
@@ -80,6 +94,7 @@ export function usePageSeo(options: PageSeoOptions) {
       defineWebPage({
         name: fullTitle,
         description,
+        url: canonicalUrl,
       }),
     ])
   }
@@ -108,9 +123,9 @@ export function useProgramPageSeo(program: ProgramDetail) {
       provider: {
         '@type': 'Organization',
         name: SITE_NAME,
-        url: useSiteConfig().url || 'https://ncedi.edu.ng',
+        url: useSiteConfig().url || 'https://n-cedi.vercel.app',
       },
-      url: `${(useSiteConfig().url || 'https://ncedi.edu.ng').replace(/\/$/, '')}/programs/${program.slug}`,
+      url: `${(useSiteConfig().url || 'https://n-cedi.vercel.app').replace(/\/$/, '')}/programs/${program.slug}`,
     },
   ])
 }

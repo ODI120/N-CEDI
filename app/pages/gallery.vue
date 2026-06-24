@@ -6,7 +6,7 @@ import { usePageSeo } from '~/composables/useSeo'
 import { useGalleryDisplayItems } from '~/composables/useGalleryMediaUrl'
 
 usePageSeo({
-  title: 'Media Gallery',
+  title: 'Gallery | N-CEDI - Facilities & Student Work',
   description:
     "View photos and videos of N-CEDI's modern facility labs, students working, and showcase exhibitions.",
 })
