@@ -15,8 +15,8 @@ const { programs } = await useHomepagePrograms(6)
 const { partners: homepagePartners } = useHomepagePartners(6)
 const displayPartners = useResolvedSectionPartners(homepagePartners)
 
-// Testimonials: await SSR so they render instantly — no client-side loading delay
-const { testimonials } = await useHomepageTestimonials(6)
+// Testimonials
+const { testimonials } = useHomepageTestimonials(6)
 
 </script>
 

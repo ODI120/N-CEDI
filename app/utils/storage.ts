@@ -77,24 +77,38 @@ function parseBucketSlashRef(ref: string): { bucket: StorageBucketId; path: stri
 }
 
 export function getSupabaseProjectUrl(): string {
-  const config = useRuntimeConfig()
-  const pub = config.public as Record<string, unknown>
+  try {
+    const config = useRuntimeConfig()
+    const pub = config?.public as Record<string, unknown> | undefined
+    if (pub) {
+      const candidates = [
+        pub.supabaseUrl,
+        (pub.supabase as { url?: string } | undefined)?.url,
+      ]
+      for (const value of candidates) {
+        if (typeof value === 'string' && value.trim()) {
+          return value.replace(/\/$/, '')
+        }
+      }
+    }
+  } catch {
+    // Outside Nuxt/Vue setup context
+  }
 
-  const candidates = [
-    pub.supabaseUrl,
-    (pub.supabase as { url?: string } | undefined)?.url,
+  const envCandidates = [
     process.env.SUPABASE_URL,
     process.env.NUXT_PUBLIC_SUPABASE_URL,
     process.env.NUXT_SUPABASE_URL,
+    'https://hknwobxwcnurymqelzdo.supabase.co',
   ]
 
-  for (const value of candidates) {
+  for (const value of envCandidates) {
     if (typeof value === 'string' && value.trim()) {
       return value.replace(/\/$/, '')
     }
   }
 
-  return ''
+  return 'https://hknwobxwcnurymqelzdo.supabase.co'
 }
 
 export function appendTransformParams(url: string, options?: ImageTransformOptions): string {

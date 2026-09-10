@@ -33,6 +33,7 @@ function resetProgress() {
 }
 
 function startTimers() {
+  if (!import.meta.client) return
   stopTimers()
   resetProgress()
 
@@ -49,6 +50,7 @@ function startTimers() {
 }
 
 function stopTimers() {
+  if (!import.meta.client) return
   if (rotationTimer) { clearInterval(rotationTimer); rotationTimer = null }
   if (progressTimer) { clearInterval(progressTimer); progressTimer = null }
 }
@@ -61,10 +63,10 @@ function selectTestimonial(index: number) {
 function pause() { isPaused.value = true }
 function resume() { isPaused.value = false }
 
-// Start auto-rotation when testimonials arrive (SSR data already present on mount)
+// Start auto-rotation when testimonials arrive on client
 watch(() => props.testimonials?.length, (len) => {
-  if (len && len > 1) startTimers()
-}, { immediate: true })
+  if (import.meta.client && len && len > 1) startTimers()
+})
 
 onMounted(() => {
   if (props.testimonials?.length > 1) startTimers()
