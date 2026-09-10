@@ -1,9 +1,7 @@
 <script setup lang="ts">
   import MotionWrapper from '~/components/motion/MotionWrapper.vue'
   import TextReveal from '~/components/motion/TextReveal.vue'
-  import { resolveTestimonialAvatarUrl } from '~/utils/testimonialAdmin'
-
-
+  import { parseTestimonialAvatarLocation } from '~/utils/testimonialAdmin'
 
   // Badge color themes that cycle for each floating avatar
   const badgeThemes = [
@@ -18,10 +16,44 @@
     avatarUrl: string
   }
 
+  /**
+   * Build a testimonial avatar public URL without calling composables.
+   * This avoids async context loss during SSR when called inside .map().
+   */
+  function buildAvatarUrl(ref: string | null | undefined, supabaseUrl: string): string {
+    if (!ref?.trim()) return ''
+    const trimmed = ref.trim()
 
+    // Already an absolute URL — use as-is
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
+    if (trimmed.startsWith('/')) return trimmed
 
-  // Fetch 4 random published testimonials that have avatars
-  const { data: fetchedAvatars } = await useAsyncData<FloatingAlumni[]>(
+    // Resolve bucket + path
+    const location = parseTestimonialAvatarLocation(trimmed)
+    if (!location || !supabaseUrl) return trimmed
+
+    const encodedPath = location.path
+      .split('/')
+      .map((s: string) => encodeURIComponent(s))
+      .join('/')
+
+    const base = `${supabaseUrl}/storage/v1/object/public/${location.bucket}/${encodedPath}`
+    return base
+  }
+
+  // Grab Supabase URL once in setup context (before any await)
+  const config = useRuntimeConfig()
+  const supabaseUrl = (
+    (config.public as Record<string, unknown>).supabaseUrl as string
+    || ((config.public as Record<string, unknown>).supabase as { url?: string } | undefined)?.url
+    || ''
+  ).replace(/\/$/, '')
+
+  // Fetch 4 random published testimonials that have avatars.
+  // `server: false` → always fetch client-side so ISR never caches an empty
+  // array when Supabase is temporarily unavailable. Floating avatars are
+  // decorative / non-SEO-critical, so client-side fetch is fine.
+  const { data: fetchedAvatars } = useAsyncData<FloatingAlumni[]>(
     'hero-floating-avatars',
     async () => {
       const { client } = useSupabase()
@@ -43,10 +75,10 @@
       const shuffled = [...validRows].sort(() => Math.random() - 0.5)
       return shuffled.slice(0, 4).map((row: any) => ({
         name: row.name?.split(' ')[0] || row.name, // Use first name only
-        avatarUrl: resolveTestimonialAvatarUrl(row.avatar_url, { width: 48, height: 48, quality: 85 }),
+        avatarUrl: buildAvatarUrl(row.avatar_url, supabaseUrl),
       }))
     },
-    { default: () => [] }
+    { default: () => [], server: false, lazy: true }
   )
 
   // Use fetched alumni
